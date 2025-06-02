@@ -10,12 +10,15 @@
     "mongoose": "^8.15.1"
   },
   "scripts": {
+    "server": "nodemon server.js",
     "start": "node server.js"
   },
   "name": "server",
   "version": "1.0.0",
   "main": "server.js",
-  "devDependencies": {},
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",

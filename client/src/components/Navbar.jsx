@@ -7,8 +7,8 @@ const Navbar = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    logout();         // clears token & user
-    navigate("/");    // redirect to login
+    logout(); // clears token & user
+    navigate("/"); // redirect to login
   };
 
   return (
@@ -23,7 +23,7 @@ const Navbar = () => {
         )}
         <button
           onClick={handleLogout}
-          className="bg-white text-blue-600 px-3 py-1 rounded hover:bg-gray-100"
+          className="bg-white text-red-600 px-3 py-1 rounded hover:bg-gray-100"
         >
           Logout
         </button>
