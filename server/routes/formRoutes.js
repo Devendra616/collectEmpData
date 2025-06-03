@@ -3,7 +3,10 @@ import express from "express";
 const router = express.Router();
 
 import handlers from "../controller/empRegLogin.js";
-import { validateReg } from "../middleware/validateForms.js";
+import {
+  validateReg,
+  validatePersonalDetails,
+} from "../middleware/validateForms.js";
 import personalDetailsHandler from "../controller/personalDetails.js";
 import { verifyToken } from "../middleware/authenticateLogin.js";
 import fetchController from "../controller/fetchDetails.js";
@@ -20,7 +23,12 @@ router.post("/register", validateReg, registrationHandler);
 
 router.post("/login", loginHandler);
 
-router.post("/personal", verifyToken, personalDetailsHandler);
+router.post(
+  "/personal",
+  verifyToken,
+  validatePersonalDetails,
+  personalDetailsHandler
+);
 
 router.post("/education", verifyToken, educationDetailsHandler);
 

@@ -8,9 +8,9 @@ import { useAuth } from "../../context/AuthContext";
 import { getAgeFromDOB } from "../../utils/getAge";
 
 const schema = yup.object().shape({
-  title: yup.string().required("Title is required"),
-  firstName: yup.string().required("Name is required"),
-  lastName: yup.string().required("Surname is required"),
+  title: yup.string().required("Select your title"),
+  firstName: yup.string().required("First name is required"),
+  lastName: yup.string().required("Last name is required"),
   sapId: yup
     .string()
     .matches(/^[0-9]{8}$/, "Provide a valid SAP ID")
@@ -18,6 +18,9 @@ const schema = yup.object().shape({
   gender: yup.string().required("Gender is required"),
   dob: yup
     .date()
+    .transform((value, originalValue) =>
+      originalValue ? new Date(originalValue) : null
+    )
     .required("Date of Birth is required")
     .max(new Date(), "Date of Birth cannot be in the future")
     .test("min-age", "Age must be at least 18 years", function (dob) {
@@ -36,8 +39,8 @@ const schema = yup.object().shape({
   religion: yup.string().required("Religion is required"),
   category: yup.string().required("Category is required"),
   subCategory: yup.string().required("Sub-category is required"),
-  idMark1: yup.string().required("Identification Mark 1 is required"),
-  idMark2: yup.string().required("Identification Mark 2 is required"),
+  // idMark1: yup.string().required("Identification Mark 1 is required"),
+  // idMark2: yup.string().required("Identification Mark 2 is required"),
   exServiceman: yup.string().required("This field is required"),
   adhaarId: yup
     .string()
@@ -58,9 +61,9 @@ const schema = yup.object().shape({
       "Email must be a valid NMDC email"
     )
     .required("Email is required"),
-  pwd: yup.string().required("This field is required"),
-  motherTongue: yup.string().required("Mother Tongue is required"),
-  hindiKnowledge: yup.string().required("This field is required"),
+  pwd: yup.string().required("Select Yes or No"),
+  motherTongue: yup.string().required("Select your monther tongue"),
+  hindiKnowledge: yup.string().required("Select Yes or No"),
   langHindiRead: yup.boolean(),
   langHindiWrite: yup.boolean(),
   langHindiSpeak: yup.boolean(),
@@ -68,6 +71,7 @@ const schema = yup.object().shape({
 
 const PersonalDetailsForm = ({ onNext }) => {
   const [age, setAge] = useState(null);
+  const [backendErrors, setBackendErrors] = useState({});
 
   const { token, empData } = useAuth();
   const {
@@ -77,10 +81,12 @@ const PersonalDetailsForm = ({ onNext }) => {
     reset,
     formState: { errors },
   } = useForm({
-    resolver: yupResolver(schema),
+    // resolver: yupResolver(schema),
     defaultValues: {
       title: "",
       gender: "Male",
+      sapId: empData?.emp?.sapId,
+      email: empData?.emp?.email,
     },
   });
 
@@ -129,12 +135,12 @@ const PersonalDetailsForm = ({ onNext }) => {
       title: empData.pData.title || "",
       firstName: empData.pData.firstName || "",
       lastName: empData.pData.lastName || "",
-      sapId: empData.emp?.sapId || "",
+      sapId: empData.pData.sapId || "",
       adhaarId: empData.pData.adhaarId || "",
       birthplace: empData.pData.birthplace || "",
       category: empData.pData.category || "",
       dob: empData.pData.dob || "",
-      email: empData.emp?.email || "",
+      email: empData.pData.email || "",
       exServiceman: empData.pData.exServiceman || "",
       gender: empData.pData.gender || "",
       hindiKnowledge: empData.pData.hindiKnowledge || "",
@@ -154,8 +160,15 @@ const PersonalDetailsForm = ({ onNext }) => {
 
   const onSubmit = async (data) => {
     try {
+      setBackendErrors({}); // Clear any previous backend errors
       const hasSaved = await saveSectionData("personalDetails", data, token);
-
+      console.log("🚀 ~ onSubmit ~ hasSaved:", hasSaved.status);
+      // capture error first
+      if (hasSaved?.status === 400 && hasSaved.response) {
+        // error in API
+        setBackendErrors(hasSaved.response?.data?.errors);
+        return false;
+      }
       if (hasSaved) {
         onNext(data);
         console.log("Section 1 Data", data);
@@ -164,6 +177,9 @@ const PersonalDetailsForm = ({ onNext }) => {
       }
     } catch (error) {
       console.error("Error in saving personal details:", error);
+      if (error.response?.data?.errors) {
+        setBackendErrors(error.response.data.errors);
+      }
     }
   };
 
@@ -185,37 +201,46 @@ const PersonalDetailsForm = ({ onNext }) => {
             <option value="Smt">Smt</option>
             <option value="Ms">Ms</option>
           </select>
-          <p className="text-red-500 text-sm">{errors.title?.message}</p>
+          <p className="text-red-500 text-sm">
+            {errors.title?.message || backendErrors.title}
+          </p>
         </div>
 
         <div>
-          <label className="block font-medium">FirstName</label>
+          <label className="block font-medium">First Name</label>
           <input
             className="w-full border rounded p-2"
             {...register("firstName")}
             placeholder="First Name"
           />
-          <p className="text-red-500 text-sm">{errors.name?.message}</p>
+          <p className="text-red-500 text-sm">
+            {errors.firstName?.message || backendErrors.firstName}
+          </p>
         </div>
 
         <div>
-          <label className="block font-medium">LastName</label>
+          <label className="block font-medium">Last Name</label>
           <input
             className="w-full border rounded p-2"
             {...register("lastName")}
             placeholder="Last Name"
           />
-          <p className="text-red-500 text-sm">{errors.surname?.message}</p>
+          <p className="text-red-500 text-sm">
+            {errors.lastName?.message || backendErrors.lastName}
+          </p>
         </div>
 
         <div>
           <label className="block font-medium">SAP ID</label>
           <input
-            className="w-full border rounded p-2"
+            className="w-full border rounded p-2 bg-gray-100"
             {...register("sapId")}
             placeholder="SAP ID"
+            readOnly
           />
-          <p className="text-red-500 text-sm">{errors.sapId?.message}</p>
+          <p className="text-red-500 text-sm">
+            {errors.sapId?.message || backendErrors.sapId}
+          </p>
         </div>
 
         <div className="flex flex-col">
@@ -229,7 +254,9 @@ const PersonalDetailsForm = ({ onNext }) => {
               Female
             </label>
           </div>
-          <p className="text-red-500 text-sm">{errors.gender?.message}</p>
+          <p className="text-red-500 text-sm">
+            {errors.gender?.message || backendErrors.gender}
+          </p>
         </div>
 
         <div>
@@ -252,7 +279,9 @@ const PersonalDetailsForm = ({ onNext }) => {
               {age.years < 18 && " (must be at least 18)"}
             </p>
           )}
-          <p className="text-red-500 text-sm">{errors.dob?.message}</p>
+          <p className="text-red-500 text-sm">
+            {errors.dob?.message || backendErrors.dob}
+          </p>
         </div>
 
         <div>
@@ -262,7 +291,9 @@ const PersonalDetailsForm = ({ onNext }) => {
             {...register("birthplace")}
             placeholder="Birthplace"
           />
-          <p className="text-red-500 text-sm">{errors.birthplace?.message}</p>
+          <p className="text-red-500 text-sm">
+            {errors.birthplace?.message || backendErrors.birthplace}
+          </p>
         </div>
 
         <div>
@@ -272,7 +303,9 @@ const PersonalDetailsForm = ({ onNext }) => {
             {...register("state")}
             placeholder="State"
           />
-          <p className="text-red-500 text-sm">{errors.state?.message}</p>
+          <p className="text-red-500 text-sm">
+            {errors.state?.message || backendErrors.state}
+          </p>
         </div>
 
         <div>
@@ -282,7 +315,9 @@ const PersonalDetailsForm = ({ onNext }) => {
             {...register("religion")}
             placeholder="Religion"
           />
-          <p className="text-red-500 text-sm">{errors.religion?.message}</p>
+          <p className="text-red-500 text-sm">
+            {errors.religion?.message || backendErrors.religion}
+          </p>
         </div>
 
         <div>
@@ -292,7 +327,9 @@ const PersonalDetailsForm = ({ onNext }) => {
             {...register("category")}
             placeholder="Category"
           />
-          <p className="text-red-500 text-sm">{errors.category?.message}</p>
+          <p className="text-red-500 text-sm">
+            {errors.category?.message || backendErrors.category}
+          </p>
         </div>
 
         <div>
@@ -302,7 +339,9 @@ const PersonalDetailsForm = ({ onNext }) => {
             {...register("subCategory")}
             placeholder="Sub-Category"
           />
-          <p className="text-red-500 text-sm">{errors.subCategory?.message}</p>
+          <p className="text-red-500 text-sm">
+            {errors.subCategory?.message || backendErrors.subCategory}
+          </p>
         </div>
 
         <div>
@@ -312,7 +351,9 @@ const PersonalDetailsForm = ({ onNext }) => {
             {...register("idMark1")}
             placeholder="Identification Mark 1"
           />
-          <p className="text-red-500 text-sm">{errors.idMark1?.message}</p>
+          <p className="text-red-500 text-sm">
+            {errors.idMark1?.message || backendErrors.idMark1}
+          </p>
         </div>
 
         <div>
@@ -322,7 +363,9 @@ const PersonalDetailsForm = ({ onNext }) => {
             {...register("idMark2")}
             placeholder="Identification Mark 2"
           />
-          <p className="text-red-500 text-sm">{errors.idMark2?.message}</p>
+          <p className="text-red-500 text-sm">
+            {errors.idMark2?.message || backendErrors.idMark2}
+          </p>
         </div>
 
         <div>
@@ -335,7 +378,9 @@ const PersonalDetailsForm = ({ onNext }) => {
             <option value="Yes">Yes</option>
             <option value="No">No</option>
           </select>
-          <p className="text-red-500 text-sm">{errors.exServiceman?.message}</p>
+          <p className="text-red-500 text-sm">
+            {errors.exServiceman?.message || backendErrors.exServiceman}
+          </p>
         </div>
 
         <div>
@@ -345,7 +390,9 @@ const PersonalDetailsForm = ({ onNext }) => {
             {...register("adhaarId")}
             placeholder="Aadhar ID"
           />
-          <p className="text-red-500 text-sm">{errors.adhaarId?.message}</p>
+          <p className="text-red-500 text-sm">
+            {errors.adhaarId?.message || backendErrors.adhaarId}
+          </p>
         </div>
 
         <div>
@@ -356,18 +403,23 @@ const PersonalDetailsForm = ({ onNext }) => {
             {...register("mobile")}
             placeholder="Mobile Number"
           />
-          <p className="text-red-500 text-sm">{errors.mobile?.message}</p>
+          <p className="text-red-500 text-sm">
+            {errors.mobile?.message || backendErrors.mobile}
+          </p>
         </div>
 
         <div>
           <label className="block font-medium">Email</label>
           <input
-            className="w-full border rounded p-2"
+            className="w-full border rounded p-2 bg-gray-100"
             type="email"
             {...register("email")}
-            placeholder="example@domain.com"
+            placeholder="example@nmdc.co.in"
+            readOnly
           />
-          <p className="text-red-500 text-sm">{errors.email?.message}</p>
+          <p className="text-red-500 text-sm">
+            {errors.email?.message || backendErrors.email}
+          </p>
         </div>
 
         <div>
@@ -377,7 +429,9 @@ const PersonalDetailsForm = ({ onNext }) => {
             <option value="Yes">Yes</option>
             <option value="No">No</option>
           </select>
-          <p className="text-red-500 text-sm">{errors.pwd?.message}</p>
+          <p className="text-red-500 text-sm">
+            {errors.pwd?.message || backendErrors.pwd}
+          </p>
         </div>
 
         <div>
@@ -393,7 +447,9 @@ const PersonalDetailsForm = ({ onNext }) => {
               </option>
             ))}
           </select>
-          <p className="text-red-500 text-sm">{errors.motherTongue?.message}</p>
+          <p className="text-red-500 text-sm">
+            {errors.motherTongue?.message || backendErrors.motherTongue}
+          </p>
         </div>
 
         {motherTongue === "OTHER" && (
@@ -417,7 +473,7 @@ const PersonalDetailsForm = ({ onNext }) => {
             <option value="No">No</option>
           </select>
           <p className="text-red-500 text-sm">
-            {errors.hindiKnowledge?.message}
+            {errors.hindiKnowledge?.message || backendErrors.hindiKnowledge}
           </p>
         </div>
 

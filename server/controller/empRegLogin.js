@@ -59,7 +59,7 @@ const loginHandler = async (req, res) => {
     console.log("Employee Id:", req.session.employeeId);
 
     const token = jwt.sign({ id: empFound._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
+      expiresIn: "2h",
     });
 
     res.status(200).json({
