@@ -15,7 +15,7 @@ const completeEducationSchema = new mongoose.Schema({
 })
 
 const educationDetailsSchema = new mongoose.Schema({
-    employee:{
+    employeeId:{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Employee',
         required: true,

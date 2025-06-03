@@ -9,7 +9,11 @@ const experienceSchema = new mongoose.Schema({
 });
 
 const workExperienceSchema = new mongoose.Schema({
-  sapId: { type: String, required: true, unique: true },
+  employeeId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Employee',
+    required: true,
+  },
   experiences: [experienceSchema],
 });
 

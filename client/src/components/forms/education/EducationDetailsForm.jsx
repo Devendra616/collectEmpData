@@ -1,6 +1,11 @@
 import React, { useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import EducationEntry from "./EducationEntry";
+import { saveSectionData } from "../../../services/formApi";
+import { useAuth } from "../../../context/AuthContext";
+// useEffect(()=>{
+
+// })
 
 const EducationDetailsForm = ({ onNext, defaultValues = [] }) => {
   const {
@@ -12,18 +17,34 @@ const EducationDetailsForm = ({ onNext, defaultValues = [] }) => {
     reset,
   } = useForm({
     defaultValues: {
-      education: defaultValues.length ? defaultValues : [],
+      education: [],
     },
   });
+
+  const {token, empData} = useAuth()
 
   const { fields, append, remove } = useFieldArray({
     control,
     name: "education",
   });
 
-  const onSubmit = (data) => {
-    console.log("Education Data:", data.education);
-    onNext(data.education);
+  const onSubmit = async(data) => {
+    try{
+      const education = data.education;
+      const hasSaved = await saveSectionData("educationDetails", {education}, token)
+      
+      if(hasSaved){
+        onNext(data.education);
+        console.log("Education Data:", data.education);
+  
+      }else{
+        console.error("Failed to save Education details")
+      }
+    }catch(error){
+      console.error("Error in saving Education details:", error);
+      
+    }
+
   };
 
   return (

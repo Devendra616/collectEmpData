@@ -15,7 +15,7 @@ const fetchPersonalDetails = async (req, res) => {
         console.log("🚀 ~ fetchPersonalDetails ~ employeeData:", employeeData)
         console.log("🚀 ~ fetchPersonalDetails ~ personalData:", personalData)
         return res.status(200).json({
-            data: personalData,
+            pData: personalData,
             emp: employeeData,
             success: true,
             msg: "Data successfully fetched from DB",

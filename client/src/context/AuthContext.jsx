@@ -8,7 +8,10 @@ export const AuthProvider = ({ children }) => {
     JSON.parse(localStorage.getItem("user")) || null
   );
 
-  const [empData, setEmpData] = useState("")
+  const [empData, setEmpData] = useState(()=>{
+    const stored = sessionStorage.getItem("empData");
+    return stored? JSON.parse(stored): "";
+  })
 
   const login = (token, user) => {
     localStorage.setItem("token", token);
@@ -21,12 +24,15 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    sessionStorage.removeItem("empData");
     setToken(null);
     setUser(null);
+    setEmpData("");
   };
 
   const fetchData =(result) =>{
-    setEmpData(result)
+    setEmpData(result);
+    sessionStorage.setItem("empData", JSON.stringify(result));
   }
 
   const isAuthenticated = !!token;

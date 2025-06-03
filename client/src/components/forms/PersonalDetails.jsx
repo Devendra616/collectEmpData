@@ -59,11 +59,17 @@ const PersonalDetailsForm = ({ onNext }) => {
     formState: { errors },
   } = useForm({
     resolver: yupResolver(schema),
-
   });
 
   const dob = watch("dob");
   const motherTongue = watch("motherTongue");
+
+  // useEffect(()=>{
+  //   if (empData && empData.data) {
+  //     const formValues = getInitialFormValues(empData);
+  //     reset(formValues);
+  //   }
+  // },[])
 
   useEffect(() => {
     if (!dob) {
@@ -82,35 +88,41 @@ const PersonalDetailsForm = ({ onNext }) => {
   }, [dob, age]);
 
   useEffect(() => {
-    if (empData && empData.data) {
-      const formValues = {
-        title: empData.data.title || "",
-        firstName: empData.data.firstName || "",
-        lastName: empData.data.lastName || "",
-        sapId: empData.emp.sapId || "",
-        adhaarId: empData.data.adhaarId || "",
-        birthplace: empData.data.birthplace || "" ,
-        category: empData.data.category || "",
-        dob: empData.data.dob || "",
-        email: empData.emp.email || "",
-        exServiceman: empData.data.exServiceman || "",
-        gender: empData.data.gender || "",
-        hindiKnowledge: empData.data.hindiKnowledge || "",
-        idMark1: empData.data.idMark1 || "",
-        idMark2: empData.data.idMark2 || "",
-        langHindiRead: empData.data.langHindiRead || "",
-        langHindiSpeak: empData.data.langHindiSpeak || "",
-        langHindiWrite: empData.data.langHindiWrite || "",
-        mobile: empData.data.mobile || "",
-        motherTongue: empData.data.motherTongue || "",
-        pwd: empData.data.pwd || "",
-        religion: empData.data.religion || "",
-        state: empData.data.state || "",
-        subCategory: empData.data.subCategory || "",
-      };
-      reset(formValues)
+    if (empData && empData.pData) {
+      const formValues = getInitialFormValues(empData);
+      reset(formValues);
     }
-  },[empData, reset]);
+  }, [empData, reset]);
+
+  const getInitialFormValues = (empData) => {
+    if (!empData || !empData.pData) return {};
+
+    return {
+      title: empData.pData.title || "",
+      firstName: empData.pData.firstName || "",
+      lastName: empData.pData.lastName || "",
+      sapId: empData.emp?.sapId || "",
+      adhaarId: empData.pData.adhaarId || "",
+      birthplace: empData.pData.birthplace || "",
+      category: empData.pData.category || "",
+      dob: empData.pData.dob || "",
+      email: empData.emp?.email || "",
+      exServiceman: empData.pData.exServiceman || "",
+      gender: empData.pData.gender || "",
+      hindiKnowledge: empData.pData.hindiKnowledge || "",
+      idMark1: empData.pData.idMark1 || "",
+      idMark2: empData.pData.idMark2 || "",
+      langHindiRead: empData.pData.langHindiRead || false,
+      langHindiSpeak: empData.pData.langHindiSpeak || false,
+      langHindiWrite: empData.pData.langHindiWrite || false,
+      mobile: empData.pData.mobile || "",
+      motherTongue: empData.pData.motherTongue || "",
+      pwd: empData.pData.pwd || "",
+      religion: empData.pData.religion || "",
+      state: empData.pData.state || "",
+      subCategory: empData.pData.subCategory || "",
+    };
+  };
 
   const onSubmit = async (data) => {
     try {

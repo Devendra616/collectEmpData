@@ -40,6 +40,7 @@ const Login = () => {
             Authorization: `Bearer ${token}`,
           },
         });
+        // console.log("🚀 ~ handleSubmit ~ result:", result)
       fetchData(result?.data)
       toast.success("Fetched Data!");
     }

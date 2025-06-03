@@ -1,7 +1,13 @@
 import mongoose from 'mongoose';
 
 const addressDetailsSchema = new mongoose.Schema({
-    
+  
+  employeeId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Employee',
+    required: true,
+  },
+
   permanentAddress: {
     addressLine1: String,
     addressLine2: String,

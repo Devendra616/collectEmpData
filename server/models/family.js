@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const familyMembersSchema = new mongoose.Schema({
-    relationship: {
+  relationship: {
     type: String,
     enum: [
       'Spouse',
@@ -26,7 +26,7 @@ const familyMembersSchema = new mongoose.Schema({
 
   // Conditional fields
   gender: { type: String, enum: ['Male', 'Female'] }, // For children
-  isWorking:{type:Boolean, default:false}, // For spouse
+  isWorking: { type: Boolean, default: false }, // For spouse
   employmentDetails: {
     type: String,
     // companyName: String,
@@ -36,7 +36,11 @@ const familyMembersSchema = new mongoose.Schema({
 })
 
 const familyDetailsSchema = new mongoose.Schema({
-  sapId: { type: String, required: true, unique: true },
+  employeeId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Employee',
+    required: true,
+  },
   familyMembers: [familyMembersSchema],
 });
 
