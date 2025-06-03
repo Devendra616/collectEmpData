@@ -5,6 +5,7 @@ import * as yup from "yup";
 import languageOptions from "../../constants/languageOptions";
 import { saveSectionData } from "../../services/formApi";
 import { useAuth } from "../../context/AuthContext";
+import { getAgeFromDOB } from "../../utils/getAge";
 
 const schema = yup.object().shape({
   title: yup.string().required("Title is required"),
@@ -12,10 +13,24 @@ const schema = yup.object().shape({
   lastName: yup.string().required("Surname is required"),
   sapId: yup
     .string()
-    .min(8, "Minimum 8 characters")
+    .matches(/^[0-9]{8}$/, "Provide a valid SAP ID")
     .required("SAP ID is required"),
   gender: yup.string().required("Gender is required"),
-  dob: yup.string().required("Date of Birth is required"),
+  dob: yup
+    .date()
+    .required("Date of Birth is required")
+    .max(new Date(), "Date of Birth cannot be in the future")
+    .test("min-age", "Age must be at least 18 years", function (dob) {
+      if (!dob) return true;
+      const today = new Date();
+      const age = today.getFullYear() - dob.getFullYear();
+      const hasHadBirthday =
+        today.getMonth() > dob.getMonth() ||
+        (today.getMonth() === dob.getMonth() &&
+          today.getDate() >= dob.getDate());
+
+      return (hasHadBirthday ? age : age - 1) >= 18;
+    }),
   birthplace: yup.string().required("Birthplace is required"),
   state: yup.string().required("State is required"),
   religion: yup.string().required("Religion is required"),
@@ -38,6 +53,10 @@ const schema = yup.object().shape({
   email: yup
     .string()
     .email("Invalid email address")
+    .matches(
+      /^[a-zA-Z0-9._%+-]+@nmdc\.co\.in$/,
+      "Email must be a valid NMDC email"
+    )
     .required("Email is required"),
   pwd: yup.string().required("This field is required"),
   motherTongue: yup.string().required("Mother Tongue is required"),
@@ -59,6 +78,10 @@ const PersonalDetailsForm = ({ onNext }) => {
     formState: { errors },
   } = useForm({
     resolver: yupResolver(schema),
+    defaultValues: {
+      title: "",
+      gender: "Male",
+    },
   });
 
   const dob = watch("dob");
@@ -77,15 +100,20 @@ const PersonalDetailsForm = ({ onNext }) => {
       return;
     }
 
-    const birthDate = new Date(dob);
+    /* const birthDate = new Date(dob);
     const ageDiff = Date.now() - birthDate.getTime();
-    const ageDate = new Date(ageDiff);
-    const calculatedAge = Math.abs(ageDate.getUTCFullYear() - 1970);
+    const ageDate = new Date(ageDiff); */
+    const calculatedAge = getAgeFromDOB(dob);
 
-    if (calculatedAge !== age) {
+    if (
+      !age ||
+      age.years !== calculatedAge.years ||
+      age.months !== calculatedAge.months ||
+      age.days !== calculatedAge.days
+    ) {
       setAge(calculatedAge);
     }
-  }, [dob, age]);
+  }, [dob]);
 
   useEffect(() => {
     if (empData && empData.pData) {
@@ -209,10 +237,20 @@ const PersonalDetailsForm = ({ onNext }) => {
           <input
             className="w-full border rounded p-2"
             type="date"
+            max={new Date().toISOString().split("T")[0]}
+            min="1960-01-01"
             {...register("dob")}
           />
-          {age !== null && (
-            <p className="text-green-600 text-sm">Age: {age} years</p>
+          {age && (
+            <p
+              className={`text-sm ${
+                age.years >= 18 ? "text-green-600" : "text-yellow-600"
+              }`}
+            >
+              Age: {age.years} year{age.years !== 1 && "s"} {age.months} month
+              {age.months !== 1 && "s"} {age.days} day{age.days !== 1 && "s"}
+              {age.years < 18 && " (must be at least 18)"}
+            </p>
           )}
           <p className="text-red-500 text-sm">{errors.dob?.message}</p>
         </div>
