@@ -2,10 +2,11 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import languageOptions from "../../constants/languageOptions";
 import { saveSectionData } from "../../services/formApi";
 import { useAuth } from "../../context/AuthContext";
+import { useFormData } from "../../context/FormContext";
 import { getAgeFromDOB } from "../../utils/getAge";
+import languageOptions from "../../constants/languageOptions";
 
 const schema = yup.object().shape({
   title: yup.string().required("Select your title"),
@@ -69,126 +70,79 @@ const schema = yup.object().shape({
   langHindiSpeak: yup.boolean(),
 });
 
-const PersonalDetailsForm = ({ onNext }) => {
-  const [age, setAge] = useState(null);
-  const [backendErrors, setBackendErrors] = useState({});
-
+const PersonalDetailsForm = ({ onNext, defaultValues }) => {
   const { token, empData } = useAuth();
+  const { dispatch } = useFormData();
+
+  const [backendErrors, setBackendErrors] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [age, setAge] = useState(null);
+
   const {
     register,
     handleSubmit,
-    watch,
     reset,
+    watch,
     formState: { errors },
   } = useForm({
-    // resolver: yupResolver(schema),
+    resolver: yupResolver(schema),
     defaultValues: {
-      title: "",
-      gender: "Male",
-      sapId: empData?.emp?.sapId,
-      email: empData?.emp?.email,
+      ...defaultValues,
+      sapId: empData?.emp?.sapId || defaultValues?.sapId || "",
+      email: empData?.emp?.email || defaultValues?.email || "",
     },
   });
 
   const dob = watch("dob");
   const motherTongue = watch("motherTongue");
 
-  // useEffect(()=>{
-  //   if (empData && empData.data) {
-  //     const formValues = getInitialFormValues(empData);
-  //     reset(formValues);
-  //   }
-  // },[])
-
   useEffect(() => {
-    if (!dob) {
-      if (age !== null) setAge(null);
-      return;
-    }
-
-    /* const birthDate = new Date(dob);
-    const ageDiff = Date.now() - birthDate.getTime();
-    const ageDate = new Date(ageDiff); */
-    const calculatedAge = getAgeFromDOB(dob);
-
-    if (
-      !age ||
-      age.years !== calculatedAge.years ||
-      age.months !== calculatedAge.months ||
-      age.days !== calculatedAge.days
-    ) {
+    if (dob) {
+      const calculatedAge = getAgeFromDOB(dob);
       setAge(calculatedAge);
     }
   }, [dob]);
 
-  useEffect(() => {
-    if (empData && empData.pData) {
-      const formValues = getInitialFormValues(empData);
-      reset(formValues);
-    }
-  }, [empData, reset]);
-
-  const getInitialFormValues = (empData) => {
-    if (!empData || !empData.pData) return {};
-
-    return {
-      title: empData.pData.title || "",
-      firstName: empData.pData.firstName || "",
-      lastName: empData.pData.lastName || "",
-      sapId: empData.pData.sapId || "",
-      adhaarId: empData.pData.adhaarId || "",
-      birthplace: empData.pData.birthplace || "",
-      category: empData.pData.category || "",
-      dob: empData.pData.dob || "",
-      email: empData.pData.email || "",
-      exServiceman: empData.pData.exServiceman || "",
-      gender: empData.pData.gender || "",
-      hindiKnowledge: empData.pData.hindiKnowledge || "",
-      idMark1: empData.pData.idMark1 || "",
-      idMark2: empData.pData.idMark2 || "",
-      langHindiRead: empData.pData.langHindiRead || false,
-      langHindiSpeak: empData.pData.langHindiSpeak || false,
-      langHindiWrite: empData.pData.langHindiWrite || false,
-      mobile: empData.pData.mobile || "",
-      motherTongue: empData.pData.motherTongue || "",
-      pwd: empData.pData.pwd || "",
-      religion: empData.pData.religion || "",
-      state: empData.pData.state || "",
-      subCategory: empData.pData.subCategory || "",
-    };
-  };
-
-  const onSubmit = async (data) => {
+  const saveData = async (data, proceed = false) => {
+    setSaving(true);
+    setBackendErrors({});
     try {
-      setBackendErrors({}); // Clear any previous backend errors
-      const hasSaved = await saveSectionData("personalDetails", data, token);
-      console.log("🚀 ~ onSubmit ~ hasSaved:", hasSaved.status);
-      // capture error first
-      if (hasSaved?.status === 400 && hasSaved.response) {
-        // error in API
-        setBackendErrors(hasSaved.response?.data?.errors);
-        return false;
+      const res = await saveSectionData("personalDetails", data, token);
+      if (res?.status === 400) {
+        setBackendErrors(res.response?.data?.errors || {});
+        return;
       }
-      if (hasSaved) {
-        onNext(data);
-        console.log("Section 1 Data", data);
-      } else {
-        console.error("Failed to save Personal Details");
-      }
+
+      dispatch({ type: "UPDATE_SECTION", section: "personalDetails", data });
+
+      if (proceed) onNext(data);
     } catch (error) {
-      console.error("Error in saving personal details:", error);
-      if (error.response?.data?.errors) {
-        setBackendErrors(error.response.data.errors);
-      }
+      setBackendErrors(error?.response?.data?.errors || {});
+    } finally {
+      setSaving(false);
     }
   };
+
+  const handleSaveDraft = handleSubmit((data) => saveData(data, false));
+  const handleNext = handleSubmit((data) => saveData(data, true));
 
   return (
     <form
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={handleNext}
       className="max-w-4xl mx-auto p-6 bg-white shadow rounded space-y-6"
     >
       <h2 className="text-2xl font-semibold mb-4">Personal Details</h2>
+
+      <h2 className="text-2xl font-semibold mb-4">Personal Details</h2>
+
+      {saving && (
+        <p className="text-blue-600 text-sm mb-4 animate-pulse">Saving...</p>
+      )}
+      {Object.keys(backendErrors).length > 0 && (
+        <div className="text-red-600 text-sm mb-4">
+          {Object.values(backendErrors).join(", ")}
+        </div>
+      )}
 
       {/* Grid layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -495,12 +449,20 @@ const PersonalDetailsForm = ({ onNext }) => {
         </div>
       </div>
 
-      <div className="text-right">
+      <div className="flex justify-between mt-6">
+        <button
+          type="button"
+          onClick={handleSaveDraft}
+          className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 cursor-pointer"
+        >
+          💾 Save Draft
+        </button>
+
         <button
           type="submit"
-          className="mt-6 px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer"
         >
-          Next
+          Next ➡️
         </button>
       </div>
     </form>
