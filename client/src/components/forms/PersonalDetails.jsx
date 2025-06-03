@@ -72,29 +72,54 @@ const schema = yup.object().shape({
 
 const PersonalDetailsForm = ({ onNext, defaultValues }) => {
   const { token, empData } = useAuth();
-  const { dispatch } = useFormData();
+  const { state: formState, dispatch } = useFormData();
 
   const [backendErrors, setBackendErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const [age, setAge] = useState(null);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  console.log("FormContext state:", formState);
+  console.log("AuthContext empData:", empData);
+  console.log("Props defaultValues:", defaultValues);
+
+  // Format date from ISO to YYYY-MM-DD
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toISOString().split("T")[0];
+  };
+
+  // Get initial values from either FormContext or defaultValues
+  const initialValues = {
+    ...defaultValues,
+    ...formState.personalDetails,
+    sapId: empData?.emp?.sapId || defaultValues?.sapId || "",
+    email: empData?.emp?.email || defaultValues?.email || "",
+    dob: formatDate(formState.personalDetails?.dob || defaultValues?.dob),
+  };
+
+  console.log("Initial values for form:", initialValues);
 
   const {
     register,
     handleSubmit,
-    reset,
     watch,
     formState: { errors },
   } = useForm({
     resolver: yupResolver(schema),
-    defaultValues: {
-      ...defaultValues,
-      sapId: empData?.emp?.sapId || defaultValues?.sapId || "",
-      email: empData?.emp?.email || defaultValues?.email || "",
-    },
+    defaultValues: initialValues,
   });
 
   const dob = watch("dob");
   const motherTongue = watch("motherTongue");
+
+  // Watch all form fields for changes
+  const formValues = watch();
+
+  useEffect(() => {
+    console.log("Current form values:", formValues);
+  }, [formValues]);
 
   useEffect(() => {
     if (dob) {
@@ -103,19 +128,51 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
     }
   }, [dob]);
 
+  // Track changes by comparing current values with default values
+  useEffect(() => {
+    if (!formValues || !initialValues) return;
+
+    const hasFormChanges = Object.keys(formValues).some((key) => {
+      // Skip comparing internal fields like _id, __v, etc.
+      if (key.startsWith("_") || key === "__v") return false;
+      return formValues[key] !== initialValues[key];
+    });
+    setHasChanges(hasFormChanges);
+  }, [formValues, initialValues]);
+
   const saveData = async (data, proceed = false) => {
+    console.log("saveData called with changes:", hasChanges);
+
+    // If no changes, just proceed to next step without saving
+    if (!hasChanges) {
+      console.log("No changes detected, skipping save");
+      if (proceed) onNext(data);
+      return;
+    }
+
     setSaving(true);
     setBackendErrors({});
     try {
-      const res = await saveSectionData("personalDetails", data, token);
+      // Remove internal fields before saving
+      const dataToSave = Object.fromEntries(
+        Object.entries(data).filter(
+          ([key]) => !key.startsWith("_") && key !== "__v"
+        )
+      );
+
+      const res = await saveSectionData("personalDetails", dataToSave, token);
       if (res?.status === 400) {
         setBackendErrors(res.response?.data?.errors || {});
         return;
       }
 
-      dispatch({ type: "UPDATE_SECTION", section: "personalDetails", data });
+      dispatch({
+        type: "UPDATE_SECTION",
+        section: "personalDetails",
+        data: dataToSave,
+      });
 
-      if (proceed) onNext(data);
+      if (proceed) onNext(dataToSave);
     } catch (error) {
       setBackendErrors(error?.response?.data?.errors || {});
     } finally {
@@ -123,16 +180,30 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
     }
   };
 
-  const handleSaveDraft = handleSubmit((data) => saveData(data, false));
-  const handleNext = handleSubmit((data) => saveData(data, true));
+  const handleSaveDraft = handleSubmit((data) => {
+    console.log("Save Draft clicked, hasChanges:", hasChanges);
+    saveData(data, false);
+  });
+
+  const handleNext = handleSubmit((data) => {
+    console.log("Next clicked, hasChanges:", hasChanges);
+    if (!hasChanges) {
+      console.log("No changes, proceeding to next step");
+      onNext(data);
+      return;
+    }
+    console.log("Changes detected, saving before proceeding");
+    saveData(data, true);
+  });
 
   return (
     <form
-      onSubmit={handleNext}
+      onSubmit={(e) => {
+        e.preventDefault();
+        handleNext();
+      }}
       className="max-w-4xl mx-auto p-6 bg-white shadow rounded space-y-6"
     >
-      <h2 className="text-2xl font-semibold mb-4">Personal Details</h2>
-
       <h2 className="text-2xl font-semibold mb-4">Personal Details</h2>
 
       {saving && (
@@ -453,7 +524,12 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
         <button
           type="button"
           onClick={handleSaveDraft}
-          className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 cursor-pointer"
+          disabled={!hasChanges}
+          className={`px-4 py-2 rounded ${
+            hasChanges
+              ? "bg-green-400 text-gray-800 hover:bg-gray-400 cursor-pointer"
+              : "bg-gray-200 text-gray-500 cursor-not-allowed"
+          }`}
         >
           💾 Save Draft
         </button>

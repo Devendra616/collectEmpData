@@ -19,6 +19,8 @@ const MultiStepForm = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  console.log("MultiStepForm - FormContext state:", state);
+
   const stepConfig = [
     { name: "personalDetails", Component: PersonalDetailsForm },
     { name: "educationDetails", Component: EducationDetailsForm },

@@ -1,4 +1,5 @@
 import { useAuth } from "../context/AuthContext.jsx";
+import { useFormData } from "../context/FormContext";
 import React, { useState } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
@@ -6,6 +7,7 @@ import { toast } from "react-toastify";
 
 const Login = () => {
   const { login, fetchData } = useAuth();
+  const { dispatch: formDispatch } = useFormData();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -40,12 +42,23 @@ const Login = () => {
             Authorization: `Bearer ${token}`,
           },
         });
-        // console.log("🚀 ~ handleSubmit ~ result:", result)
-      fetchData(result?.data)
-      toast.success("Fetched Data!");
-    }
-    navigate("/form");
 
+        console.log("Fetched data from backend:", result?.data);
+
+        // Update both AuthContext and FormContext with the fetched data
+        fetchData(result?.data);
+
+        // Store only the pData in FormContext
+        formDispatch({
+          type: "UPDATE_SECTION",
+          section: "personalDetails",
+          data: result?.data?.pData || {},
+        });
+
+        console.log("Data dispatched to FormContext:", result?.data?.pData);
+        toast.success("Fetched Data!");
+        navigate("/form");
+      }
 
       // const successMsg = res?.data?.msg || "Login successful!"
       // setResult(successMsg);
