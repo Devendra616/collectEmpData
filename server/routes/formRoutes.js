@@ -6,8 +6,10 @@ import handlers from "../controller/empRegLogin.js";
 import {
   validateReg,
   validatePersonalDetails,
+  validateFamilyDetails,
 } from "../middleware/validateForms.js";
 import personalDetailsHandler from "../controller/personalDetails.js";
+import familyDetailsHandler from "../controller/familyDetails.js";
 import { verifyToken } from "../middleware/authenticateLogin.js";
 import fetchController from "../controller/fetchDetails.js";
 import educationDetailsHandler from "../controller/educationDetails.js";
@@ -33,5 +35,12 @@ router.post(
 router.post("/education", verifyToken, educationDetailsHandler);
 
 router.get("/personalDetails", verifyToken, fetchPersonalDetails);
+
+router.post(
+  "/family",
+  verifyToken,
+  validateFamilyDetails,
+  familyDetailsHandler
+);
 
 export default router;

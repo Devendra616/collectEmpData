@@ -133,6 +133,23 @@ const validatePersonalDetails = (req, res, next) => {
     errors.email = "Email must be a valid NMDC email";
   }
 
+  // validate idMark1
+  const alphanumericRegex = /^[a-zA-Z0-9]+$/;
+  if (
+    idMark1 &&
+    idMark1.trim().length > 0 &&
+    !idMark1.trim().test(alphanumericRegex)
+  ) {
+    errors.idMark1 = "Id mark must not contain any special character.";
+  }
+
+  if (
+    idMark2 &&
+    idMark2.trim().length > 0 &&
+    !idMark2.trim().test(alphanumericRegex)
+  ) {
+    errors.idMark2 = "Id mark must not contain any special character.";
+  }
   // Validate Date of Birth
   if (dob) {
     const birthDate = new Date(dob);
@@ -187,4 +204,126 @@ const validatePersonalDetails = (req, res, next) => {
   next();
 };
 
-export { validateReg, validatePersonalDetails };
+const validateFamilyDetails = (req, res, next) => {
+  const familyMembers = req.body;
+  console.log("familyMembers->", familyMembers);
+  const errors = {};
+
+  if (!Array.isArray(familyMembers)) {
+    return res
+      .status(400)
+      .json({ errors: { familyMembers: "Family members must be an array" } });
+  }
+
+  const familyTypes = [
+    "Spouse",
+    "Child",
+    "Father",
+    "Father-in-law",
+    "Mother",
+    "Mother-in-law",
+  ];
+  const validTitles = {
+    Spouse: ["Shri", "Smt"],
+    Child: ["Mt", "Ms"],
+    Father: ["Shri"],
+    "Father-in-law": ["Shri"],
+    Mother: ["Smt"],
+    "Mother-in-law": ["Smt"],
+  };
+
+  familyMembers.forEach((member, index) => {
+    const memberErrors = {};
+
+    // Required fields validation
+    if (!member.type?.trim()) {
+      memberErrors.type = "Family member type is required";
+    } else if (!familyTypes.includes(member.type)) {
+      memberErrors.type = "Invalid family member type";
+    }
+
+    if (!member.title?.trim()) {
+      memberErrors.title = "Title is required";
+    } else if (
+      member.type &&
+      validTitles[member.type] &&
+      !validTitles[member.type].includes(member.title)
+    ) {
+      memberErrors.title = "Invalid title for selected family member type";
+    }
+
+    if (!member.name?.trim()) {
+      memberErrors.name = "First name is required";
+    }
+
+    if (!member.surname?.trim()) {
+      memberErrors.surname = "Last name is required";
+    }
+
+    // Aadhaar validation
+    if (!member.aadharNumber?.trim()) {
+      memberErrors.aadharNumber = "Member Aadhaar number is required";
+    } else {
+      const aadhaarRegex = /^[2-9]{1}[0-9]{11}$/;
+      if (!aadhaarRegex.test(member.aadharNumber)) {
+        memberErrors.aadharNumber =
+          "Aadhaar must be a 12-digit number starting with 2-9";
+      }
+    }
+
+    // Date of Birth validation
+    if (!member.dob) {
+      memberErrors.dob = "Date of Birth is required";
+    } else {
+      const birthDate = new Date(member.dob);
+      const today = new Date();
+
+      if (birthDate > today) {
+        memberErrors.dob = "Date of Birth cannot be in the future";
+      }
+    }
+
+    // Spouse specific validations
+    if (member.type === "Spouse") {
+      if (!member.employmentStatus?.trim()) {
+        memberErrors.employmentStatus =
+          "Employment status is required for spouse";
+      } else if (
+        !["Working", "Not-Working"].includes(member.employmentStatus)
+      ) {
+        memberErrors.employmentStatus = "Invalid employment status";
+      }
+
+      if (
+        member.employmentStatus === "Working" &&
+        !member.employmentDetails?.trim()
+      ) {
+        memberErrors.employmentDetails =
+          "Employment details are required when status is Working";
+      }
+    }
+
+    // Child specific validations
+    if (member.type === "Child") {
+      if (!member.gender?.trim()) {
+        memberErrors.gender = "Gender is required for child";
+      } else if (!["Male", "Female"].includes(member.gender)) {
+        memberErrors.gender = "Invalid gender selection";
+      }
+    }
+
+    // If there are errors for this member, add them to the main errors object
+    if (Object.keys(memberErrors).length > 0) {
+      errors[`familyMembers[${index}]`] = memberErrors;
+    }
+  });
+
+  // If there are any errors, return them all
+  if (Object.keys(errors).length > 0) {
+    return res.status(400).json({ errors });
+  }
+
+  next();
+};
+
+export { validateReg, validatePersonalDetails, validateFamilyDetails };
