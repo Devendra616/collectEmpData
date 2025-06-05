@@ -360,9 +360,11 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                       onBlur={createSelectBlurHandler(
                         `familyMembers[${index}].type`
                       )}
-                      className={`w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 ${
-                        fieldErrors?.type ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className={`w-full p-2 border ${
+                        fieldErrors?.type || backendFieldErrors?.type
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      } rounded-md focus:ring-blue-500 focus:border-blue-500`}
                     >
                       <option value="">Select Type</option>
                       {familyTypes.map((t) => (
@@ -372,12 +374,12 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                       ))}
                     </select>
                     {fieldErrors?.type && (
-                      <p className="text-red-500 text-xs mt-1">
+                      <p className="mt-1 text-sm text-red-600">
                         {fieldErrors.type.message}
                       </p>
                     )}
                     {backendFieldErrors?.type && (
-                      <p className="text-red-500 text-xs mt-1">
+                      <p className="mt-1 text-sm text-red-600">
                         {backendFieldErrors.type}
                       </p>
                     )}
@@ -392,11 +394,11 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                       onBlur={createSelectBlurHandler(
                         `familyMembers[${index}].title`
                       )}
-                      className={`w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 ${
-                        fieldErrors?.title
+                      className={`w-full p-2 border ${
+                        fieldErrors?.title || backendFieldErrors?.title
                           ? "border-red-500"
                           : "border-gray-300"
-                      }`}
+                      } rounded-md focus:ring-blue-500 focus:border-blue-500`}
                     >
                       <option value="">Select Title</option>
                       {titles.map((title) => (
@@ -406,12 +408,12 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                       ))}
                     </select>
                     {fieldErrors?.title && (
-                      <p className="text-red-500 text-xs mt-1">
+                      <p className="mt-1 text-sm text-red-600">
                         {fieldErrors.title.message}
                       </p>
                     )}
                     {backendFieldErrors?.title && (
-                      <p className="text-red-500 text-xs mt-1">
+                      <p className="mt-1 text-sm text-red-600">
                         {backendFieldErrors.title}
                       </p>
                     )}
@@ -427,17 +429,19 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                       onBlur={createTextBlurHandler(
                         `familyMembers[${index}].name`
                       )}
-                      className={`w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 ${
-                        fieldErrors?.name ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className={`w-full p-2 border ${
+                        fieldErrors?.name || backendFieldErrors?.name
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      } rounded-md focus:ring-blue-500 focus:border-blue-500`}
                     />
                     {fieldErrors?.name && (
-                      <p className="text-red-500 text-xs mt-1">
+                      <p className="mt-1 text-sm text-red-600">
                         {fieldErrors.name.message}
                       </p>
                     )}
                     {backendFieldErrors?.name && (
-                      <p className="text-red-500 text-xs mt-1">
+                      <p className="mt-1 text-sm text-red-600">
                         {backendFieldErrors.name}
                       </p>
                     )}
@@ -453,19 +457,19 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                       onBlur={createTextBlurHandler(
                         `familyMembers[${index}].surname`
                       )}
-                      className={`w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 ${
-                        fieldErrors?.surname
+                      className={`w-full p-2 border ${
+                        fieldErrors?.surname || backendFieldErrors?.surname
                           ? "border-red-500"
                           : "border-gray-300"
-                      }`}
+                      } rounded-md focus:ring-blue-500 focus:border-blue-500`}
                     />
                     {fieldErrors?.surname && (
-                      <p className="text-red-500 text-xs mt-1">
+                      <p className="mt-1 text-sm text-red-600">
                         {fieldErrors.surname.message}
                       </p>
                     )}
                     {backendFieldErrors?.surname && (
-                      <p className="text-red-500 text-xs mt-1">
+                      <p className="mt-1 text-sm text-red-600">
                         {backendFieldErrors.surname}
                       </p>
                     )}
@@ -481,19 +485,20 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                       onBlur={createTextBlurHandler(
                         `familyMembers[${index}].aadharNumber`
                       )}
-                      className={`w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 ${
-                        fieldErrors?.aadharNumber
+                      className={`w-full p-2 border ${
+                        fieldErrors?.aadharNumber ||
+                        backendFieldErrors?.aadharNumber
                           ? "border-red-500"
                           : "border-gray-300"
-                      }`}
+                      } rounded-md focus:ring-blue-500 focus:border-blue-500`}
                     />
                     {fieldErrors?.aadharNumber && (
-                      <p className="text-red-500 text-xs mt-1">
+                      <p className="mt-1 text-sm text-red-600">
                         {fieldErrors.aadharNumber.message}
                       </p>
                     )}
                     {backendFieldErrors?.aadharNumber && (
-                      <p className="text-red-500 text-xs mt-1">
+                      <p className="mt-1 text-sm text-red-600">
                         {backendFieldErrors.aadharNumber}
                       </p>
                     )}
@@ -509,8 +514,23 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                       onBlur={createTextBlurHandler(
                         `familyMembers[${index}].bloodGroup`
                       )}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      className={`w-full p-2 border ${
+                        fieldErrors?.bloodGroup ||
+                        backendFieldErrors?.bloodGroup
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      } rounded-md focus:ring-blue-500 focus:border-blue-500`}
                     />
+                    {fieldErrors?.bloodGroup && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {fieldErrors.bloodGroup.message}
+                      </p>
+                    )}
+                    {backendFieldErrors?.bloodGroup && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {backendFieldErrors.bloodGroup}
+                      </p>
+                    )}
                   </div>
 
                   <div className="form-group">
@@ -523,17 +543,19 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                       onBlur={createDateBlurHandler(
                         `familyMembers[${index}].dob`
                       )}
-                      className={`w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 ${
-                        fieldErrors?.dob ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className={`w-full p-2 border ${
+                        fieldErrors?.dob || backendFieldErrors?.dob
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      } rounded-md focus:ring-blue-500 focus:border-blue-500`}
                     />
                     {fieldErrors?.dob && (
-                      <p className="text-red-500 text-xs mt-1">
+                      <p className="mt-1 text-sm text-red-600">
                         {fieldErrors.dob.message}
                       </p>
                     )}
                     {backendFieldErrors?.dob && (
-                      <p className="text-red-500 text-xs mt-1">
+                      <p className="mt-1 text-sm text-red-600">
                         {backendFieldErrors.dob}
                       </p>
                     )}
@@ -549,8 +571,23 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                       onBlur={createTextBlurHandler(
                         `familyMembers[${index}].cityOfBirth`
                       )}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      className={`w-full p-2 border ${
+                        fieldErrors?.cityOfBirth ||
+                        backendFieldErrors?.cityOfBirth
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      } rounded-md focus:ring-blue-500 focus:border-blue-500`}
                     />
+                    {fieldErrors?.cityOfBirth && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {fieldErrors.cityOfBirth.message}
+                      </p>
+                    )}
+                    {backendFieldErrors?.cityOfBirth && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {backendFieldErrors.cityOfBirth}
+                      </p>
+                    )}
                   </div>
 
                   {/* Conditional Fields */}
@@ -567,18 +604,24 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                           onBlur={createSelectBlurHandler(
                             `familyMembers[${index}].employmentStatus`
                           )}
-                          className={`w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 ${
+                          className={`w-full p-2 border ${
+                            fieldErrors?.employmentStatus ||
                             backendFieldErrors?.employmentStatus
                               ? "border-red-500"
                               : "border-gray-300"
-                          }`}
+                          } rounded-md focus:ring-blue-500 focus:border-blue-500`}
                         >
                           <option value="">Select Status</option>
                           <option value="Working">Working</option>
                           <option value="Not-Working">Not-Working</option>
                         </select>
+                        {fieldErrors?.employmentStatus && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {fieldErrors.employmentStatus.message}
+                          </p>
+                        )}
                         {backendFieldErrors?.employmentStatus && (
-                          <p className="text-red-500 text-xs mt-1">
+                          <p className="mt-1 text-sm text-red-600">
                             {backendFieldErrors.employmentStatus}
                           </p>
                         )}
@@ -598,14 +641,20 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                             onBlur={createTextBlurHandler(
                               `familyMembers[${index}].employmentDetails`
                             )}
-                            className={`w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 ${
+                            className={`w-full p-2 border ${
+                              fieldErrors?.employmentDetails ||
                               backendFieldErrors?.employmentDetails
                                 ? "border-red-500"
                                 : "border-gray-300"
-                            }`}
+                            } rounded-md focus:ring-blue-500 focus:border-blue-500`}
                           />
+                          {fieldErrors?.employmentDetails && (
+                            <p className="mt-1 text-sm text-red-600">
+                              {fieldErrors.employmentDetails.message}
+                            </p>
+                          )}
                           {backendFieldErrors?.employmentDetails && (
-                            <p className="text-red-500 text-xs mt-1">
+                            <p className="mt-1 text-sm text-red-600">
                               {backendFieldErrors.employmentDetails}
                             </p>
                           )}
@@ -624,18 +673,23 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                         onBlur={createSelectBlurHandler(
                           `familyMembers[${index}].gender`
                         )}
-                        className={`w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 ${
-                          backendFieldErrors?.gender
+                        className={`w-full p-2 border ${
+                          fieldErrors?.gender || backendFieldErrors?.gender
                             ? "border-red-500"
                             : "border-gray-300"
-                        }`}
+                        } rounded-md focus:ring-blue-500 focus:border-blue-500`}
                       >
                         <option value="">Select Gender</option>
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
                       </select>
+                      {fieldErrors?.gender && (
+                        <p className="mt-1 text-sm text-red-600">
+                          {fieldErrors.gender.message}
+                        </p>
+                      )}
                       {backendFieldErrors?.gender && (
-                        <p className="text-red-500 text-xs mt-1">
+                        <p className="mt-1 text-sm text-red-600">
                           {backendFieldErrors.gender}
                         </p>
                       )}

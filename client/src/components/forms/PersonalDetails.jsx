@@ -220,52 +220,91 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
         {/* Title */}
         <div>
           <label className="block font-medium">Title</label>
-          <select className="w-full border rounded p-2" {...register("title")}>
+          <select
+            className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.title || backendErrors.title
+                ? "border-red-500"
+                : "border-gray-300"
+            }`}
+            {...register("title")}
+          >
             <option value="">Select</option>
             <option value="Shri">Shri</option>
             <option value="Smt">Smt</option>
             <option value="Ms">Ms</option>
           </select>
-          <p className="text-red-500 text-sm">
-            {errors.title?.message || backendErrors.title}
-          </p>
+          {errors.title && (
+            <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
+          )}
+          {backendErrors.title && (
+            <p className="mt-1 text-sm text-red-600">{backendErrors.title}</p>
+          )}
         </div>
 
         <div>
           <label className="block font-medium">First Name</label>
           <input
-            className="w-full border rounded p-2"
+            className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.firstName || backendErrors.firstName
+                ? "border-red-500"
+                : "border-gray-300"
+            }`}
             {...register("firstName")}
             placeholder="First Name"
           />
-          <p className="text-red-500 text-sm">
-            {errors.firstName?.message || backendErrors.firstName}
-          </p>
+          {errors.firstName && (
+            <p className="mt-1 text-sm text-red-600">
+              {errors.firstName.message}
+            </p>
+          )}
+          {backendErrors.firstName && (
+            <p className="mt-1 text-sm text-red-600">
+              {backendErrors.firstName}
+            </p>
+          )}
         </div>
 
         <div>
           <label className="block font-medium">Last Name</label>
           <input
-            className="w-full border rounded p-2"
+            className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.lastName || backendErrors.lastName
+                ? "border-red-500"
+                : "border-gray-300"
+            }`}
             {...register("lastName")}
             placeholder="Last Name"
           />
-          <p className="text-red-500 text-sm">
-            {errors.lastName?.message || backendErrors.lastName}
-          </p>
+          {errors.lastName && (
+            <p className="mt-1 text-sm text-red-600">
+              {errors.lastName.message}
+            </p>
+          )}
+          {backendErrors.lastName && (
+            <p className="mt-1 text-sm text-red-600">
+              {backendErrors.lastName}
+            </p>
+          )}
         </div>
 
         <div>
           <label className="block font-medium">SAP ID</label>
           <input
-            className="w-full border rounded p-2 bg-gray-100"
+            className={`w-full border rounded-md p-2 bg-gray-100 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.sapId || backendErrors.sapId
+                ? "border-red-500"
+                : "border-gray-300"
+            }`}
             {...register("sapId")}
             placeholder="SAP ID"
             readOnly
           />
-          <p className="text-red-500 text-sm">
-            {errors.sapId?.message || backendErrors.sapId}
-          </p>
+          {errors.sapId && (
+            <p className="mt-1 text-sm text-red-600">{errors.sapId.message}</p>
+          )}
+          {backendErrors.sapId && (
+            <p className="mt-1 text-sm text-red-600">{backendErrors.sapId}</p>
+          )}
         </div>
 
         <div className="flex flex-col">
@@ -279,15 +318,22 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
               Female
             </label>
           </div>
-          <p className="text-red-500 text-sm">
-            {errors.gender?.message || backendErrors.gender}
-          </p>
+          {errors.gender && (
+            <p className="mt-1 text-sm text-red-600">{errors.gender.message}</p>
+          )}
+          {backendErrors.gender && (
+            <p className="mt-1 text-sm text-red-600">{backendErrors.gender}</p>
+          )}
         </div>
 
         <div>
           <label className="block font-medium">Date of Birth</label>
           <input
-            className="w-full border rounded p-2"
+            className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.dob || backendErrors.dob
+                ? "border-red-500"
+                : "border-gray-300"
+            }`}
             type="date"
             max={new Date().toISOString().split("T")[0]}
             min="1960-01-01"
@@ -304,165 +350,287 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
               {age.years < 18 && " (must be at least 18)"}
             </p>
           )}
-          <p className="text-red-500 text-sm">
-            {errors.dob?.message || backendErrors.dob}
-          </p>
+          {errors.dob && (
+            <p className="mt-1 text-sm text-red-600">{errors.dob.message}</p>
+          )}
+          {backendErrors.dob && (
+            <p className="mt-1 text-sm text-red-600">{backendErrors.dob}</p>
+          )}
         </div>
 
         <div>
           <label className="block font-medium">Birth Place</label>
           <input
-            className="w-full border rounded p-2"
+            className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.birthplace || backendErrors.birthplace
+                ? "border-red-500"
+                : "border-gray-300"
+            }`}
             {...register("birthplace")}
             placeholder="Birthplace"
           />
-          <p className="text-red-500 text-sm">
-            {errors.birthplace?.message || backendErrors.birthplace}
-          </p>
+          {errors.birthplace && (
+            <p className="mt-1 text-sm text-red-600">
+              {errors.birthplace.message}
+            </p>
+          )}
+          {backendErrors.birthplace && (
+            <p className="mt-1 text-sm text-red-600">
+              {backendErrors.birthplace}
+            </p>
+          )}
         </div>
 
         <div>
           <label className="block font-medium">State</label>
           <input
-            className="w-full border rounded p-2"
+            className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.state || backendErrors.state
+                ? "border-red-500"
+                : "border-gray-300"
+            }`}
             {...register("state")}
             placeholder="State"
           />
-          <p className="text-red-500 text-sm">
-            {errors.state?.message || backendErrors.state}
-          </p>
+          {errors.state && (
+            <p className="mt-1 text-sm text-red-600">{errors.state.message}</p>
+          )}
+          {backendErrors.state && (
+            <p className="mt-1 text-sm text-red-600">{backendErrors.state}</p>
+          )}
         </div>
 
         <div>
           <label className="block font-medium">Religion</label>
           <input
-            className="w-full border rounded p-2"
+            className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.religion || backendErrors.religion
+                ? "border-red-500"
+                : "border-gray-300"
+            }`}
             {...register("religion")}
             placeholder="Religion"
           />
-          <p className="text-red-500 text-sm">
-            {errors.religion?.message || backendErrors.religion}
-          </p>
+          {errors.religion && (
+            <p className="mt-1 text-sm text-red-600">
+              {errors.religion.message}
+            </p>
+          )}
+          {backendErrors.religion && (
+            <p className="mt-1 text-sm text-red-600">
+              {backendErrors.religion}
+            </p>
+          )}
         </div>
 
         <div>
           <label className="block font-medium">Category</label>
           <input
-            className="w-full border rounded p-2"
+            className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.category || backendErrors.category
+                ? "border-red-500"
+                : "border-gray-300"
+            }`}
             {...register("category")}
             placeholder="Category"
           />
-          <p className="text-red-500 text-sm">
-            {errors.category?.message || backendErrors.category}
-          </p>
+          {errors.category && (
+            <p className="mt-1 text-sm text-red-600">
+              {errors.category.message}
+            </p>
+          )}
+          {backendErrors.category && (
+            <p className="mt-1 text-sm text-red-600">
+              {backendErrors.category}
+            </p>
+          )}
         </div>
 
         <div>
           <label className="block font-medium">Sub-Category</label>
           <input
-            className="w-full border rounded p-2"
+            className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.subCategory || backendErrors.subCategory
+                ? "border-red-500"
+                : "border-gray-300"
+            }`}
             {...register("subCategory")}
             placeholder="Sub-Category"
           />
-          <p className="text-red-500 text-sm">
-            {errors.subCategory?.message || backendErrors.subCategory}
-          </p>
+          {errors.subCategory && (
+            <p className="mt-1 text-sm text-red-600">
+              {errors.subCategory.message}
+            </p>
+          )}
+          {backendErrors.subCategory && (
+            <p className="mt-1 text-sm text-red-600">
+              {backendErrors.subCategory}
+            </p>
+          )}
         </div>
 
         <div>
           <label className="block font-medium">Identification Mark 1</label>
           <input
-            className="w-full border rounded p-2"
+            className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.idMark1 || backendErrors.idMark1
+                ? "border-red-500"
+                : "border-gray-300"
+            }`}
             {...register("idMark1")}
             placeholder="Identification Mark 1"
           />
-          <p className="text-red-500 text-sm">
-            {errors.idMark1?.message || backendErrors.idMark1}
-          </p>
+          {errors.idMark1 && (
+            <p className="mt-1 text-sm text-red-600">
+              {errors.idMark1.message}
+            </p>
+          )}
+          {backendErrors.idMark1 && (
+            <p className="mt-1 text-sm text-red-600">{backendErrors.idMark1}</p>
+          )}
         </div>
 
         <div>
           <label className="block font-medium">Identification Mark 2</label>
           <input
-            className="w-full border rounded p-2"
+            className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.idMark2 || backendErrors.idMark2
+                ? "border-red-500"
+                : "border-gray-300"
+            }`}
             {...register("idMark2")}
             placeholder="Identification Mark 2"
           />
-          <p className="text-red-500 text-sm">
-            {errors.idMark2?.message || backendErrors.idMark2}
-          </p>
+          {errors.idMark2 && (
+            <p className="mt-1 text-sm text-red-600">
+              {errors.idMark2.message}
+            </p>
+          )}
+          {backendErrors.idMark2 && (
+            <p className="mt-1 text-sm text-red-600">{backendErrors.idMark2}</p>
+          )}
         </div>
 
         <div>
           <label className="block font-medium">Ex-Serviceman</label>
           <select
-            className="w-full border rounded p-2"
+            className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.exServiceman || backendErrors.exServiceman
+                ? "border-red-500"
+                : "border-gray-300"
+            }`}
             {...register("exServiceman")}
           >
             <option value="">Select</option>
             <option value="Yes">Yes</option>
             <option value="No">No</option>
           </select>
-          <p className="text-red-500 text-sm">
-            {errors.exServiceman?.message || backendErrors.exServiceman}
-          </p>
+          {errors.exServiceman && (
+            <p className="mt-1 text-sm text-red-600">
+              {errors.exServiceman.message}
+            </p>
+          )}
+          {backendErrors.exServiceman && (
+            <p className="mt-1 text-sm text-red-600">
+              {backendErrors.exServiceman}
+            </p>
+          )}
         </div>
 
         <div>
           <label className="block font-medium">Adhaar Number</label>
           <input
-            className="w-full border rounded p-2"
+            className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.adhaarId || backendErrors.adhaarId
+                ? "border-red-500"
+                : "border-gray-300"
+            }`}
             {...register("adhaarId")}
             placeholder="Aadhar ID"
           />
-          <p className="text-red-500 text-sm">
-            {errors.adhaarId?.message || backendErrors.adhaarId}
-          </p>
+          {errors.adhaarId && (
+            <p className="mt-1 text-sm text-red-600">
+              {errors.adhaarId.message}
+            </p>
+          )}
+          {backendErrors.adhaarId && (
+            <p className="mt-1 text-sm text-red-600">
+              {backendErrors.adhaarId}
+            </p>
+          )}
         </div>
 
         <div>
           <label className="block font-medium">Mobile Number</label>
           <input
             type="number"
-            className="w-full border rounded p-2"
+            className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.mobile || backendErrors.mobile
+                ? "border-red-500"
+                : "border-gray-300"
+            }`}
             {...register("mobile")}
             placeholder="Mobile Number"
           />
-          <p className="text-red-500 text-sm">
-            {errors.mobile?.message || backendErrors.mobile}
-          </p>
+          {errors.mobile && (
+            <p className="mt-1 text-sm text-red-600">{errors.mobile.message}</p>
+          )}
+          {backendErrors.mobile && (
+            <p className="mt-1 text-sm text-red-600">{backendErrors.mobile}</p>
+          )}
         </div>
 
         <div>
           <label className="block font-medium">Email</label>
           <input
-            className="w-full border rounded p-2 bg-gray-100"
+            className={`w-full border rounded-md p-2 bg-gray-100 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.email || backendErrors.email
+                ? "border-red-500"
+                : "border-gray-300"
+            }`}
             type="email"
             {...register("email")}
             placeholder="example@nmdc.co.in"
             readOnly
           />
-          <p className="text-red-500 text-sm">
-            {errors.email?.message || backendErrors.email}
-          </p>
+          {errors.email && (
+            <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+          )}
+          {backendErrors.email && (
+            <p className="mt-1 text-sm text-red-600">{backendErrors.email}</p>
+          )}
         </div>
 
         <div>
           <label className="block font-medium">Person with Disability</label>
-          <select className="w-full border rounded p-2" {...register("pwd")}>
+          <select
+            className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.pwd || backendErrors.pwd
+                ? "border-red-500"
+                : "border-gray-300"
+            }`}
+            {...register("pwd")}
+          >
             <option value="">Select</option>
             <option value="Yes">Yes</option>
             <option value="No">No</option>
           </select>
-          <p className="text-red-500 text-sm">
-            {errors.pwd?.message || backendErrors.pwd}
-          </p>
+          {errors.pwd && (
+            <p className="mt-1 text-sm text-red-600">{errors.pwd.message}</p>
+          )}
+          {backendErrors.pwd && (
+            <p className="mt-1 text-sm text-red-600">{backendErrors.pwd}</p>
+          )}
         </div>
 
         <div>
           <label className="block font-medium">Mother Tongue</label>
           <select
-            className="w-full border rounded p-2"
+            className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.motherTongue || backendErrors.motherTongue
+                ? "border-red-500"
+                : "border-gray-300"
+            }`}
             {...register("motherTongue")}
           >
             <option value="">Select</option>
@@ -472,14 +640,25 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
               </option>
             ))}
           </select>
-          <p className="text-red-500 text-sm">
-            {errors.motherTongue?.message || backendErrors.motherTongue}
-          </p>
+          {errors.motherTongue && (
+            <p className="mt-1 text-sm text-red-600">
+              {errors.motherTongue.message}
+            </p>
+          )}
+          {backendErrors.motherTongue && (
+            <p className="mt-1 text-sm text-red-600">
+              {backendErrors.motherTongue}
+            </p>
+          )}
         </div>
 
         {motherTongue === "OTHER" && (
           <input
-            className="w-full border rounded p-2"
+            className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.otherMotherTongue || backendErrors.otherMotherTongue
+                ? "border-red-500"
+                : "border-gray-300"
+            }`}
             {...register("otherMotherTongue")}
             placeholder="Please specify"
           />
@@ -490,16 +669,27 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
             Working knowledge in Hindi?
           </label>
           <select
-            className="w-full border rounded p-2"
+            className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.hindiKnowledge || backendErrors.hindiKnowledge
+                ? "border-red-500"
+                : "border-gray-300"
+            }`}
             {...register("hindiKnowledge")}
           >
             <option value="">Select</option>
             <option value="Yes">Yes</option>
             <option value="No">No</option>
           </select>
-          <p className="text-red-500 text-sm">
-            {errors.hindiKnowledge?.message || backendErrors.hindiKnowledge}
-          </p>
+          {errors.hindiKnowledge && (
+            <p className="mt-1 text-sm text-red-600">
+              {errors.hindiKnowledge.message}
+            </p>
+          )}
+          {backendErrors.hindiKnowledge && (
+            <p className="mt-1 text-sm text-red-600">
+              {backendErrors.hindiKnowledge}
+            </p>
+          )}
         </div>
 
         <div className="col-span-2">

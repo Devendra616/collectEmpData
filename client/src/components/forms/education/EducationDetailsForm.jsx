@@ -75,7 +75,7 @@ const EducationDetailsForm = ({ onNext, defaultValues = [] }) => {
     getValues,
     formState: { errors, dirtyFields },
   } = useForm({
-    // resolver: yupResolver(schema),
+    resolver: yupResolver(schema),
     defaultValues: initialValues,
   });
 

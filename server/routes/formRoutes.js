@@ -8,12 +8,15 @@ import {
   validatePersonalDetails,
   validateFamilyDetails,
   validateEducationalDetails,
+  validateAddress,
 } from "../middleware/validateForms.js";
 import personalDetailsHandler from "../controller/personalDetails.js";
 import familyDetailsHandler from "../controller/familyDetails.js";
 import { verifyToken } from "../middleware/authenticateLogin.js";
 import fetchController from "../controller/fetchDetails.js";
 import educationDetailsHandler from "../controller/educationDetails.js";
+import addressDetailsHandler from "../controller/addressDetails.js";
+
 const { fetchPersonalDetails } = fetchController;
 
 const { registrationHandler, loginHandler } = handlers;
@@ -48,5 +51,7 @@ router.post(
   validateFamilyDetails,
   familyDetailsHandler
 );
+
+router.post("/address", verifyToken, validateAddress, addressDetailsHandler);
 
 export default router;
