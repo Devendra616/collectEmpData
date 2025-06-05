@@ -7,6 +7,7 @@ import {
   validateReg,
   validatePersonalDetails,
   validateFamilyDetails,
+  validateEducationalDetails,
 } from "../middleware/validateForms.js";
 import personalDetailsHandler from "../controller/personalDetails.js";
 import familyDetailsHandler from "../controller/familyDetails.js";
@@ -32,7 +33,12 @@ router.post(
   personalDetailsHandler
 );
 
-router.post("/education", verifyToken, educationDetailsHandler);
+router.post(
+  "/education",
+  verifyToken,
+  validateEducationalDetails,
+  educationDetailsHandler
+);
 
 router.get("/personalDetails", verifyToken, fetchPersonalDetails);
 

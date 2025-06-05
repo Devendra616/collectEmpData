@@ -326,4 +326,131 @@ const validateFamilyDetails = (req, res, next) => {
   next();
 };
 
-export { validateReg, validatePersonalDetails, validateFamilyDetails };
+const validateEducationalDetails = (req, res, next) => {
+  const { education } = req.body;
+  const errors = {};
+
+  if (!Array.isArray(education)) {
+    return res
+      .status(400)
+      .json({ errors: { education: "Education details must be an array" } });
+  }
+
+  const validEducationTypes = [
+    "10TH",
+    "12TH",
+    "GRAD",
+    "POSTGRAD",
+    "CERTIFICATE",
+  ];
+  const validCertificateTypes = ["REGULAR", "CORRESPONDANCE"];
+  const validMediums = ["ENGLISH", "HINDI"];
+  const validHindiSubjectLevels = ["FIRST", "SECOND", "THIRD", "NONE"];
+
+  education.forEach((entry, index) => {
+    const entryErrors = {};
+
+    // Required fields validation
+    if (!entry.educationType?.trim()) {
+      entryErrors.educationType = "Education type is required";
+    } else if (!validEducationTypes.includes(entry.educationType)) {
+      entryErrors.educationType = "Invalid education type";
+    }
+
+    if (!entry.instituteName?.trim()) {
+      entryErrors.instituteName = "Institute name is required";
+    }
+
+    if (!entry.certificateType?.trim()) {
+      entryErrors.certificateType = "Certificate type is required";
+    } else if (!validCertificateTypes.includes(entry.certificateType)) {
+      entryErrors.certificateType = "Invalid certificate type";
+    }
+
+    // Duration validation
+    if (entry.duration !== undefined && entry.duration !== null) {
+      const duration = Number(entry.duration);
+      if (isNaN(duration)) {
+        entryErrors.duration = "Duration must be a number";
+      } else if (duration < 0) {
+        entryErrors.duration = "Duration must be a positive number";
+      }
+    }
+
+    // Medium validation
+    if (entry.medium && !validMediums.includes(entry.medium)) {
+      entryErrors.medium = "Invalid medium of education";
+    }
+
+    // Hindi subject level validation
+    if (
+      entry.hindiSubjectLevel &&
+      !validHindiSubjectLevels.includes(entry.hindiSubjectLevel)
+    ) {
+      entryErrors.hindiSubjectLevel = "Invalid Hindi subject level";
+    }
+
+    // Date validations
+    if (!entry.startDate) {
+      entryErrors.startDate = "Start date is required";
+    } else {
+      const startDate = new Date(entry.startDate);
+      startDate.setHours(0, 0, 0, 0); // Set time to midnight
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Set time to midnight
+
+      if (isNaN(startDate.getTime())) {
+        entryErrors.startDate = "Invalid start date";
+      } else if (startDate >= today) {
+        entryErrors.startDate = "Start date must be past date";
+      }
+    }
+
+    if (!entry.passingDate) {
+      entryErrors.passingDate = "Passing date is required";
+    } else {
+      const passingDate = new Date(entry.passingDate);
+      passingDate.setHours(0, 0, 0, 0); // Set time to midnight
+      if (isNaN(passingDate.getTime())) {
+        entryErrors.passingDate = "Invalid passing date";
+      } else if (entry.startDate) {
+        const startDate = new Date(entry.startDate);
+        startDate.setHours(0, 0, 0, 0); // Set time to midnight
+        if (passingDate < startDate) {
+          entryErrors.passingDate = "Passing date must be after start date";
+        }
+      }
+    }
+
+    // Course details and specialization validation for higher education
+    if (["GRAD", "POSTGRAD", "CERTIFICATE"].includes(entry.educationType)) {
+      if (!entry.courseDetails?.trim()) {
+        entryErrors.courseDetails =
+          "Course details are required for higher education";
+      }
+      if (!entry.specialization?.trim()) {
+        entryErrors.specialization =
+          "Specialization is required for higher education";
+      }
+    }
+
+    // If there are errors for this entry, add them to the main errors object
+    if (Object.keys(entryErrors).length > 0) {
+      errors[`education[${index}]`] = entryErrors;
+    }
+  });
+
+  // If there are any errors, return them all
+  if (Object.keys(errors).length > 0) {
+    return res.status(400).json({ errors });
+  }
+
+  next();
+};
+
+export {
+  validateReg,
+  validatePersonalDetails,
+  validateFamilyDetails,
+  validateEducationalDetails,
+};

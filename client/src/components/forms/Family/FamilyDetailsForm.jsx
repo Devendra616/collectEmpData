@@ -567,12 +567,21 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                           onBlur={createSelectBlurHandler(
                             `familyMembers[${index}].employmentStatus`
                           )}
-                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                          className={`w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 ${
+                            backendFieldErrors?.employmentStatus
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          }`}
                         >
                           <option value="">Select Status</option>
                           <option value="Working">Working</option>
                           <option value="Not-Working">Not-Working</option>
                         </select>
+                        {backendFieldErrors?.employmentStatus && (
+                          <p className="text-red-500 text-xs mt-1">
+                            {backendFieldErrors.employmentStatus}
+                          </p>
+                        )}
                       </div>
 
                       {watch(`familyMembers.${index}.employmentStatus`) ===
@@ -589,8 +598,17 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                             onBlur={createTextBlurHandler(
                               `familyMembers[${index}].employmentDetails`
                             )}
-                            className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                            className={`w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 ${
+                              backendFieldErrors?.employmentDetails
+                                ? "border-red-500"
+                                : "border-gray-300"
+                            }`}
                           />
+                          {backendFieldErrors?.employmentDetails && (
+                            <p className="text-red-500 text-xs mt-1">
+                              {backendFieldErrors.employmentDetails}
+                            </p>
+                          )}
                         </div>
                       )}
                     </>
@@ -606,12 +624,21 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                         onBlur={createSelectBlurHandler(
                           `familyMembers[${index}].gender`
                         )}
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                        className={`w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 ${
+                          backendFieldErrors?.gender
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        }`}
                       >
                         <option value="">Select Gender</option>
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
                       </select>
+                      {backendFieldErrors?.gender && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {backendFieldErrors.gender}
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
