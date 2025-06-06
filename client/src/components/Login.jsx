@@ -36,27 +36,38 @@ const Login = () => {
         toast.success(res?.data?.msg || "Login successful!");
         toast.success("Getting employee's data...");
 
-        // load existing employee's data
-        const result = await axios.get(`${apiUrl}/personalDetails`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        // Fetch all sections of data
+        const sections = ["personal", "education", "family", "address", "work"];
+        const allData = {
+          emp: user, // Add the user data at the top level
+        };
 
-        console.log("Fetched data from backend:", result?.data);
+        for (const section of sections) {
+          try {
+            const result = await axios.get(`${apiUrl}/${section}`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            });
+            allData[section] = result?.data || {};
+            console.log(`Fetched ${section} data:`, result?.data);
+          } catch (error) {
+            console.error(`Error fetching ${section}:`, error);
+            allData[section] = {};
+          }
+        }
 
-        // Update both AuthContext and FormContext with the fetched data
-        fetchData(result?.data);
+        // Update both AuthContext and FormContext with all fetched data
+        fetchData(allData);
 
-        // Store only the pData in FormContext
+        // Store all sections in FormContext
         formDispatch({
-          type: "UPDATE_SECTION",
-          section: "personalDetails",
-          data: result?.data?.pData || {},
+          type: "SET_ALL",
+          payload: allData,
         });
 
-        console.log("Data dispatched to FormContext:", result?.data?.pData);
-        toast.success("Fetched Data!");
+        console.log("All data dispatched to FormContext:", allData);
+        toast.success("Data loaded successfully!");
         navigate("/form");
       }
 

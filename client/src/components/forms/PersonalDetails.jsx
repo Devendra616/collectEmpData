@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
@@ -7,6 +7,8 @@ import { useAuth } from "../../context/AuthContext";
 import { useFormData } from "../../context/FormContext";
 import { getAgeFromDOB } from "../../utils/getAge";
 import languageOptions from "../../constants/languageOptions";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 const schema = yup.object().shape({
   title: yup.string().required("Select your title"),
@@ -76,12 +78,9 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
 
   const [backendErrors, setBackendErrors] = useState({});
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [age, setAge] = useState(null);
   const [hasChanges, setHasChanges] = useState(false);
-
-  console.log("FormContext state:", formState);
-  console.log("AuthContext empData:", empData);
-  console.log("Props defaultValues:", defaultValues);
 
   // Format date from ISO to YYYY-MM-DD
   const formatDate = (dateString) => {
@@ -90,43 +89,46 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
     return date.toISOString().split("T")[0];
   };
 
-  // Get initial values from either FormContext or defaultValues
-  const initialValues = {
-    ...defaultValues,
-    ...formState.personalDetails,
-    sapId: empData?.emp?.sapId || defaultValues?.sapId || "",
-    email: empData?.emp?.email || defaultValues?.email || "",
-    dob: formatDate(formState.personalDetails?.dob || defaultValues?.dob),
-  };
-
-  console.log("Initial values for form:", initialValues);
+  const initialValues = useMemo(
+    () => ({
+      ...formState?.personal?.data,
+      ...defaultValues?.data,
+      dob: formatDate(
+        formState.personal?.data?.dob || defaultValues?.data?.dob
+      ),
+      langHindiRead:
+        formState.personal?.data?.langHindiRead ||
+        defaultValues?.data?.langHindiRead ||
+        false,
+      langHindiWrite:
+        formState.personal?.data?.langHindiWrite ||
+        defaultValues?.data?.langHindiWrite ||
+        false,
+      langHindiSpeak:
+        formState.personal?.data?.langHindiSpeak ||
+        defaultValues?.data?.langHindiSpeak ||
+        false,
+    }),
+    [formState?.personal?.data, defaultValues?.data]
+  );
 
   const {
     register,
     handleSubmit,
     watch,
     formState: { errors },
+    clearErrors,
+    setError,
   } = useForm({
-    resolver: yupResolver(schema),
+    //resolver: yupResolver(schema),
     defaultValues: initialValues,
   });
 
   const dob = watch("dob");
   const motherTongue = watch("motherTongue");
 
-  // Watch all form fields for changes
+  // Watch only the fields we need for changes
   const formValues = watch();
-
-  useEffect(() => {
-    console.log("Current form values:", formValues);
-  }, [formValues]);
-
-  useEffect(() => {
-    if (dob) {
-      const calculatedAge = getAgeFromDOB(dob);
-      setAge(calculatedAge);
-    }
-  }, [dob]);
 
   // Track changes by comparing current values with default values
   useEffect(() => {
@@ -140,20 +142,56 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
     setHasChanges(hasFormChanges);
   }, [formValues, initialValues]);
 
-  const saveData = async (data, proceed = false) => {
-    console.log("saveData called with changes:", hasChanges);
+  useEffect(() => {
+    if (dob) {
+      const calculatedAge = getAgeFromDOB(dob);
+      setAge(calculatedAge);
+    }
+  }, [dob]);
 
-    // If no changes, just proceed to next step without saving
+  // Load data if not already in FormContext
+  useEffect(() => {
+    const loadData = async () => {
+      if (!formState.personal || Object.keys(formState.personal).length === 0) {
+        setLoading(true);
+        try {
+          const result = await axios.get(
+            `${import.meta.env.VITE_API_URL}/personal`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          dispatch({
+            type: "UPDATE_SECTION",
+            section: "personal",
+            data: result?.data || {},
+          });
+        } catch (error) {
+          console.error("Error loading personal details:", error);
+          toast.error("Failed to load personal details");
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [token, dispatch, formState.personal]);
+
+  const saveData = async (data, proceed = false) => {
     if (!hasChanges) {
-      console.log("No changes detected, skipping save");
       if (proceed) onNext(data);
       return;
     }
 
     setSaving(true);
-    setBackendErrors({});
+    clearErrors();
     try {
-      // Remove internal fields before saving
       const dataToSave = Object.fromEntries(
         Object.entries(data).filter(
           ([key]) => !key.startsWith("_") && key !== "__v"
@@ -162,39 +200,57 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
 
       const res = await saveSectionData("personalDetails", dataToSave, token);
       if (res?.status === 400) {
-        setBackendErrors(res.response?.data?.errors || {});
+        const backendErrors = res.response?.data?.errors || {};
+        Object.entries(backendErrors).forEach(([field, message]) => {
+          setError(field, { type: "manual", message });
+        });
         return;
       }
 
-      dispatch({
-        type: "UPDATE_SECTION",
-        section: "personalDetails",
-        data: dataToSave,
-      });
+      if (res?.data?.success) {
+        toast.success(res?.msg || "Personal details updated successfully");
+        dispatch({
+          type: "UPDATE_SECTION",
+          section: "personal",
+          data: {
+            ...formState.personal,
+            data: dataToSave,
+          },
+        });
+      } else {
+        toast.error(res?.msg || "Something went wrong, not updated");
+      }
 
       if (proceed) onNext(dataToSave);
     } catch (error) {
-      setBackendErrors(error?.response?.data?.errors || {});
+      const errorMessages = error?.response?.data?.errors || {};
+      Object.entries(errorMessages).forEach(([field, message]) => {
+        setError(field, { type: "manual", message });
+      });
     } finally {
       setSaving(false);
     }
   };
 
   const handleSaveDraft = handleSubmit((data) => {
-    console.log("Save Draft clicked, hasChanges:", hasChanges);
     saveData(data, false);
   });
 
   const handleNext = handleSubmit((data) => {
-    console.log("Next clicked, hasChanges:", hasChanges);
     if (!hasChanges) {
-      console.log("No changes, proceeding to next step");
       onNext(data);
       return;
     }
-    console.log("Changes detected, saving before proceeding");
     saveData(data, true);
   });
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <form
@@ -209,11 +265,6 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
       {saving && (
         <p className="text-blue-600 text-sm mb-4 animate-pulse">Saving...</p>
       )}
-      {Object.keys(backendErrors).length > 0 && (
-        <div className="text-red-600 text-sm mb-4">
-          {Object.values(backendErrors).join(", ")}
-        </div>
-      )}
 
       {/* Grid layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -222,9 +273,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
           <label className="block font-medium">Title</label>
           <select
             className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.title || backendErrors.title
-                ? "border-red-500"
-                : "border-gray-300"
+              errors.title ? "border-red-500" : "border-gray-300"
             }`}
             {...register("title")}
           >
@@ -236,18 +285,13 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
           {errors.title && (
             <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
           )}
-          {backendErrors.title && (
-            <p className="mt-1 text-sm text-red-600">{backendErrors.title}</p>
-          )}
         </div>
 
         <div>
           <label className="block font-medium">First Name</label>
           <input
             className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.firstName || backendErrors.firstName
-                ? "border-red-500"
-                : "border-gray-300"
+              errors.firstName ? "border-red-500" : "border-gray-300"
             }`}
             {...register("firstName")}
             placeholder="First Name"
@@ -257,20 +301,13 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
               {errors.firstName.message}
             </p>
           )}
-          {backendErrors.firstName && (
-            <p className="mt-1 text-sm text-red-600">
-              {backendErrors.firstName}
-            </p>
-          )}
         </div>
 
         <div>
           <label className="block font-medium">Last Name</label>
           <input
             className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.lastName || backendErrors.lastName
-                ? "border-red-500"
-                : "border-gray-300"
+              errors.lastName ? "border-red-500" : "border-gray-300"
             }`}
             {...register("lastName")}
             placeholder="Last Name"
@@ -280,20 +317,13 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
               {errors.lastName.message}
             </p>
           )}
-          {backendErrors.lastName && (
-            <p className="mt-1 text-sm text-red-600">
-              {backendErrors.lastName}
-            </p>
-          )}
         </div>
 
         <div>
           <label className="block font-medium">SAP ID</label>
           <input
             className={`w-full border rounded-md p-2 bg-gray-100 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.sapId || backendErrors.sapId
-                ? "border-red-500"
-                : "border-gray-300"
+              errors.sapId ? "border-red-500" : "border-gray-300"
             }`}
             {...register("sapId")}
             placeholder="SAP ID"
@@ -301,9 +331,6 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
           />
           {errors.sapId && (
             <p className="mt-1 text-sm text-red-600">{errors.sapId.message}</p>
-          )}
-          {backendErrors.sapId && (
-            <p className="mt-1 text-sm text-red-600">{backendErrors.sapId}</p>
           )}
         </div>
 
@@ -321,18 +348,13 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
           {errors.gender && (
             <p className="mt-1 text-sm text-red-600">{errors.gender.message}</p>
           )}
-          {backendErrors.gender && (
-            <p className="mt-1 text-sm text-red-600">{backendErrors.gender}</p>
-          )}
         </div>
 
         <div>
           <label className="block font-medium">Date of Birth</label>
           <input
             className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.dob || backendErrors.dob
-                ? "border-red-500"
-                : "border-gray-300"
+              errors.dob ? "border-red-500" : "border-gray-300"
             }`}
             type="date"
             max={new Date().toISOString().split("T")[0]}
@@ -353,18 +375,13 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
           {errors.dob && (
             <p className="mt-1 text-sm text-red-600">{errors.dob.message}</p>
           )}
-          {backendErrors.dob && (
-            <p className="mt-1 text-sm text-red-600">{backendErrors.dob}</p>
-          )}
         </div>
 
         <div>
           <label className="block font-medium">Birth Place</label>
           <input
             className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.birthplace || backendErrors.birthplace
-                ? "border-red-500"
-                : "border-gray-300"
+              errors.birthplace ? "border-red-500" : "border-gray-300"
             }`}
             {...register("birthplace")}
             placeholder="Birthplace"
@@ -374,20 +391,13 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
               {errors.birthplace.message}
             </p>
           )}
-          {backendErrors.birthplace && (
-            <p className="mt-1 text-sm text-red-600">
-              {backendErrors.birthplace}
-            </p>
-          )}
         </div>
 
         <div>
           <label className="block font-medium">State</label>
           <input
             className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.state || backendErrors.state
-                ? "border-red-500"
-                : "border-gray-300"
+              errors.state ? "border-red-500" : "border-gray-300"
             }`}
             {...register("state")}
             placeholder="State"
@@ -395,18 +405,13 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
           {errors.state && (
             <p className="mt-1 text-sm text-red-600">{errors.state.message}</p>
           )}
-          {backendErrors.state && (
-            <p className="mt-1 text-sm text-red-600">{backendErrors.state}</p>
-          )}
         </div>
 
         <div>
           <label className="block font-medium">Religion</label>
           <input
             className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.religion || backendErrors.religion
-                ? "border-red-500"
-                : "border-gray-300"
+              errors.religion ? "border-red-500" : "border-gray-300"
             }`}
             {...register("religion")}
             placeholder="Religion"
@@ -416,20 +421,13 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
               {errors.religion.message}
             </p>
           )}
-          {backendErrors.religion && (
-            <p className="mt-1 text-sm text-red-600">
-              {backendErrors.religion}
-            </p>
-          )}
         </div>
 
         <div>
           <label className="block font-medium">Category</label>
           <input
             className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.category || backendErrors.category
-                ? "border-red-500"
-                : "border-gray-300"
+              errors.category ? "border-red-500" : "border-gray-300"
             }`}
             {...register("category")}
             placeholder="Category"
@@ -439,20 +437,13 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
               {errors.category.message}
             </p>
           )}
-          {backendErrors.category && (
-            <p className="mt-1 text-sm text-red-600">
-              {backendErrors.category}
-            </p>
-          )}
         </div>
 
         <div>
           <label className="block font-medium">Sub-Category</label>
           <input
             className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.subCategory || backendErrors.subCategory
-                ? "border-red-500"
-                : "border-gray-300"
+              errors.subCategory ? "border-red-500" : "border-gray-300"
             }`}
             {...register("subCategory")}
             placeholder="Sub-Category"
@@ -462,20 +453,13 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
               {errors.subCategory.message}
             </p>
           )}
-          {backendErrors.subCategory && (
-            <p className="mt-1 text-sm text-red-600">
-              {backendErrors.subCategory}
-            </p>
-          )}
         </div>
 
         <div>
           <label className="block font-medium">Identification Mark 1</label>
           <input
             className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.idMark1 || backendErrors.idMark1
-                ? "border-red-500"
-                : "border-gray-300"
+              errors.idMark1 ? "border-red-500" : "border-gray-300"
             }`}
             {...register("idMark1")}
             placeholder="Identification Mark 1"
@@ -485,18 +469,13 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
               {errors.idMark1.message}
             </p>
           )}
-          {backendErrors.idMark1 && (
-            <p className="mt-1 text-sm text-red-600">{backendErrors.idMark1}</p>
-          )}
         </div>
 
         <div>
           <label className="block font-medium">Identification Mark 2</label>
           <input
             className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.idMark2 || backendErrors.idMark2
-                ? "border-red-500"
-                : "border-gray-300"
+              errors.idMark2 ? "border-red-500" : "border-gray-300"
             }`}
             {...register("idMark2")}
             placeholder="Identification Mark 2"
@@ -506,18 +485,13 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
               {errors.idMark2.message}
             </p>
           )}
-          {backendErrors.idMark2 && (
-            <p className="mt-1 text-sm text-red-600">{backendErrors.idMark2}</p>
-          )}
         </div>
 
         <div>
           <label className="block font-medium">Ex-Serviceman</label>
           <select
             className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.exServiceman || backendErrors.exServiceman
-                ? "border-red-500"
-                : "border-gray-300"
+              errors.exServiceman ? "border-red-500" : "border-gray-300"
             }`}
             {...register("exServiceman")}
           >
@@ -530,20 +504,13 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
               {errors.exServiceman.message}
             </p>
           )}
-          {backendErrors.exServiceman && (
-            <p className="mt-1 text-sm text-red-600">
-              {backendErrors.exServiceman}
-            </p>
-          )}
         </div>
 
         <div>
           <label className="block font-medium">Adhaar Number</label>
           <input
             className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.adhaarId || backendErrors.adhaarId
-                ? "border-red-500"
-                : "border-gray-300"
+              errors.adhaarId ? "border-red-500" : "border-gray-300"
             }`}
             {...register("adhaarId")}
             placeholder="Aadhar ID"
@@ -553,11 +520,6 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
               {errors.adhaarId.message}
             </p>
           )}
-          {backendErrors.adhaarId && (
-            <p className="mt-1 text-sm text-red-600">
-              {backendErrors.adhaarId}
-            </p>
-          )}
         </div>
 
         <div>
@@ -565,9 +527,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
           <input
             type="number"
             className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.mobile || backendErrors.mobile
-                ? "border-red-500"
-                : "border-gray-300"
+              errors.mobile ? "border-red-500" : "border-gray-300"
             }`}
             {...register("mobile")}
             placeholder="Mobile Number"
@@ -575,18 +535,13 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
           {errors.mobile && (
             <p className="mt-1 text-sm text-red-600">{errors.mobile.message}</p>
           )}
-          {backendErrors.mobile && (
-            <p className="mt-1 text-sm text-red-600">{backendErrors.mobile}</p>
-          )}
         </div>
 
         <div>
           <label className="block font-medium">Email</label>
           <input
             className={`w-full border rounded-md p-2 bg-gray-100 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.email || backendErrors.email
-                ? "border-red-500"
-                : "border-gray-300"
+              errors.email ? "border-red-500" : "border-gray-300"
             }`}
             type="email"
             {...register("email")}
@@ -596,18 +551,13 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
           {errors.email && (
             <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
           )}
-          {backendErrors.email && (
-            <p className="mt-1 text-sm text-red-600">{backendErrors.email}</p>
-          )}
         </div>
 
         <div>
           <label className="block font-medium">Person with Disability</label>
           <select
             className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.pwd || backendErrors.pwd
-                ? "border-red-500"
-                : "border-gray-300"
+              errors.pwd ? "border-red-500" : "border-gray-300"
             }`}
             {...register("pwd")}
           >
@@ -618,18 +568,13 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
           {errors.pwd && (
             <p className="mt-1 text-sm text-red-600">{errors.pwd.message}</p>
           )}
-          {backendErrors.pwd && (
-            <p className="mt-1 text-sm text-red-600">{backendErrors.pwd}</p>
-          )}
         </div>
 
         <div>
           <label className="block font-medium">Mother Tongue</label>
           <select
             className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.motherTongue || backendErrors.motherTongue
-                ? "border-red-500"
-                : "border-gray-300"
+              errors.motherTongue ? "border-red-500" : "border-gray-300"
             }`}
             {...register("motherTongue")}
           >
@@ -645,19 +590,12 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
               {errors.motherTongue.message}
             </p>
           )}
-          {backendErrors.motherTongue && (
-            <p className="mt-1 text-sm text-red-600">
-              {backendErrors.motherTongue}
-            </p>
-          )}
         </div>
 
         {motherTongue === "OTHER" && (
           <input
             className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.otherMotherTongue || backendErrors.otherMotherTongue
-                ? "border-red-500"
-                : "border-gray-300"
+              errors.otherMotherTongue ? "border-red-500" : "border-gray-300"
             }`}
             {...register("otherMotherTongue")}
             placeholder="Please specify"
@@ -670,9 +608,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
           </label>
           <select
             className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.hindiKnowledge || backendErrors.hindiKnowledge
-                ? "border-red-500"
-                : "border-gray-300"
+              errors.hindiKnowledge ? "border-red-500" : "border-gray-300"
             }`}
             {...register("hindiKnowledge")}
           >
@@ -683,11 +619,6 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
           {errors.hindiKnowledge && (
             <p className="mt-1 text-sm text-red-600">
               {errors.hindiKnowledge.message}
-            </p>
-          )}
-          {backendErrors.hindiKnowledge && (
-            <p className="mt-1 text-sm text-red-600">
-              {backendErrors.hindiKnowledge}
             </p>
           )}
         </div>

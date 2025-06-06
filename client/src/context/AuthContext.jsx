@@ -3,15 +3,19 @@ import { createContext, useContext, useState } from "react";
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(localStorage.getItem("token") || null);
+  const [token, setToken] = useState(
+    localStorage.getItem("token") ? localStorage.getItem("token") : null
+  );
   const [user, setUser] = useState(
-    JSON.parse(localStorage.getItem("user")) || null
+    localStorage.getItem("user")
+      ? JSON.parse(localStorage.getItem("user"))
+      : null
   );
 
-  const [empData, setEmpData] = useState(()=>{
+  const [empData, setEmpData] = useState(() => {
     const stored = sessionStorage.getItem("empData");
-    return stored? JSON.parse(stored): "";
-  })
+    return stored ? JSON.parse(stored) : "";
+  });
 
   const login = (token, user) => {
     localStorage.setItem("token", token);
@@ -30,15 +34,25 @@ export const AuthProvider = ({ children }) => {
     setEmpData("");
   };
 
-  const fetchData =(result) =>{
+  const fetchData = (result) => {
     setEmpData(result);
     sessionStorage.setItem("empData", JSON.stringify(result));
-  }
+  };
 
   const isAuthenticated = !!token;
 
   return (
-    <AuthContext.Provider value={{token,user, login, logout, isAuthenticated, fetchData, empData}}>
+    <AuthContext.Provider
+      value={{
+        token,
+        user,
+        login,
+        logout,
+        isAuthenticated,
+        fetchData,
+        empData,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

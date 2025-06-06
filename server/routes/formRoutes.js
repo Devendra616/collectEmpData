@@ -9,15 +9,20 @@ import {
   validateFamilyDetails,
   validateEducationalDetails,
   validateAddress,
+  validateWorkExperience,
 } from "../middleware/validateForms.js";
-import personalDetailsHandler from "../controller/personalDetails.js";
+import {
+  personalDetailsHandler,
+  fetchPersonalDetails,
+} from "../controller/personalDetails.js";
 import familyDetailsHandler from "../controller/familyDetails.js";
 import { verifyToken } from "../middleware/authenticateLogin.js";
-import fetchController from "../controller/fetchDetails.js";
+// import fetchController from "../controller/fetchDetails.js";
 import educationDetailsHandler from "../controller/educationDetails.js";
 import addressDetailsHandler from "../controller/addressDetails.js";
+import WorkDetailsHandler from "../controller/workDetails.js";
 
-const { fetchPersonalDetails } = fetchController;
+// const { fetchPersonalDetails } = fetchController;
 
 const { registrationHandler, loginHandler } = handlers;
 
@@ -43,7 +48,11 @@ router.post(
   educationDetailsHandler
 );
 
-router.get("/personalDetails", verifyToken, fetchPersonalDetails);
+router.get("/personal", verifyToken, fetchPersonalDetails);
+router.get("/education", verifyToken, fetchPersonalDetails);
+router.get("/address", verifyToken, fetchPersonalDetails);
+router.get("/work", verifyToken, fetchPersonalDetails);
+router.get("/family", verifyToken, fetchPersonalDetails);
 
 router.post(
   "/family",
@@ -53,5 +62,7 @@ router.post(
 );
 
 router.post("/address", verifyToken, validateAddress, addressDetailsHandler);
+
+router.post("/work", verifyToken, validateWorkExperience, WorkDetailsHandler);
 
 export default router;

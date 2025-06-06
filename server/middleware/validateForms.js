@@ -134,22 +134,23 @@ const validatePersonalDetails = (req, res, next) => {
   }
 
   // validate idMark1
-  const alphanumericRegex = /^[a-zA-Z0-9]+$/;
+  const alphanumericWithSpaceRegex = /^[a-zA-Z0-9\s]+$/;
   if (
     idMark1 &&
     idMark1.trim().length > 0 &&
-    !idMark1.trim().test(alphanumericRegex)
+    !alphanumericWithSpaceRegex.test(idMark1.trim())
   ) {
-    errors.idMark1 = "Id mark must not contain any special character.";
+    errors.idMark1 = "Id mark must not contain any special characters.";
   }
 
   if (
     idMark2 &&
     idMark2.trim().length > 0 &&
-    !idMark2.trim().test(alphanumericRegex)
+    !alphanumericWithSpaceRegex.test(idMark2.trim())
   ) {
-    errors.idMark2 = "Id mark must not contain any special character.";
+    errors.idMark2 = "Id mark must not contain any special characters.";
   }
+
   // Validate Date of Birth
   if (dob) {
     const birthDate = new Date(dob);
@@ -536,10 +537,122 @@ const validateAddress = (req, res, next) => {
   next();
 };
 
+const validateWorkExperience = (req, res, next) => {
+  const workExp = req.body;
+  const errors = {};
+
+  if (!Array.isArray(workExp)) {
+    return res.status(400).json({
+      errors: { workExperience: "Work Experience details must be an array" },
+    });
+  }
+
+  const validIndustryTypes = [
+    "Autonomous Bodies",
+    "Central govt.",
+    "Indian Armed Forces",
+    "NGO",
+    "Private",
+    "PSU central",
+    "PSU state",
+    "State govt",
+  ];
+
+  workExp.forEach((entry, index) => {
+    const entryErrors = {};
+
+    // Required fields validation
+    if (!entry.name?.trim()) {
+      entryErrors.name = "Company name is required";
+    }
+
+    if (!entry.designation?.trim()) {
+      entryErrors.designation = "Designation is required";
+    }
+
+    if (!entry.grossSalary || entry.grossSalary <= 0) {
+      entryErrors.grossSalary = "Gross salary is required and must be positive";
+    }
+
+    // Industry validation
+    if (entry.industry && !validIndustryTypes.includes(entry.industry)) {
+      entryErrors.industry = "Invalid industry selected";
+    }
+
+    // Greenfield validation
+    if (entry.greenfield && !["Yes", "No"].includes(entry.greenfield)) {
+      entryErrors.greenfield = "Greenfield must be either 'Yes' or 'No'";
+    }
+
+    // Start Date validations
+    if (!entry.startDate) {
+      entryErrors.startDate = "Start date is required";
+    } else {
+      const startDate = new Date(entry.startDate);
+      startDate.setHours(0, 0, 0, 0);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (isNaN(startDate.getTime())) {
+        entryErrors.startDate = "Invalid start date";
+      } else if (startDate >= today) {
+        entryErrors.startDate = "Start date must be past date";
+      }
+    }
+
+    // Relieving Date validations
+    if (!entry.relievingDate) {
+      entryErrors.relievingDate = "Relieving date is required";
+    } else {
+      const relievingDate = new Date(entry.relievingDate);
+      relievingDate.setHours(0, 0, 0, 0);
+      if (isNaN(relievingDate.getTime())) {
+        entryErrors.relievingDate = "Invalid relieving date";
+      } else if (entry.startDate) {
+        const startDate = new Date(entry.startDate);
+        startDate.setHours(0, 0, 0, 0);
+        if (relievingDate < startDate) {
+          entryErrors.relievingDate = "Relieving date must be after start date";
+        }
+      }
+    }
+
+    // Duration validations
+    if (
+      entry.numberOfYears !== undefined &&
+      (entry.numberOfYears < 0 || !Number.isInteger(entry.numberOfYears))
+    ) {
+      entryErrors.numberOfYears =
+        "Number of years must be a non-negative integer";
+    }
+
+    if (
+      entry.numberOfMonths !== undefined &&
+      (entry.numberOfMonths < 0 ||
+        entry.numberOfMonths > 11 ||
+        !Number.isInteger(entry.numberOfMonths))
+    ) {
+      entryErrors.numberOfMonths = "Number of months must be between 0 and 11";
+    }
+
+    // If there are errors for this entry, add them to the main errors object
+    if (Object.keys(entryErrors).length > 0) {
+      errors[`work[${index}]`] = entryErrors;
+    }
+  });
+
+  // If there are any errors, return them all
+  if (Object.keys(errors).length > 0) {
+    return res.status(400).json({ errors });
+  }
+  next();
+};
+
 export {
   validateReg,
   validatePersonalDetails,
   validateFamilyDetails,
   validateEducationalDetails,
   validateAddress,
+  validateWorkExperience,
 };

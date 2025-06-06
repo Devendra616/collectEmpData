@@ -36,7 +36,7 @@ const MultiStepForm = () => {
 
     try {
       const res = await saveSectionData(section, data, token);
-      if (res !== true) throw new Error("Failed to save section");
+      if (!res?.data?.success) throw new Error("Failed to save section");
       dispatch({ type: "UPDATE_SECTION", section, data });
       setStep((prev) => prev + 1);
     } catch (err) {

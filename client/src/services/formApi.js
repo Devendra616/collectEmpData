@@ -23,24 +23,12 @@ export const saveSectionData = async (sectionName, data, token) => {
   }
 
   try {
-    // const res = await fetch(endpoint,{
-    //     method: "POST",
-    //     headers:{
-    //         "Content-Type": "application/json",
-    //     },
-    //     body: JSON.stringify(data),
-    // });
-
-    // if(!res.ok){
-    //     console.log(`Failed to save ${sectionName}`);
-
-    // }
-    await axios.post(`${apiUrl}/${endpoint}`, data, {
+    const res = await axios.post(`${apiUrl}/${endpoint}`, data, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
-    return true;
+    return res;
   } catch (error) {
     console.log(`🚀 ~ saveSectionData ~ error saving ${sectionName}:`, error);
     return error;

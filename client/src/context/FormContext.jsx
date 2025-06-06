@@ -4,11 +4,11 @@ import { createContext, useContext, useReducer } from "react";
 const FormDataContext = createContext();
 
 const initialState = {
-  personalDetails: {},
-  educationDetails: [],
-  familyDetails: [],
-  addressDetails: {},
-  workExperience: [],
+  personal: {},
+  education: [],
+  family: [],
+  address: {},
+  work: [],
 };
 
 function reducer(state, action) {
