@@ -5,11 +5,8 @@ import PersonalDetails from "../models/personalDetails.js";
 
 const personalDetailsHandler = async (req, res) => {
   try {
-    // const { title, firstName, lastName, gender, dob, mobile, adhaarId, birthplace, state, religion, category, subCategory, idMark1, idMark2, exServiceman, isDisabled, motherTongue,  otherMotherTongue, hindiKnowledge, langHindiRead, langHindiWrite, langHindiSpeak } = req.body;
-
     const personalDetails = req.body;
 
-    // const employeeId = req.session.employeeId|| new mongoose.Types.ObjectId('683be24811d60ea20f74d5ac');
     const employeeId = req.user.id;
 
     if (!employeeId) {

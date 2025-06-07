@@ -9,6 +9,7 @@ import { getAgeFromDOB } from "../../utils/getAge";
 import languageOptions from "../../constants/languageOptions";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { formatDate } from "../../utils/dateConversion.js";
 
 const schema = yup.object().shape({
   title: yup.string().required("Select your title"),
@@ -81,13 +82,6 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
   const [loading, setLoading] = useState(true);
   const [age, setAge] = useState(null);
   const [hasChanges, setHasChanges] = useState(false);
-
-  // Format date from ISO to YYYY-MM-DD
-  const formatDate = (dateString) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toISOString().split("T")[0];
-  };
 
   const initialValues = useMemo(
     () => ({
@@ -190,6 +184,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
     }
 
     setSaving(true);
+    setBackendErrors({});
     clearErrors();
     try {
       const dataToSave = Object.fromEntries(
@@ -201,6 +196,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
       const res = await saveSectionData("personalDetails", dataToSave, token);
       if (res?.status === 400) {
         const backendErrors = res.response?.data?.errors || {};
+        setBackendErrors(backendErrors);
         Object.entries(backendErrors).forEach(([field, message]) => {
           setError(field, { type: "manual", message });
         });
@@ -224,6 +220,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
       if (proceed) onNext(dataToSave);
     } catch (error) {
       const errorMessages = error?.response?.data?.errors || {};
+      setBackendErrors(errorMessages);
       Object.entries(errorMessages).forEach(([field, message]) => {
         setError(field, { type: "manual", message });
       });
@@ -264,6 +261,27 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
 
       {saving && (
         <p className="text-blue-600 text-sm mb-4 animate-pulse">Saving...</p>
+      )}
+
+      {Object.keys(backendErrors).length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
+          <h3 className="text-red-800 font-medium mb-2">
+            Please fix the following errors:
+          </h3>
+          <ul className="list-disc list-inside ml-4">
+            {Object.entries(backendErrors).map(([field, message]) => (
+              <li key={field} className="text-red-600">
+                {message}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {Object.keys(errors).length > 0 && (
+        <div className="text-red-600 text-sm mb-4">
+          Please fix the validation errors below.
+        </div>
       )}
 
       {/* Grid layout */}

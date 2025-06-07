@@ -28,6 +28,7 @@ export const saveSectionData = async (sectionName, data, token) => {
         Authorization: `Bearer ${token}`,
       },
     });
+    console.log("response api", res);
     return res;
   } catch (error) {
     console.log(`🚀 ~ saveSectionData ~ error saving ${sectionName}:`, error);
