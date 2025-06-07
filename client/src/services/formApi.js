@@ -11,11 +11,12 @@ const sectionEndpoints = {
 const apiUrl = import.meta.env.VITE_API_URL;
 // const apiUrl = "http://localhost:3000"
 
-console.log("API URL:", apiUrl);
 // const { token } =useAuth();
 
 export const saveSectionData = async (sectionName, data, token) => {
   const endpoint = sectionEndpoints[sectionName];
+  console.log("endpoint:", endpoint);
+  console.log("Data sent:", data);
 
   if (!endpoint) {
     console.warn(`No endpoint defined for ${sectionName}`);
@@ -28,9 +29,12 @@ export const saveSectionData = async (sectionName, data, token) => {
         Authorization: `Bearer ${token}`,
       },
     });
-    return res;
+    return res.data;
   } catch (error) {
-    console.log(`🚀 ~ saveSectionData ~ error saving ${sectionName}:`, error);
-    return error;
+    console.log(
+      `🚀 ~ saveSectionData ~ error saving ${sectionName}:`,
+      error?.response?.data
+    );
+    return error?.response?.data;
   }
 };

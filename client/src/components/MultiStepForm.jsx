@@ -36,11 +36,33 @@ const MultiStepForm = () => {
 
     try {
       const res = await saveSectionData(section, data, token);
-      if (!res?.data?.success) throw new Error("Failed to save section");
+      console.log("Response from saveSectionData:", res);
+
+      // Check if response contains validation errors
+      if (res?.errors) {
+        // Format validation errors into a readable message
+        const errorMessages = Object.entries(res.errors)
+          .map(([field, message]) => `${field}: ${message}`)
+          .join(", ");
+        setError(`Validation errors: ${errorMessages}`);
+        return res.errors;
+      }
+
+      if (!res?.success) {
+        const errorMsg = res?.msg || "Failed to save section";
+        setError(errorMsg);
+        return;
+      }
+
       dispatch({ type: "UPDATE_SECTION", section, data });
       setStep((prev) => prev + 1);
     } catch (err) {
-      setError(`Error saving ${section}: ${err.message}`);
+      console.error("Error in handleNext:", err);
+      const errorMsg =
+        err?.response?.data?.msg ||
+        err?.message ||
+        "An error occurred while saving";
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -56,8 +78,36 @@ const MultiStepForm = () => {
       <Navbar />
       <StepTabs currentStep={currentStep} setStep={setStep} />
 
-      {loading && <p className="text-blue-600">Saving...</p>}
-      {error && <p className="text-red-600">{error}</p>}
+      {loading && (
+        <div className="flex items-center justify-center p-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          <span className="ml-2 text-blue-600">Saving...</span>
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg
+                className="h-5 w-5 text-red-500"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-700 font-medium">Error</p>
+              <p className="text-sm text-red-600 mt-1">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {!isSubmitted && (
         <CurrentForm

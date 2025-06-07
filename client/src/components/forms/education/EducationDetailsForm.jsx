@@ -7,6 +7,8 @@ import { saveSectionData } from "../../../services/formApi";
 import { useAuth } from "../../../context/AuthContext";
 import { useFormData } from "../../../context/FormContext";
 import { toast } from "react-toastify";
+import axios from "axios";
+import { formatDate } from "../../../utils/dateConversion.js";
 
 const schema = yup.object().shape({
   education: yup.array().of(
@@ -52,20 +54,71 @@ const EducationDetailsForm = ({ onNext, defaultValues = [] }) => {
 
   const [backendErrors, setBackendErrors] = useState({});
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [hasChanges, setHasChanges] = useState(false);
   const [fieldChanges, setFieldChanges] = useState({});
 
   // Memoize initial values to prevent unnecessary re-renders
-  const initialValues = useMemo(
-    () => ({
-      education: Array.isArray(formState.educationDetails)
-        ? formState.educationDetails
-        : Array.isArray(defaultValues)
-        ? defaultValues
-        : [],
-    }),
-    [formState.educationDetails, defaultValues]
-  );
+  const initialValues = useMemo(() => {
+    console.log("Form State:", formState);
+    const educationData = formState?.education?.data || [];
+
+    // Format dates in each education entry
+    const formattedEducationData = educationData.map((entry) => ({
+      ...entry,
+      startDate: formatDate(entry.startDate),
+      passingDate: formatDate(entry.passingDate),
+    }));
+
+    return {
+      education:
+        Array.isArray(formattedEducationData) &&
+        formattedEducationData.length > 0
+          ? formattedEducationData
+          : Array.isArray(defaultValues)
+          ? defaultValues
+          : [],
+    };
+  }, [formState?.education?.data, defaultValues]);
+
+  // Load data if not already in FormContext
+  useEffect(() => {
+    const loadData = async () => {
+      if (
+        !formState?.education?.data ||
+        formState.education.data.length === 0
+      ) {
+        setLoading(true);
+        try {
+          const result = await axios.get(
+            `${import.meta.env.VITE_API_URL}/education`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (result?.data?.success) {
+            dispatch({
+              type: "UPDATE_SECTION",
+              section: "education",
+              data: result.data.data?.education || [],
+            });
+          }
+        } catch (error) {
+          console.error("Error loading education details:", error);
+          toast.error("Failed to load education details");
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [token, dispatch, formState?.education?.data]);
 
   const {
     register,
@@ -75,7 +128,7 @@ const EducationDetailsForm = ({ onNext, defaultValues = [] }) => {
     getValues,
     formState: { errors, dirtyFields },
   } = useForm({
-    resolver: yupResolver(schema),
+    //resolver: yupResolver(schema),
     defaultValues: initialValues,
   });
 
@@ -258,6 +311,14 @@ const EducationDetailsForm = ({ onNext, defaultValues = [] }) => {
     saveData(data, true);
   });
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto p-6">
       <h2 className="text-2xl font-bold mb-6 text-gray-800">
@@ -396,8 +457,12 @@ const EducationDetailsForm = ({ onNext, defaultValues = [] }) => {
           <button
             type="button"
             onClick={handleSaveDraft}
-            disabled={saving}
-            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-300"
+            disabled={!hasChanges || saving}
+            className={`px-4 py-2 rounded ${
+              hasChanges && !saving
+                ? "bg-green-500 text-white hover:bg-green-600 cursor-pointer"
+                : "bg-gray-200 text-gray-500 cursor-not-allowed"
+            }`}
           >
             💾 Save Draft
           </button>

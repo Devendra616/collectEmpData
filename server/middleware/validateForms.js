@@ -332,9 +332,12 @@ const validateEducationalDetails = (req, res, next) => {
   const errors = {};
 
   if (!Array.isArray(education)) {
-    return res
-      .status(400)
-      .json({ errors: { education: "Education details must be an array" } });
+    console.log("validation error", education);
+    return res.status(400).json({
+      errors: { education: "Education details must be an array2" },
+      success: false,
+      data: null,
+    });
   }
 
   const validEducationTypes = [

@@ -9,6 +9,7 @@ import { getAgeFromDOB } from "../../utils/getAge";
 import languageOptions from "../../constants/languageOptions";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { formatDate } from "../../utils/dateConversion.js";
 
 const schema = yup.object().shape({
   title: yup.string().required("Select your title"),
@@ -81,13 +82,6 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
   const [loading, setLoading] = useState(true);
   const [age, setAge] = useState(null);
   const [hasChanges, setHasChanges] = useState(false);
-
-  // Format date from ISO to YYYY-MM-DD
-  const formatDate = (dateString) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toISOString().split("T")[0];
-  };
 
   const initialValues = useMemo(
     () => ({
@@ -199,12 +193,15 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
       );
 
       const res = await saveSectionData("personalDetails", dataToSave, token);
-      if (res?.status === 400) {
-        const backendErrors = res.response?.data?.errors || {};
-        Object.entries(backendErrors).forEach(([field, message]) => {
+
+      // Check if response contains errors
+      if (res?.errors) {
+        // Handle validation errors from backend
+        Object.entries(res.errors).forEach(([field, message]) => {
           setError(field, { type: "manual", message });
         });
-        return;
+        toast.error("Please fix the validation errors");
+        return res.errors;
       }
 
       if (res?.data?.success) {
@@ -222,11 +219,19 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
       }
 
       if (proceed) onNext(dataToSave);
+      return null;
     } catch (error) {
+      // Handle network or other errors
       const errorMessages = error?.response?.data?.errors || {};
-      Object.entries(errorMessages).forEach(([field, message]) => {
-        setError(field, { type: "manual", message });
-      });
+      if (Object.keys(errorMessages).length > 0) {
+        Object.entries(errorMessages).forEach(([field, message]) => {
+          setError(field, { type: "manual", message });
+        });
+        toast.error("Please fix the validation errors");
+      } else {
+        toast.error("An error occurred while saving the data");
+      }
+      return errorMessages;
     } finally {
       setSaving(false);
     }
@@ -236,12 +241,19 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
     saveData(data, false);
   });
 
-  const handleNext = handleSubmit((data) => {
+  const handleNext = handleSubmit(async (data) => {
     if (!hasChanges) {
       onNext(data);
       return;
     }
-    saveData(data, true);
+    const errors = await saveData(data, true);
+    if (errors) {
+      // Handle validation errors returned from MultiStepForm
+      Object.entries(errors).forEach(([field, message]) => {
+        setError(field, { type: "manual", message });
+      });
+      toast.error("Please fix the validation errors");
+    }
   });
 
   if (loading) {
@@ -513,7 +525,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
               errors.adhaarId ? "border-red-500" : "border-gray-300"
             }`}
             {...register("adhaarId")}
-            placeholder="Aadhar ID"
+            placeholder="Adhaar Number"
           />
           {errors.adhaarId && (
             <p className="mt-1 text-sm text-red-600">
@@ -654,7 +666,6 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
         >
           💾 Save Draft
         </button>
-
         <button
           type="submit"
           className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer"
