@@ -3,6 +3,22 @@ import React from "react";
 const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
   const educationType = watch(`education[${index}].educationType`);
 
+  const getErrorClass = (fieldName) => {
+    const hasError = errors?.[fieldName] || backendErrors?.[fieldName];
+    return `w-full p-2 border ${
+      hasError ? "border-red-500" : "border-gray-300"
+    } rounded-md focus:ring-blue-500 focus:border-blue-500`;
+  };
+  const renderError = (fieldName) => {
+    const error = errors?.[fieldName] || backendErrors?.[fieldName];
+    if (!error) return null;
+    return (
+      <p className="mt-1 text-sm text-red-600">
+        {typeof error === "string" ? error : error.message}
+      </p>
+    );
+  };
+
   return (
     <div className="education-entry space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -12,11 +28,7 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
           </label>
           <select
             {...register(`education[${index}].educationType`)}
-            className={`w-full p-2 border ${
-              errors?.educationType || backendErrors?.educationType
-                ? "border-red-500"
-                : "border-gray-300"
-            } rounded-md focus:ring-blue-500 focus:border-blue-500`}
+            className={getErrorClass("educationType")}
           >
             <option value="">Select</option>
             <option value="10TH">10th Class</option>
@@ -25,16 +37,7 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
             <option value="POSTGRAD">Post-graduation / PhD</option>
             <option value="CERTIFICATE">Course Certificate / Others</option>
           </select>
-          {errors?.educationType && (
-            <p className="mt-1 text-sm text-red-600">
-              {errors.educationType.message}
-            </p>
-          )}
-          {backendErrors?.educationType && (
-            <p className="mt-1 text-sm text-red-600">
-              {backendErrors.educationType}
-            </p>
-          )}
+          {renderError("educationType")}
         </div>
 
         <div className="form-group">
@@ -44,22 +47,9 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
           <input
             placeholder="Enter institute name"
             {...register(`education[${index}].instituteName`)}
-            className={`w-full p-2 border ${
-              errors?.instituteName || backendErrors?.instituteName
-                ? "border-red-500"
-                : "border-gray-300"
-            } rounded-md focus:ring-blue-500 focus:border-blue-500`}
+            className={getErrorClass("instituteName")}
           />
-          {errors?.instituteName && (
-            <p className="mt-1 text-sm text-red-600">
-              {errors.instituteName.message}
-            </p>
-          )}
-          {backendErrors?.instituteName && (
-            <p className="mt-1 text-sm text-red-600">
-              {backendErrors.instituteName}
-            </p>
-          )}
+          {renderError("instituteName")}
         </div>
 
         <div className="form-group">
@@ -68,26 +58,13 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
           </label>
           <select
             {...register(`education[${index}].certificateType`)}
-            className={`w-full p-2 border ${
-              errors?.certificateType || backendErrors?.certificateType
-                ? "border-red-500"
-                : "border-gray-300"
-            } rounded-md focus:ring-blue-500 focus:border-blue-500`}
+            className={getErrorClass("certificateType")}
           >
             <option value="">Select Certificate Type</option>
             <option value="REGULAR">Regular</option>
             <option value="CORRESPONDANCE">Correspondance</option>
           </select>
-          {errors?.certificateType && (
-            <p className="mt-1 text-sm text-red-600">
-              {errors.certificateType.message}
-            </p>
-          )}
-          {backendErrors?.certificateType && (
-            <p className="mt-1 text-sm text-red-600">
-              {backendErrors.certificateType}
-            </p>
-          )}
+          {renderError("certificateType")}
         </div>
 
         <div className="form-group">
@@ -100,24 +77,10 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
             min={0}
             placeholder="Enter duration"
             {...register(`education[${index}].duration`)}
-            className={`w-full p-2 border ${
-              errors?.duration || backendErrors?.duration
-                ? "border-red-500"
-                : "border-gray-300"
-            } rounded-md focus:ring-blue-500 focus:border-blue-500`}
+            className={getErrorClass("duration")}
           />
-          {errors?.duration && (
-            <p className="mt-1 text-sm text-red-600">
-              {errors.duration.message}
-            </p>
-          )}
-          {backendErrors?.duration && (
-            <p className="mt-1 text-sm text-red-600">
-              {backendErrors.duration}
-            </p>
-          )}
+          {renderError("duration")}
         </div>
-
         <div className="form-group">
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Final Grade
@@ -125,18 +88,9 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
           <input
             placeholder="Enter final grade"
             {...register(`education[${index}].grade`)}
-            className={`w-full p-2 border ${
-              errors?.grade || backendErrors?.grade
-                ? "border-red-500"
-                : "border-gray-300"
-            } rounded-md focus:ring-blue-500 focus:border-blue-500`}
+            className={getErrorClass("grade")}
           />
-          {errors?.grade && (
-            <p className="mt-1 text-sm text-red-600">{errors.grade.message}</p>
-          )}
-          {backendErrors?.grade && (
-            <p className="mt-1 text-sm text-red-600">{backendErrors.grade}</p>
-          )}
+          {renderError("grade")}
         </div>
 
         <div className="form-group">
@@ -163,12 +117,7 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
               <span className="ml-2">Hindi</span>
             </label>
           </div>
-          {errors?.medium && (
-            <p className="mt-1 text-sm text-red-600">{errors.medium.message}</p>
-          )}
-          {backendErrors?.medium && (
-            <p className="mt-1 text-sm text-red-600">{backendErrors.medium}</p>
-          )}
+          {renderError("medium")}
         </div>
 
         <div className="form-group">
@@ -177,11 +126,7 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
           </label>
           <select
             {...register(`education[${index}].hindiSubjectLevel`)}
-            className={`w-full p-2 border ${
-              errors?.hindiSubjectLevel || backendErrors?.hindiSubjectLevel
-                ? "border-red-500"
-                : "border-gray-300"
-            } rounded-md focus:ring-blue-500 focus:border-blue-500`}
+            className={getErrorClass("hindiSubjectLevel")}
           >
             <option value="">Select Level</option>
             <option value="FIRST">1st Language</option>
@@ -189,16 +134,7 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
             <option value="THIRD">3rd Language</option>
             <option value="NONE">None</option>
           </select>
-          {errors?.hindiSubjectLevel && (
-            <p className="mt-1 text-sm text-red-600">
-              {errors.hindiSubjectLevel.message}
-            </p>
-          )}
-          {backendErrors?.hindiSubjectLevel && (
-            <p className="mt-1 text-sm text-red-600">
-              {backendErrors.hindiSubjectLevel}
-            </p>
-          )}
+          {renderError("hindiSubjectLevel")}
         </div>
 
         {(educationType === "GRAD" ||
@@ -212,22 +148,9 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
               <input
                 placeholder="Enter course details"
                 {...register(`education[${index}].courseDetails`)}
-                className={`w-full p-2 border ${
-                  errors?.courseDetails || backendErrors?.courseDetails
-                    ? "border-red-500"
-                    : "border-gray-300"
-                } rounded-md focus:ring-blue-500 focus:border-blue-500`}
+                className={getErrorClass("courseDetails")}
               />
-              {errors?.courseDetails && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.courseDetails.message}
-                </p>
-              )}
-              {backendErrors?.courseDetails && (
-                <p className="mt-1 text-sm text-red-600">
-                  {backendErrors.courseDetails}
-                </p>
-              )}
+              {renderError("courseDetails")}
             </div>
             <div className="form-group">
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -236,22 +159,9 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
               <input
                 placeholder="Enter specialization"
                 {...register(`education[${index}].specialization`)}
-                className={`w-full p-2 border ${
-                  errors?.specialization || backendErrors?.specialization
-                    ? "border-red-500"
-                    : "border-gray-300"
-                } rounded-md focus:ring-blue-500 focus:border-blue-500`}
+                className={getErrorClass("specialization")}
               />
-              {errors?.specialization && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.specialization.message}
-                </p>
-              )}
-              {backendErrors?.specialization && (
-                <p className="mt-1 text-sm text-red-600">
-                  {backendErrors.specialization}
-                </p>
-              )}
+              {renderError("specialization")}
             </div>
           </>
         )}
@@ -263,22 +173,9 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
           <input
             type="date"
             {...register(`education[${index}].startDate`)}
-            className={`w-full p-2 border ${
-              errors?.startDate || backendErrors?.startDate
-                ? "border-red-500"
-                : "border-gray-300"
-            } rounded-md focus:ring-blue-500 focus:border-blue-500`}
+            className={getErrorClass("startDate")}
           />
-          {errors?.startDate && (
-            <p className="mt-1 text-sm text-red-600">
-              {errors.startDate.message}
-            </p>
-          )}
-          {backendErrors?.startDate && (
-            <p className="mt-1 text-sm text-red-600">
-              {backendErrors.startDate}
-            </p>
-          )}
+          {renderError("startDate")}
         </div>
 
         <div className="form-group">
@@ -288,22 +185,9 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
           <input
             type="date"
             {...register(`education[${index}].passingDate`)}
-            className={`w-full p-2 border ${
-              errors?.passingDate || backendErrors?.passingDate
-                ? "border-red-500"
-                : "border-gray-300"
-            } rounded-md focus:ring-blue-500 focus:border-blue-500`}
+            className={getErrorClass("startDate")}
           />
-          {errors?.passingDate && (
-            <p className="mt-1 text-sm text-red-600">
-              {errors.passingDate.message}
-            </p>
-          )}
-          {backendErrors?.passingDate && (
-            <p className="mt-1 text-sm text-red-600">
-              {backendErrors.passingDate}
-            </p>
-          )}
+          {renderError("passingDate")}
         </div>
       </div>
     </div>

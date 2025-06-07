@@ -443,7 +443,7 @@ const validateEducationalDetails = (req, res, next) => {
 
   // If there are any errors, return them all
   if (Object.keys(errors).length > 0) {
-    return res.status(400).json({ errors });
+    return res.status(400).json({ errors, success: false, data: null });
   }
 
   next();
