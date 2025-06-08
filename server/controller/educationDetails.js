@@ -7,9 +7,11 @@ const educationDetailsHandler = async (req, res) => {
     const employeeId = req.user.id;
 
     if (!employeeId) {
-      return res
-        .status(401)
-        .json({ message: "Unauthorized: Employee ID missing" });
+      return res.status(401).json({
+        msg: "Unauthorized: Employee ID missing",
+        success: false,
+        data: null,
+      });
     }
 
     // console.log(req.body)

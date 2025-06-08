@@ -29,9 +29,12 @@ export const saveSectionData = async (sectionName, data, token) => {
       },
     });
     console.log("response api", res);
-    return res;
+    return res.data;
   } catch (error) {
-    console.log(`🚀 ~ saveSectionData ~ error saving ${sectionName}:`, error);
-    return error;
+    console.log(
+      `🚀 ~ saveSectionData ~ error saving ${sectionName}:`,
+      error?.response?.data
+    );
+    return error?.response?.data;
   }
 };

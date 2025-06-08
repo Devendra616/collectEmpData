@@ -15,7 +15,10 @@ import {
   personalDetailsHandler,
   fetchPersonalDetails,
 } from "../controller/personalDetails.js";
-import familyDetailsHandler from "../controller/familyDetails.js";
+import {
+  familyDetailsHandler,
+  fetchFamilyDetails,
+} from "../controller/familyDetails.js";
 import { verifyToken } from "../middleware/authenticateLogin.js";
 // import fetchController from "../controller/fetchDetails.js";
 import {
@@ -55,7 +58,7 @@ router.get("/personal", verifyToken, fetchPersonalDetails);
 router.get("/education", verifyToken, fetchEducationDetails);
 router.get("/address", verifyToken, fetchPersonalDetails);
 router.get("/work", verifyToken, fetchPersonalDetails);
-router.get("/family", verifyToken, fetchPersonalDetails);
+router.get("/family", verifyToken, fetchFamilyDetails);
 
 router.post(
   "/family",

@@ -8,7 +8,6 @@ import { useAuth } from "../../../context/AuthContext";
 import { useFormData } from "../../../context/FormContext";
 import axios from "axios";
 import { formatDate } from "../../../utils/dateConversion.js";
-
 import { toast } from "react-toastify";
 
 const schema = yup.object().shape({
@@ -81,7 +80,7 @@ const EducationDetailsForm = ({ onNext, defaultValues = [] }) => {
     };
   }, [formState?.education?.data, defaultValues]);
 
-  // Load data if not already in FormContextAdd commentMore actions
+  // Load data if not already in FormContext
   useEffect(() => {
     const loadData = async () => {
       if (

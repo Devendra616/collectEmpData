@@ -5,6 +5,9 @@ import * as yup from "yup";
 import { saveSectionData } from "../../../services/formApi";
 import { useAuth } from "../../../context/AuthContext";
 import { useFormData } from "../../../context/FormContext";
+import axios from "axios";
+import { toast } from "react-toastify";
+import { formatDate } from "../../../utils/dateConversion.js";
 
 const familyTypes = [
   "Spouse",
@@ -25,12 +28,12 @@ const titlesByType = {
 };
 
 const schema = yup.object().shape({
-  familyMembers: yup.array().of(
+  family: yup.array().of(
     yup.object().shape({
-      type: yup.string().required("Select family member type"),
+      relationship: yup.string().required("Family relation is required"),
       title: yup.string().required("Select title"),
-      name: yup.string().required("Name is required"),
-      surname: yup.string().required("Surname is required"),
+      firstName: yup.string().required("First name is required"),
+      lastName: yup.string().required("Last name is required"),
       aadharNumber: yup
         .string()
         .matches(
@@ -47,7 +50,7 @@ const schema = yup.object().shape({
         .required("Date of Birth is required")
         .max(new Date(), "Date of Birth cannot be future date"),
       cityOfBirth: yup.string(),
-      employmentStatus: yup.string(),
+      isWorking: yup.boolean(),
       employmentDetails: yup.string(),
       gender: yup.string(),
     })
@@ -60,25 +63,66 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
 
   const [backendErrors, setBackendErrors] = useState({});
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [hasChanges, setHasChanges] = useState(false);
   const [fieldChanges, setFieldChanges] = useState({});
 
   // Memoize initial values to prevent unnecessary re-renders
-  const initialValues = useMemo(
-    () => ({
-      familyMembers: Array.isArray(formState.familyDetails)
-        ? formState.familyDetails
-        : Array.isArray(defaultValues)
-        ? defaultValues
-        : [],
-    }),
-    [formState.familyDetails, defaultValues]
-  );
+  const initialValues = useMemo(() => {
+    console.log("Form State:", formState);
+    const familyData = formState?.family?.data || [];
 
-  // Debug initial values only on mount
+    // Format dates in each family member entry
+    const formattedFamilyData = familyData.map((entry) => ({
+      ...entry,
+      dob: formatDate(entry.dob),
+    }));
+
+    return {
+      family:
+        Array.isArray(formattedFamilyData) && formattedFamilyData.length > 0
+          ? formattedFamilyData
+          : Array.isArray(defaultValues)
+          ? defaultValues
+          : [],
+    };
+  }, [formState?.family?.data, defaultValues]);
+
+  // Load data if not already in FormContext
   useEffect(() => {
-    console.log("Initial family members:", initialValues.familyMembers);
-  }, []);
+    const loadData = async () => {
+      if (!formState?.family?.data || formState.family.data.length === 0) {
+        setLoading(true);
+        try {
+          const result = await axios.get(
+            `${import.meta.env.VITE_API_URL}/family`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (result?.data?.success) {
+            dispatch({
+              type: "UPDATE_SECTION",
+              section: "family",
+              data: result.data.data?.family || [],
+            });
+          }
+        } catch (error) {
+          console.error("Error loading family details:", error);
+          toast.error("Failed to load family details");
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [token, dispatch, formState?.family?.data]);
 
   const {
     register,
@@ -88,14 +132,72 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
     getValues,
     formState: { errors },
   } = useForm({
-    resolver: yupResolver(schema),
+    // resolver: yupResolver(schema),
     defaultValues: initialValues,
   });
 
   const { fields, append, remove } = useFieldArray({
     control,
-    name: "familyMembers",
+    name: "family",
   });
+
+  // Watch all form values for changes
+  const formValues = watch();
+
+  // Check for changes whenever form values change
+  useEffect(() => {
+    const checkForChanges = () => {
+      const currentValues = getValues();
+      const hasAnyChanges = currentValues.family.some((entry, index) => {
+        const initialEntry = initialValues.family[index];
+        if (!initialEntry) return true;
+
+        return Object.keys(entry).some((key) => {
+          const currentValue = entry[key];
+          const initialValue = initialEntry[key];
+
+          // Handle date comparisons
+          if (key === "dob") {
+            return currentValue !== initialValue;
+          }
+          // Handle other types
+          return JSON.stringify(currentValue) !== JSON.stringify(initialValue);
+        });
+      });
+
+      setHasChanges(hasAnyChanges);
+    };
+    checkForChanges();
+  }, [formValues, initialValues, getValues]);
+
+  // Create onBlur handlers for different field types
+  const createTextBlurHandler = useCallback(
+    (fieldPath) => (e) => {
+      const currentValue = e.target.value;
+      const initialValue = getFieldValue(initialValues, fieldPath);
+      const hasChanged = currentValue !== initialValue;
+
+      setFieldChanges((prev) => {
+        const updated = { ...prev, [fieldPath]: hasChanged };
+        return updated;
+      });
+    },
+    [initialValues]
+  );
+
+  const createSelectBlurHandler = useCallback(
+    (fieldPath) => (e) => {
+      const currentValue = e.target.value;
+      const initialValue = getFieldValue(initialValues, fieldPath);
+      const hasChanged = currentValue !== initialValue;
+
+      setFieldChanges((prev) => {
+        const updated = { ...prev, [fieldPath]: hasChanged };
+        return updated;
+      });
+    },
+    [initialValues]
+  );
 
   // Helper to get nested field value
   const getFieldValue = useCallback((obj, path) => {
@@ -109,53 +211,10 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
     }, obj);
   }, []);
 
-  // Check if field value differs from initial
-  const checkFieldChange = useCallback(
-    (fieldPath, currentValue) => {
-      const initialValue = getFieldValue(initialValues, fieldPath);
-      const hasChanged =
-        JSON.stringify(currentValue) !== JSON.stringify(initialValue);
-
-      setFieldChanges((prev) => {
-        const updated = { ...prev, [fieldPath]: hasChanged };
-        const anyChanges = Object.values(updated).some(Boolean);
-        setHasChanges(anyChanges);
-        return updated;
-      });
-    },
-    [initialValues, getFieldValue]
-  );
-
-  // Create onBlur handlers for different field types
-  const createTextBlurHandler = useCallback(
-    (fieldPath) => (e) => {
-      checkFieldChange(fieldPath, e.target.value);
-    },
-    [checkFieldChange]
-  );
-
-  const createSelectBlurHandler = useCallback(
-    (fieldPath) => (e) => {
-      checkFieldChange(fieldPath, e.target.value);
-    },
-    [checkFieldChange]
-  );
-
-  const createDateBlurHandler = useCallback(
-    (fieldPath) => (e) => {
-      checkFieldChange(fieldPath, e.target.value);
-    },
-    [checkFieldChange]
-  );
-
   const saveData = async (data, proceed = false) => {
-    console.log("saveData called with data:", data);
-    console.log("hasChanges:", hasChanges);
-
-    // If no changes, just proceed to next step without saving
     if (!hasChanges) {
       console.log("No changes detected, skipping save");
-      if (proceed) onNext(data.familyMembers);
+      if (proceed) onNext(data.family);
       return;
     }
 
@@ -163,50 +222,47 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
     setBackendErrors({});
     try {
       // Remove internal fields before saving
-      const dataToSave = data.familyMembers.map((member) => {
-        const { _id, __v, ...cleanMember } = member;
-        return cleanMember;
+      const dataToSave = data.family.map((entry) => {
+        const { _id, __v, ...cleanEntry } = entry;
+        return cleanEntry;
       });
 
-      console.log("Saving family members:", dataToSave);
+      const res = await saveSectionData(
+        "familyDetails",
+        { family: dataToSave },
+        token
+      );
 
-      const res = await saveSectionData("familyDetails", dataToSave, token);
-      if (res?.status === 400) {
-        // Transform the nested error structure
+      if (res?.errors) {
         const transformedErrors = {};
-        if (res.response?.data?.errors) {
-          const errors = res.response.data.errors;
-          // Handle the familyMembers[index] format
-          Object.entries(errors).forEach(([key, value]) => {
-            const match = key.match(/familyMembers\[(\d+)\]/);
-            if (match) {
-              const index = parseInt(match[1]);
-              transformedErrors[index] = value;
-            }
-          });
-        }
+        Object.entries(res.errors).forEach(([key, value]) => {
+          const match = key.match(/family\[(\d+)\]/);
+          if (match) {
+            const index = parseInt(match[1]);
+            transformedErrors[index] = value;
+          }
+        });
         setBackendErrors(transformedErrors);
         return;
+      } else if (res?.success) {
+        toast.success(res.data?.msg || "Family details saved successfully");
+        dispatch({
+          type: "UPDATE_SECTION",
+          section: "family",
+          data: dataToSave,
+        });
       }
-
-      dispatch({
-        type: "UPDATE_SECTION",
-        section: "familyDetails",
-        data: dataToSave,
-      });
 
       setHasChanges(false);
       setFieldChanges({});
       if (proceed) onNext(dataToSave);
     } catch (error) {
       console.error("Error saving data:", error);
-      // Transform error structure for caught errors
       const transformedErrors = {};
       if (error?.response?.data?.errors) {
         const errors = error.response.data.errors;
-        // Handle the familyMembers[index] format
         Object.entries(errors).forEach(([key, value]) => {
-          const match = key.match(/familyMembers\[(\d+)\]/);
+          const match = key.match(/family\[(\d+)\]/);
           if (match) {
             const index = parseInt(match[1]);
             transformedErrors[index] = value;
@@ -220,14 +276,20 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
   };
 
   const handleSaveDraft = handleSubmit((data) => {
-    console.log("Save Draft clicked, data:", data);
     saveData(data, false);
   });
 
   const handleNext = handleSubmit((data) => {
-    console.log("Next clicked, data:", data);
     saveData(data, true);
   });
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -259,7 +321,7 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
         </div>
       )}
 
-      {errors.familyMembers && (
+      {errors.family && (
         <div className="text-red-600 text-sm mb-4">
           Please fix the validation errors below.
         </div>
@@ -272,15 +334,15 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
             className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200 flex items-center"
             onClick={() =>
               append({
-                type: "",
+                relationship: "",
                 title: "",
-                name: "",
-                surname: "",
+                firstName: "",
+                lastName: "",
                 aadharNumber: "",
                 bloodGroup: "",
                 dob: "",
                 cityOfBirth: "",
-                employmentStatus: "",
+                isWorking: "",
                 employmentDetails: "",
                 gender: "",
               })
@@ -313,15 +375,35 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
         )}
 
         <div className="space-y-6">
-          {fields.map((member, index) => {
-            const type = watch(`familyMembers.${index}.type`);
-            const titles = titlesByType[type] || [];
-            const fieldErrors = errors.familyMembers?.[index];
+          {fields.map((item, index) => {
+            const fieldErrors = errors.family?.[index];
             const backendFieldErrors = backendErrors[index];
+
+            const relationship = watch(`family.${index}.relationship`);
+            const titles = titlesByType[relationship] || [];
+
+            const getErrorClass = (fieldName) => {
+              const hasError =
+                fieldErrors?.[fieldName] || backendFieldErrors?.[fieldName];
+              return `w-full p-2 border ${
+                hasError ? "border-red-500" : "border-gray-300"
+              } rounded-md focus:ring-blue-500 focus:border-blue-500`;
+            };
+
+            const renderError = (fieldName) => {
+              const error =
+                fieldErrors?.[fieldName] || backendFieldErrors?.[fieldName];
+              if (!error) return null;
+              return (
+                <p className="mt-1 text-sm text-red-600">
+                  {typeof error === "string" ? error : error.message}
+                </p>
+              );
+            };
 
             return (
               <div
-                key={member.id}
+                key={item.id}
                 className="border border-gray-200 rounded-lg shadow-sm bg-white p-6 relative"
               >
                 <div className="absolute top-4 right-4">
@@ -353,18 +435,11 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="form-group">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Family Member Type
+                      Family Relationship
                     </label>
                     <select
-                      {...register(`familyMembers.${index}.type`)}
-                      onBlur={createSelectBlurHandler(
-                        `familyMembers[${index}].type`
-                      )}
-                      className={`w-full p-2 border ${
-                        fieldErrors?.type || backendFieldErrors?.type
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      } rounded-md focus:ring-blue-500 focus:border-blue-500`}
+                      {...register(`family.${index}.relationship`)}
+                      className={getErrorClass("relatioship")}
                     >
                       <option value="">Select Type</option>
                       {familyTypes.map((t) => (
@@ -373,16 +448,7 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                         </option>
                       ))}
                     </select>
-                    {fieldErrors?.type && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {fieldErrors.type.message}
-                      </p>
-                    )}
-                    {backendFieldErrors?.type && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {backendFieldErrors.type}
-                      </p>
-                    )}
+                    {renderError("relationship")}
                   </div>
 
                   <div className="form-group">
@@ -390,15 +456,8 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                       Title
                     </label>
                     <select
-                      {...register(`familyMembers.${index}.title`)}
-                      onBlur={createSelectBlurHandler(
-                        `familyMembers[${index}].title`
-                      )}
-                      className={`w-full p-2 border ${
-                        fieldErrors?.title || backendFieldErrors?.title
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      } rounded-md focus:ring-blue-500 focus:border-blue-500`}
+                      {...register(`family.${index}.title`)}
+                      className={getErrorClass("title")}
                     >
                       <option value="">Select Title</option>
                       {titles.map((title) => (
@@ -407,72 +466,31 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                         </option>
                       ))}
                     </select>
-                    {fieldErrors?.title && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {fieldErrors.title.message}
-                      </p>
-                    )}
-                    {backendFieldErrors?.title && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {backendFieldErrors.title}
-                      </p>
-                    )}
+                    {renderError("title")}
                   </div>
 
                   <div className="form-group">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Name
+                      First Name
                     </label>
                     <input
-                      placeholder="Enter name"
-                      {...register(`familyMembers.${index}.name`)}
-                      onBlur={createTextBlurHandler(
-                        `familyMembers[${index}].name`
-                      )}
-                      className={`w-full p-2 border ${
-                        fieldErrors?.name || backendFieldErrors?.name
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      } rounded-md focus:ring-blue-500 focus:border-blue-500`}
+                      placeholder="Enter first name"
+                      {...register(`family.${index}.firstName`)}
+                      className={getErrorClass("firstName")}
                     />
-                    {fieldErrors?.name && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {fieldErrors.name.message}
-                      </p>
-                    )}
-                    {backendFieldErrors?.name && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {backendFieldErrors.name}
-                      </p>
-                    )}
+                    {renderError("firstName")}
                   </div>
 
                   <div className="form-group">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Surname
+                      Last Name
                     </label>
                     <input
-                      placeholder="Enter surname"
-                      {...register(`familyMembers.${index}.surname`)}
-                      onBlur={createTextBlurHandler(
-                        `familyMembers[${index}].surname`
-                      )}
-                      className={`w-full p-2 border ${
-                        fieldErrors?.surname || backendFieldErrors?.surname
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      } rounded-md focus:ring-blue-500 focus:border-blue-500`}
+                      placeholder="Enter last name"
+                      {...register(`family.${index}.lastName`)}
+                      className={getErrorClass("lastName")}
                     />
-                    {fieldErrors?.surname && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {fieldErrors.surname.message}
-                      </p>
-                    )}
-                    {backendFieldErrors?.surname && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {backendFieldErrors.surname}
-                      </p>
-                    )}
+                    {renderError("lastName")}
                   </div>
 
                   <div className="form-group">
@@ -481,27 +499,11 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                     </label>
                     <input
                       placeholder="Enter Aadhar number"
-                      {...register(`familyMembers.${index}.aadharNumber`)}
-                      onBlur={createTextBlurHandler(
-                        `familyMembers[${index}].aadharNumber`
-                      )}
-                      className={`w-full p-2 border ${
-                        fieldErrors?.aadharNumber ||
-                        backendFieldErrors?.aadharNumber
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      } rounded-md focus:ring-blue-500 focus:border-blue-500`}
+                      {...register(`family.${index}.aadharNumber`)}
+                      className={getErrorClass("aadharNumber")}
                     />
-                    {fieldErrors?.aadharNumber && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {fieldErrors.aadharNumber.message}
-                      </p>
-                    )}
-                    {backendFieldErrors?.aadharNumber && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {backendFieldErrors.aadharNumber}
-                      </p>
-                    )}
+
+                    {renderError("aadharNumber")}
                   </div>
 
                   <div className="form-group">
@@ -510,27 +512,10 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                     </label>
                     <input
                       placeholder="Enter blood group"
-                      {...register(`familyMembers.${index}.bloodGroup`)}
-                      onBlur={createTextBlurHandler(
-                        `familyMembers[${index}].bloodGroup`
-                      )}
-                      className={`w-full p-2 border ${
-                        fieldErrors?.bloodGroup ||
-                        backendFieldErrors?.bloodGroup
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      } rounded-md focus:ring-blue-500 focus:border-blue-500`}
+                      {...register(`family.${index}.bloodGroup`)}
+                      className={getErrorClass("bloodGroup")}
                     />
-                    {fieldErrors?.bloodGroup && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {fieldErrors.bloodGroup.message}
-                      </p>
-                    )}
-                    {backendFieldErrors?.bloodGroup && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {backendFieldErrors.bloodGroup}
-                      </p>
-                    )}
+                    {renderError("bloodGroup")}
                   </div>
 
                   <div className="form-group">
@@ -539,26 +524,10 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                     </label>
                     <input
                       type="date"
-                      {...register(`familyMembers.${index}.dob`)}
-                      onBlur={createDateBlurHandler(
-                        `familyMembers[${index}].dob`
-                      )}
-                      className={`w-full p-2 border ${
-                        fieldErrors?.dob || backendFieldErrors?.dob
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      } rounded-md focus:ring-blue-500 focus:border-blue-500`}
+                      {...register(`family.${index}.dob`)}
+                      className={getErrorClass("dob")}
                     />
-                    {fieldErrors?.dob && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {fieldErrors.dob.message}
-                      </p>
-                    )}
-                    {backendFieldErrors?.dob && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {backendFieldErrors.dob}
-                      </p>
-                    )}
+                    {renderError("dob")}
                   </div>
 
                   <div className="form-group">
@@ -567,132 +536,60 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                     </label>
                     <input
                       placeholder="Enter city of birth"
-                      {...register(`familyMembers.${index}.cityOfBirth`)}
-                      onBlur={createTextBlurHandler(
-                        `familyMembers[${index}].cityOfBirth`
-                      )}
-                      className={`w-full p-2 border ${
-                        fieldErrors?.cityOfBirth ||
-                        backendFieldErrors?.cityOfBirth
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      } rounded-md focus:ring-blue-500 focus:border-blue-500`}
+                      {...register(`family.${index}.cityOfBirth`)}
+                      className={getErrorClass("cityOfBirth")}
                     />
-                    {fieldErrors?.cityOfBirth && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {fieldErrors.cityOfBirth.message}
-                      </p>
-                    )}
-                    {backendFieldErrors?.cityOfBirth && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {backendFieldErrors.cityOfBirth}
-                      </p>
-                    )}
+                    {renderError("cityOfBirth")}
                   </div>
 
                   {/* Conditional Fields */}
-                  {type === "Spouse" && (
+                  {relationship === "Spouse" && (
                     <>
                       <div className="form-group">
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Spouse Status
                         </label>
                         <select
-                          {...register(
-                            `familyMembers.${index}.employmentStatus`
-                          )}
-                          onBlur={createSelectBlurHandler(
-                            `familyMembers[${index}].employmentStatus`
-                          )}
-                          className={`w-full p-2 border ${
-                            fieldErrors?.employmentStatus ||
-                            backendFieldErrors?.employmentStatus
-                              ? "border-red-500"
-                              : "border-gray-300"
-                          } rounded-md focus:ring-blue-500 focus:border-blue-500`}
+                          {...register(`family.${index}.isWorking`)}
+                          className={getErrorClass("isWorking")}
                         >
                           <option value="">Select Status</option>
-                          <option value="Working">Working</option>
-                          <option value="Not-Working">Not-Working</option>
+                          <option value="true">Working</option>
+                          <option value="false">Not-Working</option>
                         </select>
-                        {fieldErrors?.employmentStatus && (
-                          <p className="mt-1 text-sm text-red-600">
-                            {fieldErrors.employmentStatus.message}
-                          </p>
-                        )}
-                        {backendFieldErrors?.employmentStatus && (
-                          <p className="mt-1 text-sm text-red-600">
-                            {backendFieldErrors.employmentStatus}
-                          </p>
-                        )}
+                        {renderError("isWorking")}
                       </div>
 
-                      {watch(`familyMembers.${index}.employmentStatus`) ===
-                        "Working" && (
+                      {watch(`family.${index}.isWorking`) === "true" && (
                         <div className="form-group">
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Employment Details
                           </label>
                           <input
                             placeholder="Enter employment details"
-                            {...register(
-                              `familyMembers.${index}.employmentDetails`
-                            )}
-                            onBlur={createTextBlurHandler(
-                              `familyMembers[${index}].employmentDetails`
-                            )}
-                            className={`w-full p-2 border ${
-                              fieldErrors?.employmentDetails ||
-                              backendFieldErrors?.employmentDetails
-                                ? "border-red-500"
-                                : "border-gray-300"
-                            } rounded-md focus:ring-blue-500 focus:border-blue-500`}
+                            {...register(`family.${index}.employmentDetails`)}
+                            className={getErrorClass("employmentDetails")}
                           />
-                          {fieldErrors?.employmentDetails && (
-                            <p className="mt-1 text-sm text-red-600">
-                              {fieldErrors.employmentDetails.message}
-                            </p>
-                          )}
-                          {backendFieldErrors?.employmentDetails && (
-                            <p className="mt-1 text-sm text-red-600">
-                              {backendFieldErrors.employmentDetails}
-                            </p>
-                          )}
+                          {renderError("employmentDetails")}
                         </div>
                       )}
                     </>
                   )}
 
-                  {type === "Child" && (
+                  {relationship === "Child" && (
                     <div className="form-group">
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Gender
                       </label>
                       <select
-                        {...register(`familyMembers.${index}.gender`)}
-                        onBlur={createSelectBlurHandler(
-                          `familyMembers[${index}].gender`
-                        )}
-                        className={`w-full p-2 border ${
-                          fieldErrors?.gender || backendFieldErrors?.gender
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        } rounded-md focus:ring-blue-500 focus:border-blue-500`}
+                        {...register(`family.${index}.gender`)}
+                        className={getErrorClass("gender")}
                       >
                         <option value="">Select Gender</option>
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
                       </select>
-                      {fieldErrors?.gender && (
-                        <p className="mt-1 text-sm text-red-600">
-                          {fieldErrors.gender.message}
-                        </p>
-                      )}
-                      {backendFieldErrors?.gender && (
-                        <p className="mt-1 text-sm text-red-600">
-                          {backendFieldErrors.gender}
-                        </p>
-                      )}
+                      {renderError("gender")}
                     </div>
                   )}
                 </div>
@@ -705,8 +602,12 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
           <button
             type="button"
             onClick={handleSaveDraft}
-            disabled={saving}
-            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-300"
+            disabled={!hasChanges || saving}
+            className={`px-4 py-2 rounded ${
+              hasChanges || !saving
+                ? "bg-green-400 text-gray-800 hover:bg-gray-400 cursor-pointer"
+                : "bg-gray-200 text-gray-500 cursor-not-allowed"
+            }`}
           >
             💾 Save Draft
           </button>

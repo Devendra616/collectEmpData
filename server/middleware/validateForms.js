@@ -206,17 +206,18 @@ const validatePersonalDetails = (req, res, next) => {
 };
 
 const validateFamilyDetails = (req, res, next) => {
-  const familyMembers = req.body;
-  console.log("familyMembers->", familyMembers);
+  const { family: familyMembers } = req.body;
   const errors = {};
 
   if (!Array.isArray(familyMembers)) {
-    return res
-      .status(400)
-      .json({ errors: { familyMembers: "Family members must be an array" } });
+    return res.status(400).json({
+      errors: { familyMembers: "Family members must be an array" },
+      success: false,
+      data: null,
+    });
   }
 
-  const familyTypes = [
+  const validRelations = [
     "Spouse",
     "Child",
     "Father",
@@ -237,28 +238,28 @@ const validateFamilyDetails = (req, res, next) => {
     const memberErrors = {};
 
     // Required fields validation
-    if (!member.type?.trim()) {
-      memberErrors.type = "Family member type is required";
-    } else if (!familyTypes.includes(member.type)) {
-      memberErrors.type = "Invalid family member type";
+    if (!member.relationship?.trim()) {
+      memberErrors.relationship = "Family relation is required";
+    } else if (!validRelations.includes(member.relationship)) {
+      memberErrors.relationship = "Invalid family relation selected";
     }
 
     if (!member.title?.trim()) {
       memberErrors.title = "Title is required";
     } else if (
       member.type &&
-      validTitles[member.type] &&
-      !validTitles[member.type].includes(member.title)
+      validTitles[member.relationship] &&
+      !validTitles[member.relationship].includes(member.title)
     ) {
       memberErrors.title = "Invalid title for selected family member type";
     }
 
-    if (!member.name?.trim()) {
-      memberErrors.name = "First name is required";
+    if (!member.firstName?.trim()) {
+      memberErrors.firstName = "First name is required";
     }
 
-    if (!member.surname?.trim()) {
-      memberErrors.surname = "Last name is required";
+    if (!member.lastName?.trim()) {
+      memberErrors.lastName = "Last name is required";
     }
 
     // Aadhaar validation
@@ -277,7 +278,9 @@ const validateFamilyDetails = (req, res, next) => {
       memberErrors.dob = "Date of Birth is required";
     } else {
       const birthDate = new Date(member.dob);
+      birthDate.setHours(0, 0, 0, 0);
       const today = new Date();
+      today.setHours(0, 0, 0, 0); // Set time to midnight
 
       if (birthDate > today) {
         memberErrors.dob = "Date of Birth cannot be in the future";
@@ -285,27 +288,24 @@ const validateFamilyDetails = (req, res, next) => {
     }
 
     // Spouse specific validations
-    if (member.type === "Spouse") {
-      if (!member.employmentStatus?.trim()) {
-        memberErrors.employmentStatus =
-          "Employment status is required for spouse";
+    if (member.relationship === "Spouse") {
+      if (member.isWorking === "") {
+        memberErrors.isWorking = "Employment status is required for spouse";
       } else if (
-        !["Working", "Not-Working"].includes(member.employmentStatus)
+        typeof member.isWorking !== "boolean" &&
+        !["true", "false"].includes(String(member.isWorking).toLowerCase())
       ) {
-        memberErrors.employmentStatus = "Invalid employment status";
+        memberErrors.isWorking = "Invalid employment status";
       }
 
-      if (
-        member.employmentStatus === "Working" &&
-        !member.employmentDetails?.trim()
-      ) {
+      if (member.isWorking && !member.employmentDetails?.trim()) {
         memberErrors.employmentDetails =
           "Employment details are required when status is Working";
       }
     }
 
     // Child specific validations
-    if (member.type === "Child") {
+    if (member.relationship === "Child") {
       if (!member.gender?.trim()) {
         memberErrors.gender = "Gender is required for child";
       } else if (!["Male", "Female"].includes(member.gender)) {
@@ -315,13 +315,13 @@ const validateFamilyDetails = (req, res, next) => {
 
     // If there are errors for this member, add them to the main errors object
     if (Object.keys(memberErrors).length > 0) {
-      errors[`familyMembers[${index}]`] = memberErrors;
+      errors[`family[${index}]`] = memberErrors;
     }
   });
 
   // If there are any errors, return them all
   if (Object.keys(errors).length > 0) {
-    return res.status(400).json({ errors });
+    return res.status(400).json({ errors, success: false, data: null });
   }
 
   next();
@@ -332,9 +332,11 @@ const validateEducationalDetails = (req, res, next) => {
   const errors = {};
 
   if (!Array.isArray(education)) {
-    return res
-      .status(400)
-      .json({ errors: { education: "Education details must be an array" } });
+    return res.status(400).json({
+      errors: { education: "Education details must be an array" },
+      success: false,
+      data: null,
+    });
   }
 
   const validEducationTypes = [
