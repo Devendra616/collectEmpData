@@ -1,10 +1,9 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const addressDetailsSchema = new mongoose.Schema({
-  
   employeeId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Employee',
+    ref: "Employee",
     required: true,
   },
 
@@ -18,7 +17,7 @@ const addressDetailsSchema = new mongoose.Schema({
     postOffice: String,
     policeStation: String,
   },
-  currentAddress: {
+  presentAddress: {
     addressLine1: String,
     addressLine2: String,
     city: String,
@@ -30,5 +29,5 @@ const addressDetailsSchema = new mongoose.Schema({
   },
 });
 
-const AddressDetails = mongoose.model('addressDetails', addressDetailsSchema);
+const AddressDetails = mongoose.model("addressDetails", addressDetailsSchema);
 export default AddressDetails;

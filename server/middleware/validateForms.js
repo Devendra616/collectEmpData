@@ -452,35 +452,58 @@ const validateEducationalDetails = (req, res, next) => {
 };
 
 const validateAddress = (req, res, next) => {
-  const { local, permanent } = req.body;
+  const { address } = req.body;
   const errors = {};
 
-  // Validate both addresses are present
-  if (!local || !permanent) {
+  if (!Array.isArray(address)) {
     return res.status(400).json({
-      errors: {
-        local: !local ? "Local address is required" : null,
-        permanent: !permanent ? "Permanent address is required" : null,
-      },
+      errors: { address: "Address details must be an array" },
+      success: false,
+      data: null,
     });
   }
 
-  // Helper function to validate address fields
-  const validateAddressFields = (address, prefix) => {
+  // Check if both addresses are present
+  const presentAddress = address.find((addr) => addr.type === "present");
+  const permanentAddress = address.find((addr) => addr.type === "permanent");
+
+  if (!presentAddress || !permanentAddress) {
+    return res.status(400).json({
+      errors: {
+        address: {
+          present: !presentAddress ? "Present address is required" : null,
+          permanent: !permanentAddress ? "Permanent address is required" : null,
+        },
+      },
+      success: false,
+      data: null,
+    });
+  }
+
+  const requiredFields = [
+    "addressLine1",
+    "city",
+    "state",
+    "pincode",
+    "district",
+    "postOffice",
+    "policeStation",
+  ];
+
+  address.forEach((addr, index) => {
     const addressErrors = {};
-    const requiredFields = [
-      "addressLine1",
-      "city",
-      "state",
-      "pincode",
-      "district",
-      "postOffice",
-      "policeStation",
-    ];
+
+    // Validate address type
+    if (!addr.type?.trim()) {
+      addressErrors.type = "Address type is required";
+    } else if (!["present", "permanent"].includes(addr.type)) {
+      addressErrors.type =
+        "Address type must be either 'present' or 'permanent'";
+    }
 
     // Check required fields
     requiredFields.forEach((field) => {
-      if (!address[field]?.trim()) {
+      if (!addr[field]?.trim()) {
         addressErrors[field] = `${
           field.charAt(0).toUpperCase() + field.slice(1)
         } is required`;
@@ -488,53 +511,20 @@ const validateAddress = (req, res, next) => {
     });
 
     // Validate pincode format
-    if (address.pincode && !/^[0-9]{6}$/.test(address.pincode)) {
+    if (addr.pincode && !/^[0-9]{6}$/.test(addr.pincode)) {
       addressErrors.pincode = "Pincode must be 6 digits";
     }
 
-    return addressErrors;
-  };
+    // If there are errors for this address, add them to the main errors object
+    if (Object.keys(addressErrors).length > 0) {
+      errors[`address[${index}]`] = addressErrors;
+    }
+  });
 
-  // Validate local address (will be saved as currentAddress)
-  const localErrors = validateAddressFields(local, "local");
-  if (Object.keys(localErrors).length > 0) {
-    errors.local = localErrors;
-  }
-
-  // Validate permanent address
-  const permanentErrors = validateAddressFields(permanent, "permanent");
-  if (Object.keys(permanentErrors).length > 0) {
-    errors.permanent = permanentErrors;
-  }
-
-  // If there are any errors, return them
+  // If there are any errors, return them all
   if (Object.keys(errors).length > 0) {
-    return res.status(400).json({ errors });
+    return res.status(400).json({ errors, success: false, data: null });
   }
-
-  // Transform the data to match the model schema before passing to controller
-  req.body = {
-    currentAddress: {
-      addressLine1: local.addressLine1,
-      addressLine2: local.addressLine2,
-      city: local.city,
-      district: local.district,
-      state: local.state,
-      pincode: local.pincode,
-      postOffice: local.postOffice,
-      policeStation: local.policeStation,
-    },
-    permanentAddress: {
-      addressLine1: permanent.addressLine1,
-      addressLine2: permanent.addressLine2,
-      city: permanent.city,
-      district: permanent.district,
-      state: permanent.state,
-      pincode: permanent.pincode,
-      postOffice: permanent.postOffice,
-      policeStation: permanent.policeStation,
-    },
-  };
 
   next();
 };

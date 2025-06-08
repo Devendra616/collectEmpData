@@ -25,7 +25,10 @@ import {
   fetchEducationDetails,
   educationDetailsHandler,
 } from "../controller/educationDetails.js";
-import addressDetailsHandler from "../controller/addressDetails.js";
+import {
+  addressDetailsHandler,
+  fetchAddressDetails,
+} from "../controller/addressDetails.js";
 import WorkDetailsHandler from "../controller/workDetails.js";
 
 // const { fetchPersonalDetails } = fetchController;
@@ -56,7 +59,7 @@ router.post(
 
 router.get("/personal", verifyToken, fetchPersonalDetails);
 router.get("/education", verifyToken, fetchEducationDetails);
-router.get("/address", verifyToken, fetchPersonalDetails);
+router.get("/address", verifyToken, fetchAddressDetails);
 router.get("/work", verifyToken, fetchPersonalDetails);
 router.get("/family", verifyToken, fetchFamilyDetails);
 
