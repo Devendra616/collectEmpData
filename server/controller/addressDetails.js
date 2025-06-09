@@ -9,9 +9,11 @@ const addressDetailsHandler = async (req, res) => {
     const employeeId = req.user.id;
 
     if (!employeeId) {
-      return res
-        .status(401)
-        .json({ message: "Unauthorized: Employee ID missing" });
+      return res.status(401).json({
+        msg: "Unauthorized: Employee ID missing",
+        success: false,
+        data: null,
+      });
     }
 
     // Transform the address array to match the model schema
@@ -21,7 +23,7 @@ const addressDetailsHandler = async (req, res) => {
     if (!presentAddress || !permanentAddress) {
       return res.status(400).json({
         success: false,
-        message: "Both present and permanent addresses are required",
+        msg: "Both present and permanent addresses are required",
         data: null,
       });
     }
@@ -41,8 +43,6 @@ const addressDetailsHandler = async (req, res) => {
       {
         presentAddress: presentAddressData,
         permanentAddress: permanentAddressData,
-        employeeId,
-        updatedAt: new Date(),
       },
       {
         new: true,
@@ -51,12 +51,17 @@ const addressDetailsHandler = async (req, res) => {
       }
     );
 
-    console.log("Saved address details:", savedDetails);
+    const {
+      _id,
+      __v,
+      employeeId: emp,
+      ...cleanedResult
+    } = savedDetails.toObject();
 
     res.status(200).json({
       success: true,
-      message: "Address details saved successfully",
-      data: savedDetails,
+      msg: "Address details saved successfully",
+      data: cleanedResult,
     });
   } catch (error) {
     console.error("Error in addressDetailsHandler:", error);
@@ -69,7 +74,7 @@ const addressDetailsHandler = async (req, res) => {
       });
       return res.status(400).json({
         success: false,
-        message: "Validation error",
+        msg: "Validation error",
         errors: validationErrors,
         data: null,
       });
@@ -79,7 +84,7 @@ const addressDetailsHandler = async (req, res) => {
     if (error.code === 11000) {
       return res.status(400).json({
         success: false,
-        message: "Duplicate entry found",
+        msg: "Duplicate entry found",
         errors: {
           employeeId: "Address details already exist for this employee",
         },
@@ -89,8 +94,8 @@ const addressDetailsHandler = async (req, res) => {
 
     res.status(500).json({
       success: false,
-      message: "Internal server error",
-      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+      msg: "Internal server error",
+      error: process.env.NODE_ENV === "development" ? error.msg : undefined,
       data: null,
     });
   }

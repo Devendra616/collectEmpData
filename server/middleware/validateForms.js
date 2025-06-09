@@ -454,7 +454,7 @@ const validateEducationalDetails = (req, res, next) => {
 const validateAddress = (req, res, next) => {
   const { address } = req.body;
   const errors = {};
-
+  console.log("validate address called");
   if (!Array.isArray(address)) {
     return res.status(400).json({
       errors: { address: "Address details must be an array" },

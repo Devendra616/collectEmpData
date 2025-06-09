@@ -1,60 +1,31 @@
-import React, { useEffect, useRef, useCallback } from "react";
-import { useForm } from "react-hook-form";
+import React from "react";
 
 const AddressDetails = ({
-  onChange,
-  values = {},
   disabled = false,
   errors = {},
+  backendErrors = {},
+  index,
+  register,
+  watch,
 }) => {
-  const { register, watch, setValue } = useForm();
-  const timeoutRef = useRef(null);
-  const prevDataRef = useRef({});
+  const getErrorClass = (fieldName) => {
+    const hasError = errors?.[fieldName] || backendErrors?.[fieldName];
+    return `w-full p-2 border ${
+      hasError ? "border-red-500" : "border-gray-300"
+    } rounded-md focus:ring-blue-500 focus:border-blue-500 ${
+      disabled ? "bg-gray-100" : ""
+    }`;
+  };
 
-  // ✅ Sync external values into form inputs
-  useEffect(() => {
-    if (values && Object.keys(values).length > 0) {
-      Object.entries(values).forEach(([key, val]) => {
-        setValue(key, val);
-      });
-    }
-  }, [values, setValue]);
-
-  // Debounced change handler
-  const debouncedOnChange = useCallback(
-    (data) => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-
-      timeoutRef.current = setTimeout(() => {
-        const prevData = prevDataRef.current;
-        const hasChanged = Object.keys(data).some(
-          (key) => data[key] !== prevData[key]
-        );
-
-        if (hasChanged) {
-          prevDataRef.current = data;
-          onChange(data);
-        }
-      }, 300); // 300ms debounce
-    },
-    [onChange]
-  );
-
-  // Watch all fields but debounce the changes
-  useEffect(() => {
-    const subscription = watch((data) => {
-      debouncedOnChange(data);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, [watch, debouncedOnChange]);
+  const renderError = (fieldName) => {
+    const error = errors?.[fieldName] || backendErrors?.[fieldName];
+    if (!error) return null;
+    return (
+      <p className="mt-1 text-sm text-red-600">
+        {typeof error === "string" ? error : error.message}
+      </p>
+    );
+  };
 
   const renderField = (name, label, placeholder) => (
     <div className="form-group">
@@ -62,16 +33,12 @@ const AddressDetails = ({
         {label}
       </label>
       <input
-        {...register(name)}
+        {...register(`address.${index}.${name}`)}
         placeholder={placeholder}
-        className={`w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 ${
-          errors[name] ? "border-red-500" : "border-gray-300"
-        } ${disabled ? "bg-gray-100" : ""}`}
+        className={getErrorClass(name)}
         disabled={disabled}
       />
-      {errors[name] && (
-        <p className="mt-1 text-sm text-red-600">{errors[name].message}</p>
-      )}
+      {renderError(name)}
     </div>
   );
 

@@ -35,7 +35,7 @@ const MultiStepForm = () => {
     setError("");
 
     try {
-      const res = await saveSectionData(section, data, token);
+      /* const res = await saveSectionData(section, data, token);
       console.log("Response from saveSectionData:", res);
 
       // Check if response contains validation errors
@@ -51,7 +51,7 @@ const MultiStepForm = () => {
         const errorMsg = res?.msg || "Failed to save section";
         setError(errorMsg);
         return;
-      }
+      } */
 
       dispatch({ type: "UPDATE_SECTION", section, data });
       setStep((prev) => prev + 1);
