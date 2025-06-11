@@ -530,12 +530,14 @@ const validateAddress = (req, res, next) => {
 };
 
 const validateWorkExperience = (req, res, next) => {
-  const workExp = req.body;
+  const { work: workExperience } = req.body;
   const errors = {};
 
-  if (!Array.isArray(workExp)) {
+  if (!Array.isArray(workExperience)) {
     return res.status(400).json({
-      errors: { workExperience: "Work Experience details must be an array" },
+      errors: { work: "Work experiences must be an array" },
+      success: false,
+      data: null,
     });
   }
 
@@ -550,16 +552,19 @@ const validateWorkExperience = (req, res, next) => {
     "State govt",
   ];
 
-  workExp.forEach((entry, index) => {
+  workExperience.forEach((entry, index) => {
     const entryErrors = {};
 
     // Required fields validation
-    if (!entry.name?.trim()) {
-      entryErrors.name = "Company name is required";
+    if (!entry.companyName?.trim()) {
+      entryErrors.companyName = "Company name is required";
+    }
+    if (!entry.city?.trim()) {
+      entryErrors.city = "Company city is required";
     }
 
-    if (!entry.designation?.trim()) {
-      entryErrors.designation = "Designation is required";
+    if (!entry.role?.trim()) {
+      entryErrors.role = "Designation/role is required";
     }
 
     if (!entry.grossSalary || entry.grossSalary <= 0) {
@@ -572,8 +577,13 @@ const validateWorkExperience = (req, res, next) => {
     }
 
     // Greenfield validation
-    if (entry.greenfield && !["Yes", "No"].includes(entry.greenfield)) {
-      entryErrors.greenfield = "Greenfield must be either 'Yes' or 'No'";
+    if (entry.isGreenfield === "") {
+      entryErrors.isGreenfield = "Is work Greenfield ?";
+    } else if (
+      typeof entry.isGreenfield !== "boolean" &&
+      !["true", "false"].includes(String(entry.isGreenfield).toLowerCase())
+    ) {
+      memberErrors.isWorking = "Invalid greenfield status";
     }
 
     // Start Date validations

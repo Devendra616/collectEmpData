@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
@@ -6,8 +6,9 @@ import { saveSectionData } from "../../../services/formApi";
 import { useAuth } from "../../../context/AuthContext";
 import { useFormData } from "../../../context/FormContext";
 import { toast } from "react-toastify";
-import { getDiffFromDates } from "../../../utils/getAge.js";
+import { formatDuration } from "../../../utils/getAge.js";
 import axios from "axios";
+import { formatDate } from "../../../utils/dateConversion.js";
 
 const industries = [
   "Autonomous Bodies",
@@ -21,30 +22,24 @@ const industries = [
 ];
 
 const schema = yup.object().shape({
-  employers: yup.array().of(
+  work: yup.array().of(
     yup.object().shape({
-      name: yup.string().required("Employer name is required"),
-      designation: yup.string().required("Designation is required"),
-      city: yup.string(),
+      companyName: yup.string().required("Company name is required"),
+      role: yup.string().required("Designation/role is required"),
+      city: yup.string().required("Worked city is required"),
       startDate: yup
         .date()
         .required("Start date is required")
-        .transform((value, originalValue) => {
-          if (!originalValue) return null;
-          const date = new Date(originalValue);
-          return isNaN(date.getTime()) ? null : date;
-        })
-        .nullable()
+        .transform((value, originalValue) =>
+          originalValue ? new Date(originalValue) : null
+        )
         .typeError("Please enter a valid start date"),
       relievingDate: yup
         .date()
         .required("Relieving date is required")
-        .transform((value, originalValue) => {
-          if (!originalValue) return null;
-          const date = new Date(originalValue);
-          return isNaN(date.getTime()) ? null : date;
-        })
-        .nullable()
+        .transform((value, originalValue) =>
+          originalValue ? new Date(originalValue) : null
+        )
         .typeError("Please enter a valid relieving date")
         .test(
           "is-after-start",
@@ -67,28 +62,15 @@ const schema = yup.object().shape({
         .transform((value) => (isNaN(value) ? undefined : value))
         .nullable()
         .typeError("Please enter a valid salary amount"),
-      greenfield: yup.string().oneOf(["Yes", "No"], "Please select Yes or No"),
-      numberOfMonths: yup
-        .number()
-        .min(0, "Number of months must be non-negative")
-        .max(11, "Number of months must be less than 12")
-        .integer("Number of months must be a whole number")
-        .transform((value) => (isNaN(value) ? undefined : value))
-        .nullable()
-        .typeError("Please enter a valid number of months"),
-      numberOfYears: yup
-        .number()
-        .min(0, "Number of years must be non-negative")
-        .integer("Number of years must be a whole number")
-        .transform((value) => (isNaN(value) ? undefined : value))
-        .nullable()
-        .typeError("Please enter a valid number of years"),
+      isGreenfield: yup
+        .boolean()
+        .required("Specify if its greenfield job(mines work)"),
       responsibilities: yup.string(),
     })
   ),
 });
 
-const EmployerForm = ({ onNext, defaultValues = [] }) => {
+const WorkExperienceForm = ({ onNext, defaultValues = [] }) => {
   const { token } = useAuth();
   const { state: formState, dispatch } = useFormData();
 
@@ -96,11 +78,34 @@ const EmployerForm = ({ onNext, defaultValues = [] }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [fieldChanges, setFieldChanges] = useState({});
+
+  // Memoize initial values to prevent unnecessary re-renders
+  const initialValues = useMemo(() => {
+    console.log("Form State:", formState);
+    const workData = formState?.work?.data || [];
+
+    // Format dates in each work entry
+    const formattedWorkData = workData.map((entry) => ({
+      ...entry,
+      startDate: formatDate(entry.startDate),
+      relievingDate: formatDate(entry.relievingDate),
+    }));
+    console.log("formatted", formattedWorkData);
+    return {
+      work:
+        Array.isArray(formattedWorkData) && formattedWorkData.length > 0
+          ? formattedWorkData
+          : Array.isArray(defaultValues)
+          ? defaultValues
+          : [],
+    };
+  }, [formState?.work?.data, defaultValues]);
 
   // Load data if not already in FormContext
   useEffect(() => {
     const loadData = async () => {
-      if (!formState.workExperience || formState.workExperience.length === 0) {
+      if (!formState.work || formState.work.length === 0) {
         setLoading(true);
         try {
           const result = await axios.get(
@@ -129,26 +134,14 @@ const EmployerForm = ({ onNext, defaultValues = [] }) => {
     };
 
     loadData();
-  }, [token, dispatch, formState.workExperience]);
-
-  // Memoize initial values to prevent unnecessary re-renders
-  const initialValues = useMemo(
-    () => ({
-      employers: Array.isArray(formState.workExperience)
-        ? formState.workExperience
-        : Array.isArray(defaultValues)
-        ? defaultValues
-        : [],
-    }),
-    [formState.workExperience, defaultValues]
-  );
+  }, [token, dispatch, formState?.work?.data]);
 
   const {
     register,
     control,
     handleSubmit,
+    getValues,
     watch,
-    setValue,
     formState: { errors },
   } = useForm({
     resolver: yupResolver(schema),
@@ -157,140 +150,95 @@ const EmployerForm = ({ onNext, defaultValues = [] }) => {
 
   const { fields, append, remove } = useFieldArray({
     control,
-    name: "employers",
+    name: "work",
   });
 
-  // Helper to get nested field value
-  const getFieldValue = useCallback((obj, path) => {
-    return path.split(".").reduce((curr, key) => {
-      if (key.includes("[") && key.includes("]")) {
-        const arrayKey = key.split("[")[0];
-        const index = parseInt(key.split("[")[1].split("]")[0]);
-        return curr?.[arrayKey]?.[index];
-      }
-      return curr?.[key];
-    }, obj);
-  }, []);
+  // Watch all form values for changes
+  const formValues = watch();
 
-  // Check if field value differs from initial
-  const checkFieldChange = useCallback(
-    (fieldPath, currentValue) => {
-      const initialValue = getFieldValue(initialValues, fieldPath);
-      const hasChanged =
-        JSON.stringify(currentValue) !== JSON.stringify(initialValue);
-
-      setHasChanges(hasChanged);
-    },
-    [initialValues, getFieldValue]
-  );
-
-  // Create onBlur handlers for different field types
-  const createTextBlurHandler = useCallback(
-    (fieldPath) => (e) => {
-      checkFieldChange(fieldPath, e.target.value);
-    },
-    [checkFieldChange]
-  );
-
-  const createSelectBlurHandler = useCallback(
-    (fieldPath) => (e) => {
-      checkFieldChange(fieldPath, e.target.value);
-    },
-    [checkFieldChange]
-  );
-
-  const createDateBlurHandler = useCallback(
-    (fieldPath) => (e) => {
-      checkFieldChange(fieldPath, e.target.value);
-    },
-    [checkFieldChange]
-  );
-
-  // Watch all start and relieving dates
-  const startDates = watch("employers")?.map((emp) => emp.startDate) || [];
-  const relievingDates =
-    watch("employers")?.map((emp) => emp.relievingDate) || [];
-
-  // Calculate duration whenever dates change
+  // Check for changes whenever form values change
   useEffect(() => {
-    const calculateAndSetDuration = (index) => {
-      const startDate = startDates[index];
-      const relievingDate = relievingDates[index];
+    const checkForChanges = () => {
+      const currentValues = getValues();
+      const hasAnyChanges = currentValues.work.some((entry, index) => {
+        const initialEntry = initialValues.work[index];
+        if (!initialEntry) return true;
 
-      if (startDate && relievingDate) {
-        const calculatedDuration = getDiffFromDates(startDate, relievingDate);
-        if (calculatedDuration) {
-          // Only update if values are different to prevent infinite loop
-          const currentYears = watch(`employers.${index}.numberOfYears`);
-          const currentMonths = watch(`employers.${index}.numberOfMonths`);
+        return Object.keys(entry).some((key) => {
+          const currentValue = entry[key];
+          const initialValue = initialEntry[key];
 
-          if (currentYears !== calculatedDuration.years) {
-            setValue(
-              `employers.${index}.numberOfYears`,
-              calculatedDuration.years,
-              { shouldDirty: false }
-            );
+          // Handle date comparisons
+          if (key === "startDate") {
+            return currentValue !== initialValue;
           }
-          if (currentMonths !== calculatedDuration.months) {
-            setValue(
-              `employers.${index}.numberOfMonths`,
-              calculatedDuration.months,
-              { shouldDirty: false }
-            );
+          if (key === "relievingDate") {
+            return currentValue !== initialValue;
           }
-        }
-      }
+          // Handle other types
+          return JSON.stringify(currentValue) !== JSON.stringify(initialValue);
+        });
+      });
+
+      setHasChanges(hasAnyChanges);
     };
+    checkForChanges();
+  }, [formValues, initialValues, getValues]);
 
-    // Calculate duration for each employer
-    fields.forEach((_, index) => {
-      calculateAndSetDuration(index);
-    });
-  }, [startDates, relievingDates, fields, setValue, watch]);
+  const startDates = watch("work")?.map((emp) => emp.startDate) || [];
+  const relievingDates = watch("work")?.map((emp) => emp.relievingDate) || [];
 
   const saveData = async (data, proceed = false) => {
     if (!hasChanges) {
-      if (proceed) onNext(data.employers);
+      if (proceed) onNext(data.work);
       return;
     }
 
     setSaving(true);
     setBackendErrors({});
     try {
-      const dataToSave = data.employers.map((employer) => {
+      const dataToSave = data.work.map((employer) => {
         const { _id, __v, ...cleanEmployer } = employer;
         return cleanEmployer;
       });
 
-      const res = await saveSectionData("workExperience", dataToSave, token);
-      if (res?.status === 400) {
+      const res = await saveSectionData(
+        "workExperience",
+        { work: dataToSave },
+        token
+      );
+      if (res?.errors) {
         const transformedErrors = {};
-        if (res.response?.data?.errors) {
-          const errors = res.response.data.errors;
-          Object.entries(errors).forEach(([key, value]) => {
-            const match = key.match(/work\[(\d+)\]/);
-            if (match) {
-              const index = parseInt(match[1]);
-              transformedErrors[index] = value;
-            }
-          });
-        }
+
+        Object.entries(res.errors).forEach(([key, value]) => {
+          const match = key.match(/work\[(\d+)\]/);
+          if (match) {
+            const index = parseInt(match[1]);
+            transformedErrors[index] = value;
+          }
+        });
+
         setBackendErrors(transformedErrors);
         return;
-      }
-      if (res.success) {
+      } else if (res?.success) {
         console.log("Work Experience saved successfully");
-        toast.success("Work Experience saved successfully");
-        return;
+        toast.success(res.data?.msg || "Work Experience saved successfully");
+        dispatch({
+          type: "UPDATE_SECTION",
+          section: "work",
+          data: dataToSave,
+        });
       }
 
       dispatch({
         type: "UPDATE_SECTION",
-        section: "employers",
+        section: "work",
         data: dataToSave,
       });
 
       setHasChanges(false);
+      setFieldChanges({});
+
       if (proceed) onNext(dataToSave);
     } catch (error) {
       console.error("Error saving data:", error);
@@ -298,7 +246,7 @@ const EmployerForm = ({ onNext, defaultValues = [] }) => {
       if (error?.response?.data?.errors) {
         const errors = error.response.data.errors;
         Object.entries(errors).forEach(([key, value]) => {
-          const match = key.match(/employers\[(\d+)\]/);
+          const match = key.match(/work\[(\d+)\]/);
           if (match) {
             const index = parseInt(match[1]);
             transformedErrors[index] = value;
@@ -359,7 +307,7 @@ const EmployerForm = ({ onNext, defaultValues = [] }) => {
         </div>
       )}
 
-      {errors.employers && (
+      {errors.work && (
         <div className="text-red-600 text-sm mb-4">
           Please fix the validation errors below.
         </div>
@@ -372,8 +320,8 @@ const EmployerForm = ({ onNext, defaultValues = [] }) => {
             className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200 flex items-center"
             onClick={() =>
               append({
-                name: "",
-                designation: "",
+                companyName: "",
+                role: "",
                 city: "",
                 startDate: "",
                 relievingDate: "",
@@ -381,7 +329,7 @@ const EmployerForm = ({ onNext, defaultValues = [] }) => {
                 scaleOnLeaving: "",
                 reasonForLeaving: "",
                 grossSalary: "",
-                greenfield: "",
+                isGreenfield: false,
                 numberOfMonths: "",
                 numberOfYears: "",
                 responsibilities: "",
@@ -415,13 +363,32 @@ const EmployerForm = ({ onNext, defaultValues = [] }) => {
         )}
 
         <div className="space-y-6">
-          {fields.map((employer, index) => {
-            const fieldErrors = errors.employers?.[index];
+          {fields.map((item, index) => {
+            const fieldErrors = errors.work?.[index];
             const backendFieldErrors = backendErrors[index];
+
+            const getErrorClass = (fieldName) => {
+              const hasError =
+                fieldErrors?.[fieldName] || backendFieldErrors?.[fieldName];
+              return `w-full p-2 border ${
+                hasError ? "border-red-500" : "border-gray-300"
+              } rounded-md focus:ring-blue-500 focus:border-blue-500`;
+            };
+
+            const renderError = (fieldName) => {
+              const error =
+                fieldErrors?.[fieldName] || backendFieldErrors?.[fieldName];
+              if (!error) return null;
+              return (
+                <p className="mt-1 text-sm text-red-600">
+                  {typeof error === "string" ? error : error.message}
+                </p>
+              );
+            };
 
             return (
               <div
-                key={employer.id}
+                key={item.id}
                 className="border border-gray-200 rounded-lg shadow-sm bg-white p-6 relative"
               >
                 <div className="absolute top-4 right-4">
@@ -453,28 +420,14 @@ const EmployerForm = ({ onNext, defaultValues = [] }) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="form-group">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Employer's Name
+                      Company's Name
                     </label>
                     <input
-                      {...register(`employers.${index}.name`)}
-                      onBlur={createTextBlurHandler(`employers[${index}].name`)}
-                      placeholder="Enter employer's name"
-                      className={`w-full p-2 border ${
-                        fieldErrors?.name || backendFieldErrors?.name
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      } rounded-md focus:ring-blue-500 focus:border-blue-500`}
+                      {...register(`work.${index}.companyName`)}
+                      placeholder="Enter company's name"
+                      className={getErrorClass("companyName")}
                     />
-                    {fieldErrors?.name && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {fieldErrors.name.message}
-                      </p>
-                    )}
-                    {backendFieldErrors?.name && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {backendFieldErrors.name}
-                      </p>
-                    )}
+                    {renderError("companyName")}
                   </div>
 
                   <div className="form-group">
@@ -482,25 +435,11 @@ const EmployerForm = ({ onNext, defaultValues = [] }) => {
                       City
                     </label>
                     <input
-                      {...register(`employers.${index}.city`)}
-                      onBlur={createTextBlurHandler(`employers[${index}].city`)}
+                      {...register(`work.${index}.city`)}
                       placeholder="Enter city"
-                      className={`w-full p-2 border ${
-                        fieldErrors?.city || backendFieldErrors?.city
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      } rounded-md focus:ring-blue-500 focus:border-blue-500`}
+                      className={getErrorClass("city")}
                     />
-                    {fieldErrors?.city && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {fieldErrors.city.message}
-                      </p>
-                    )}
-                    {backendFieldErrors?.city && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {backendFieldErrors.city}
-                      </p>
-                    )}
+                    {renderError("city")}
                   </div>
 
                   <div className="form-group">
@@ -509,26 +448,10 @@ const EmployerForm = ({ onNext, defaultValues = [] }) => {
                     </label>
                     <input
                       type="date"
-                      {...register(`employers.${index}.startDate`)}
-                      onBlur={createDateBlurHandler(
-                        `employers[${index}].startDate`
-                      )}
-                      className={`w-full p-2 border ${
-                        fieldErrors?.startDate || backendFieldErrors?.startDate
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      } rounded-md focus:ring-blue-500 focus:border-blue-500`}
+                      {...register(`work.${index}.startDate`)}
+                      className={getErrorClass("startDate")}
                     />
-                    {fieldErrors?.startDate && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {fieldErrors.startDate.message}
-                      </p>
-                    )}
-                    {backendFieldErrors?.startDate && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {backendFieldErrors.startDate}
-                      </p>
-                    )}
+                    {renderError("startDate")}
                   </div>
 
                   <div className="form-group">
@@ -537,59 +460,31 @@ const EmployerForm = ({ onNext, defaultValues = [] }) => {
                     </label>
                     <input
                       type="date"
-                      {...register(`employers.${index}.relievingDate`)}
-                      onBlur={createDateBlurHandler(
-                        `employers[${index}].relievingDate`
-                      )}
-                      className={`w-full p-2 border ${
-                        fieldErrors?.relievingDate ||
-                        backendFieldErrors?.relievingDate
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      } rounded-md focus:ring-blue-500 focus:border-blue-500`}
+                      {...register(`work.${index}.relievingDate`)}
+                      className={getErrorClass("relievingDate")}
+                      min={
+                        startDates[index]
+                          ? new Date(
+                              new Date(startDates[index]).setDate(
+                                new Date(startDates[index]).getDate() + 1
+                              )
+                            )
+                              .toISOString()
+                              .split("T")[0]
+                          : undefined
+                      }
+                      max={new Date().toISOString().split("T")[0]}
                     />
                     {startDates[index] && relievingDates[index] && (
                       <p className="text-sm text-green-600 mt-1">
                         Duration:{" "}
-                        {getDiffFromDates(
+                        {formatDuration(
                           startDates[index],
                           relievingDates[index]
-                        )?.years || 0}{" "}
-                        year
-                        {getDiffFromDates(
-                          startDates[index],
-                          relievingDates[index]
-                        )?.years !== 1 && "s"}{" "}
-                        {getDiffFromDates(
-                          startDates[index],
-                          relievingDates[index]
-                        )?.months || 0}{" "}
-                        month
-                        {getDiffFromDates(
-                          startDates[index],
-                          relievingDates[index]
-                        )?.months !== 1 && "s"}{" "}
-                        {getDiffFromDates(
-                          startDates[index],
-                          relievingDates[index]
-                        )?.days || 0}{" "}
-                        day
-                        {getDiffFromDates(
-                          startDates[index],
-                          relievingDates[index]
-                        )?.days !== 1 && "s"}
+                        )}
                       </p>
                     )}
-                    {fieldErrors?.relievingDate && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {fieldErrors.relievingDate.message}
-                      </p>
-                    )}
-                    {backendFieldErrors?.relievingDate && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {backendFieldErrors.relievingDate}
-                      </p>
-                    )}
+                    {renderError("relievingDate")}
                   </div>
 
                   <div className="form-group">
@@ -597,15 +492,8 @@ const EmployerForm = ({ onNext, defaultValues = [] }) => {
                       Industry
                     </label>
                     <select
-                      {...register(`employers.${index}.industry`)}
-                      onBlur={createSelectBlurHandler(
-                        `employers[${index}].industry`
-                      )}
-                      className={`w-full p-2 border ${
-                        fieldErrors?.industry || backendFieldErrors?.industry
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      } rounded-md focus:ring-blue-500 focus:border-blue-500`}
+                      {...register(`work.${index}.industry`)}
+                      className={getErrorClass("industry")}
                     >
                       <option value="">Select Industry</option>
                       {industries.map((ind, idx) => (
@@ -614,45 +502,19 @@ const EmployerForm = ({ onNext, defaultValues = [] }) => {
                         </option>
                       ))}
                     </select>
-                    {fieldErrors?.industry && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {fieldErrors.industry.message}
-                      </p>
-                    )}
-                    {backendFieldErrors?.industry && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {backendFieldErrors.industry}
-                      </p>
-                    )}
+                    {renderError("industry")}
                   </div>
 
                   <div className="form-group">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Designation
+                      Designation/Role
                     </label>
                     <input
-                      {...register(`employers.${index}.designation`)}
-                      onBlur={createTextBlurHandler(
-                        `employers[${index}].designation`
-                      )}
-                      placeholder="Enter designation"
-                      className={`w-full p-2 border ${
-                        fieldErrors?.designation ||
-                        backendFieldErrors?.designation
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      } rounded-md focus:ring-blue-500 focus:border-blue-500`}
+                      {...register(`work.${index}.role`)}
+                      className={getErrorClass("role")}
+                      placeholder="Enter designation/role"
                     />
-                    {fieldErrors?.designation && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {fieldErrors.designation.message}
-                      </p>
-                    )}
-                    {backendFieldErrors?.designation && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {backendFieldErrors.designation}
-                      </p>
-                    )}
+                    {renderError("role")}
                   </div>
 
                   <div className="form-group">
@@ -660,28 +522,11 @@ const EmployerForm = ({ onNext, defaultValues = [] }) => {
                       Scale on Leaving
                     </label>
                     <input
-                      {...register(`employers.${index}.scaleOnLeaving`)}
-                      onBlur={createTextBlurHandler(
-                        `employers[${index}].scaleOnLeaving`
-                      )}
+                      {...register(`work.${index}.scaleOnLeaving`)}
                       placeholder="Enter scale on leaving"
-                      className={`w-full p-2 border ${
-                        fieldErrors?.scaleOnLeaving ||
-                        backendFieldErrors?.scaleOnLeaving
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      } rounded-md focus:ring-blue-500 focus:border-blue-500`}
+                      className={getErrorClass("scaleOnLeaving")}
                     />
-                    {fieldErrors?.scaleOnLeaving && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {fieldErrors.scaleOnLeaving.message}
-                      </p>
-                    )}
-                    {backendFieldErrors?.scaleOnLeaving && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {backendFieldErrors.scaleOnLeaving}
-                      </p>
-                    )}
+                    {renderError("scaleOnLeaving")}
                   </div>
 
                   <div className="form-group">
@@ -689,28 +534,11 @@ const EmployerForm = ({ onNext, defaultValues = [] }) => {
                       Reason for Leaving
                     </label>
                     <input
-                      {...register(`employers.${index}.reasonForLeaving`)}
-                      onBlur={createTextBlurHandler(
-                        `employers[${index}].reasonForLeaving`
-                      )}
+                      {...register(`work.${index}.reasonForLeaving`)}
+                      className={getErrorClass("reasonForLeaving")}
                       placeholder="Enter reason for leaving"
-                      className={`w-full p-2 border ${
-                        fieldErrors?.reasonForLeaving ||
-                        backendFieldErrors?.reasonForLeaving
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      } rounded-md focus:ring-blue-500 focus:border-blue-500`}
                     />
-                    {fieldErrors?.reasonForLeaving && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {fieldErrors.reasonForLeaving.message}
-                      </p>
-                    )}
-                    {backendFieldErrors?.reasonForLeaving && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {backendFieldErrors.reasonForLeaving}
-                      </p>
-                    )}
+                    {renderError("reasonForLeaving")}
                   </div>
 
                   <div className="form-group">
@@ -720,117 +548,61 @@ const EmployerForm = ({ onNext, defaultValues = [] }) => {
                     <input
                       type="number"
                       min={0}
-                      {...register(`employers.${index}.grossSalary`)}
-                      onBlur={createTextBlurHandler(
-                        `employers[${index}].grossSalary`
-                      )}
+                      {...register(`work.${index}.grossSalary`)}
                       placeholder="Enter gross salary"
-                      className={`w-full p-2 border ${
-                        fieldErrors?.grossSalary ||
-                        backendFieldErrors?.grossSalary
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      } rounded-md focus:ring-blue-500 focus:border-blue-500`}
+                      className={getErrorClass("grossSalary")}
                     />
-                    {fieldErrors?.grossSalary && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {fieldErrors.grossSalary.message}
-                      </p>
-                    )}
-                    {backendFieldErrors?.grossSalary && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {backendFieldErrors.grossSalary}
-                      </p>
-                    )}
+                    {renderError("grossSalary")}
                   </div>
 
                   <div className="form-group">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Greenfield
                     </label>
-                    <input
-                      {...register(`employers.${index}.greenfield`)}
-                      onBlur={createTextBlurHandler(
-                        `employers[${index}].greenfield`
-                      )}
-                      placeholder="Enter greenfield"
-                      className={`w-full p-2 border ${
-                        fieldErrors?.greenfield ||
-                        backendFieldErrors?.greenfield
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      } rounded-md focus:ring-blue-500 focus:border-blue-500`}
-                    />
-                    {fieldErrors?.greenfield && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {fieldErrors.greenfield.message}
-                      </p>
-                    )}
-                    {backendFieldErrors?.greenfield && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {backendFieldErrors.greenfield}
-                      </p>
-                    )}
+                    <select
+                      {...register(`work.${index}.isGreenfield`, {
+                        setValueAs: (value) => {
+                          if (value === "") return undefined;
+                          return value === "true";
+                        },
+                      })}
+                      className={getErrorClass("isGreenfield")}
+                    >
+                      <option value="">Select</option>
+                      <option value="false">No</option>
+                      <option value="true">Yes</option>
+                    </select>
+                    {renderError("isGreenfield")}
                   </div>
 
-                  <div className="form-group">
+                  <div className="form-group col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Number of Months
+                      Responsibilities
                     </label>
-                    <input
-                      type="number"
-                      {...register(`employers.${index}.numberOfMonths`)}
-                      onBlur={createTextBlurHandler(
-                        `employers[${index}].numberOfMonths`
-                      )}
-                      placeholder="Enter number of months"
-                      className={`w-full p-2 border ${
-                        fieldErrors?.numberOfMonths ||
-                        backendFieldErrors?.numberOfMonths
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      } rounded-md focus:ring-blue-500 focus:border-blue-500`}
+                    <textarea
+                      {...register(`work.${index}.responsibilities`, {
+                        maxLength: 500,
+                      })}
+                      placeholder="Enter your job responsibilities (max 500 characters)"
+                      className={`${getErrorClass(
+                        "responsibilities"
+                      )} min-h-[100px] resize-y w-full`}
+                      rows={4}
                     />
-                    {fieldErrors?.numberOfMonths && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {fieldErrors.numberOfMonths.message}
+                    <div className="flex justify-between mt-1">
+                      <p className="text-sm text-gray-500">
+                        {watch(`work.${index}.responsibilities`)?.length || 0}
+                        /500 characters
                       </p>
-                    )}
-                    {backendFieldErrors?.numberOfMonths && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {backendFieldErrors.numberOfMonths}
+                      <p className="text-sm text-gray-500">
+                        {watch(`work.${index}.responsibilities`)
+                          ?.trim()
+                          .split(/\s+/)
+                          .filter(Boolean).length || 0}{" "}
+                        words
                       </p>
-                    )}
-                  </div>
-
-                  <div className="form-group">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Number of Years
-                    </label>
-                    <input
-                      type="number"
-                      {...register(`employers.${index}.numberOfYears`)}
-                      onBlur={createTextBlurHandler(
-                        `employers[${index}].numberOfYears`
-                      )}
-                      placeholder="Enter number of years"
-                      className={`w-full p-2 border ${
-                        fieldErrors?.numberOfYears ||
-                        backendFieldErrors?.numberOfYears
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      } rounded-md focus:ring-blue-500 focus:border-blue-500`}
-                    />
-                    {fieldErrors?.numberOfYears && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {fieldErrors.numberOfYears.message}
-                      </p>
-                    )}
-                    {backendFieldErrors?.numberOfYears && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {backendFieldErrors.numberOfYears}
-                      </p>
-                    )}
+                    </div>
+                    {renderError("responsibilities")}
                   </div>
                 </div>
               </div>
@@ -842,7 +614,7 @@ const EmployerForm = ({ onNext, defaultValues = [] }) => {
           <button
             type="button"
             onClick={handleSaveDraft}
-            disabled={saving}
+            disabled={!hasChanges || saving}
             className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-300"
           >
             💾 Save Draft
@@ -861,4 +633,4 @@ const EmployerForm = ({ onNext, defaultValues = [] }) => {
   );
 };
 
-export default EmployerForm;
+export default WorkExperienceForm;

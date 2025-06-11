@@ -1,58 +1,52 @@
 import WorkExperience from "../models/workExperience.js";
+import { getDiffFromDates } from "../utils/getAge.js";
 
 const WorkDetailsHandler = async (req, res) => {
   try {
-    const workDetails = req.body;
+    const { work: workDetails } = req.body;
     const employeeId = req.user.id;
 
     if (!employeeId) {
-      return res
-        .status(401)
-        .json({ message: "Unauthorized: Employee ID missing" });
-    }
-
-    // Transform the data to match the schema
-    const transformedWorkDetails = workDetails.map((exp) => ({
-      companyName: exp.name,
-      role: exp.designation,
-      startDate: exp.startDate,
-      endDate: exp.relievingDate,
-      duration: {
-        years: exp.numberOfYears || 0,
-        months: exp.numberOfMonths || 0,
-        days: 0,
-      },
-      grossSalary: exp.grossSalary,
-      city: exp.city,
-      industry: exp.industry,
-      greenfield: exp.greenfield === "Yes",
-      reasonForLeaving: exp.reasonForLeaving,
-      scaleOnLeaving: exp.scaleOnLeaving,
-      responsibilities: exp.responsibilities || "",
-    }));
-
-    // Find existing work experience or create new
-    let workExperience = await WorkExperience.findOne({ employeeId });
-
-    if (workExperience) {
-      // Update existing document
-      workExperience.experiences = transformedWorkDetails;
-    } else {
-      // Create new document
-      workExperience = new WorkExperience({
-        employeeId,
-        experiences: transformedWorkDetails,
+      return res.status(401).json({
+        msg: "Unauthorized: Employee ID missing",
+        success: false,
+        data: null,
       });
     }
 
-    // Save the document to trigger pre-save middleware
-    const savedWorkDetails = await workExperience.save();
+    // Transform the data to match the schema
+    const transformedWorkDetails = workDetails.map((exp) => {
+      const duration = getDiffFromDates(exp.startDate, exp.relievingDate);
 
+      return {
+        ...exp,
+        duration: {
+          years: duration.years || 0,
+          months: duration.months || 0,
+          days: duration.days || 0,
+        },
+      };
+    });
+
+    // Log the update operation data
+    console.log("Update operation data:", {
+      $set: { experiences: transformedWorkDetails },
+    });
+
+    const savedWorkDetails = await WorkExperience.findOneAndUpdate(
+      { employeeId },
+      { $set: { experiences: transformedWorkDetails } },
+      { new: true, upsert: true }
+    );
+
+    console.log(
+      "🚀 ~ WorkDetailsHandler ~ savedWorkDetails:",
+      savedWorkDetails
+    );
     res.status(200).json({
       success: true,
-      savedWorkDetails,
-      msg: "Work details saved successfully.",
-      statusCode: 200,
+      data: savedWorkDetails,
+      msg: "Work details updated successfully.",
     });
   } catch (error) {
     console.log("🚀 ~ WorkDetailsHandler ~ error:", error);
@@ -60,4 +54,35 @@ const WorkDetailsHandler = async (req, res) => {
   }
 };
 
-export default WorkDetailsHandler;
+const fetchWorkDetails = async (req, res) => {
+  try {
+    const employeeId = req.user.id;
+    const workExpDetails = await WorkExperience.findOne({ employeeId })
+      .populate("employeeId", "-__v -_id")
+      .select("-__v -_id");
+
+    if (!workExpDetails) {
+      return res.status(404).json({
+        success: false,
+        msg: "No work experiences found",
+        data: null,
+      });
+    }
+    const { employeeId: id, ...workDetails } = workExpDetails.toObject();
+    console.log("🚀 ~ fetchWorkDetails ~ workDetails:", workDetails);
+    return res.status(200).json({
+      data: workDetails.experiences || [],
+      success: true,
+      msg: "Data successfully fetched from DB",
+    });
+  } catch (error) {
+    console.log("🚀 ~ fetch work details ~ error:", error);
+    res.status(500).json({
+      success: false,
+      msg: "Error in fetching data",
+      data: null,
+    });
+  }
+};
+
+export { WorkDetailsHandler, fetchWorkDetails };

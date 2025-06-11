@@ -34,7 +34,7 @@ export const getDiffFromDates = (start, end = new Date()) => {
 
   let years = endDate.getFullYear() - startDate.getFullYear();
   let months = endDate.getMonth() - startDate.getMonth();
-  let days = endDate.getDate() - startDate.getDate();
+  let days = endDate.getDate() - startDate.getDate() + 1;
 
   if (days < 0) {
     months -= 1;
@@ -48,4 +48,23 @@ export const getDiffFromDates = (start, end = new Date()) => {
   }
 
   return { years, months, days };
+};
+
+// format the duration as year(s) month(s) day(s)
+export const formatDuration = (start, end = new Date()) => {
+  const duration = getDiffFromDates(start, end);
+  if (!duration) return "";
+
+  const parts = [];
+  if (duration.years > 0) {
+    parts.push(`${duration.years} year${duration.years !== 1 ? "s" : ""}`);
+  }
+  if (duration.months > 0) {
+    parts.push(`${duration.months} month${duration.months !== 1 ? "s" : ""}`);
+  }
+  if (duration.days > 0) {
+    parts.push(`${duration.days} day${duration.days !== 1 ? "s" : ""}`);
+  }
+
+  return parts.join(", ");
 };

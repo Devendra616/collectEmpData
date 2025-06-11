@@ -4,7 +4,7 @@ const experienceSchema = new mongoose.Schema({
   companyName: String,
   role: String,
   startDate: Date,
-  endDate: Date,
+  relievingDate: Date,
   duration: {
     years: Number,
     months: Number,
@@ -13,18 +13,18 @@ const experienceSchema = new mongoose.Schema({
   grossSalary: Number,
   city: String,
   industry: String,
-  greenfield: Boolean, //YES or NO
+  isGreenfield: Boolean, //YES or NO
   reasonForLeaving: String,
   scaleOnLeaving: String,
   responsibilities: String,
 });
 
-// Pre-save middleware to calculate duration
+/* // Pre-save middleware to calculate duration
 experienceSchema.pre("save", function (next) {
   console.log("presave called");
-  if (this.startDate && this.endDate) {
+  if (this.startDate && this.relievingDate) {
     const start = new Date(this.startDate);
-    const end = new Date(this.endDate);
+    const end = new Date(this.relievingDate);
     console.log(start, end);
     // Calculate the difference in milliseconds
     const diffTime = Math.abs(end - start);
@@ -43,7 +43,7 @@ experienceSchema.pre("save", function (next) {
     };
   }
   next();
-});
+}); */
 
 const workExperienceSchema = new mongoose.Schema({
   employeeId: {

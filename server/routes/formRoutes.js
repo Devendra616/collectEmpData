@@ -29,7 +29,10 @@ import {
   addressDetailsHandler,
   fetchAddressDetails,
 } from "../controller/addressDetails.js";
-import WorkDetailsHandler from "../controller/workDetails.js";
+import {
+  WorkDetailsHandler,
+  fetchWorkDetails,
+} from "../controller/workDetails.js";
 
 // const { fetchPersonalDetails } = fetchController;
 
@@ -60,7 +63,7 @@ router.post(
 router.get("/personal", verifyToken, fetchPersonalDetails);
 router.get("/education", verifyToken, fetchEducationDetails);
 router.get("/address", verifyToken, fetchAddressDetails);
-router.get("/work", verifyToken, fetchPersonalDetails);
+router.get("/work", verifyToken, fetchWorkDetails);
 router.get("/family", verifyToken, fetchFamilyDetails);
 
 router.post(
