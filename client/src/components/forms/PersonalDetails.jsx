@@ -87,18 +87,18 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
       ...formState?.personal?.data[0],
       ...defaultValues?.data,
       dob: formatDate(
-        formState.personal?.data[0]?.dob || defaultValues?.data?.dob
+        formState?.personal?.data[0]?.dob || defaultValues?.data?.dob
       ),
       langHindiRead:
-        formState.personal?.data[0]?.langHindiRead ||
+        formState?.personal?.data[0]?.langHindiRead ||
         defaultValues?.data?.langHindiRead ||
         false,
       langHindiWrite:
-        formState.personal?.data[0]?.langHindiWrite ||
+        formState?.personal?.data[0]?.langHindiWrite ||
         defaultValues?.data?.langHindiWrite ||
         false,
       langHindiSpeak:
-        formState.personal?.data[0]?.langHindiSpeak ||
+        formState?.personal?.data[0]?.langHindiSpeak ||
         defaultValues?.data?.langHindiSpeak ||
         false,
     }),
@@ -194,6 +194,11 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
           ([key]) => !key.startsWith("_") && key !== "__v"
         )
       );
+
+      // Format date before saving
+      if (dataToSave.dob) {
+        dataToSave.dob = formatDate(dataToSave.dob);
+      }
 
       const res = await saveSectionData("personalDetails", dataToSave, token);
       console.log("after saving res", res);

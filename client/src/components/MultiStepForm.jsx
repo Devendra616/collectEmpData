@@ -109,10 +109,16 @@ const MultiStepForm = () => {
 
       {!isSubmitted && (
         <CurrentForm
-          onNext={(data) =>
-            isReview ? setIsSubmitted(true) : handleNext(current.name, data)
-          }
-          defaultValues={state[current.name] || {}}
+          {...(isReview
+            ? {
+                data: state,
+                onBack: () => setStep((prev) => prev - 1),
+                onSubmit: () => setIsSubmitted(true),
+              }
+            : {
+                onNext: (data) => handleNext(current.name, data),
+                defaultValues: state[current.name] || {},
+              })}
         />
       )}
 

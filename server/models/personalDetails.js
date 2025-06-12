@@ -1,16 +1,16 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const personalDetailsSchema = new mongoose.Schema({
-  employeeId:{
-    type:mongoose.Types.ObjectId,
-    ref:"Employee"
+  employeeId: {
+    type: mongoose.Types.ObjectId,
+    ref: "Employee",
   },
   title: String,
   firstName: String,
   lastName: String,
   // sapId: String,
   gender: String,
-  dob: String,
+  dob: Date,
   mobile: String,
   // email: String,
   adhaarId: String,
@@ -32,6 +32,9 @@ const personalDetailsSchema = new mongoose.Schema({
   pwd: String,
 });
 
-const PersonalDetails = mongoose.model('PersonalDetails', personalDetailsSchema);
+const PersonalDetails = mongoose.model(
+  "PersonalDetails",
+  personalDetailsSchema
+);
 
 export default PersonalDetails;

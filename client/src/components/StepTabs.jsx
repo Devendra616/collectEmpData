@@ -1,10 +1,17 @@
-import React from 'react';
+import React from "react";
 
-const steps = ["Personal", "Education", "Family","Address", "Work"];
+const steps = [
+  "Personal",
+  "Education",
+  "Family",
+  "Address",
+  "Work",
+  "Review Application",
+];
 
-const StepTabs = ({ currentStep, setStep})=>{
-    return(
-         <div className="flex justify-around mb-6">
+const StepTabs = ({ currentStep, setStep }) => {
+  return (
+    <div className="flex justify-around mb-6">
       {steps.map((label, index) => (
         <button
           key={label}
@@ -19,7 +26,7 @@ const StepTabs = ({ currentStep, setStep})=>{
         </button>
       ))}
     </div>
-    )
-}
+  );
+};
 
 export default StepTabs;
