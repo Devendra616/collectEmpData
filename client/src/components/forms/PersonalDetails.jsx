@@ -82,24 +82,23 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
   const [loading, setLoading] = useState(true);
   const [age, setAge] = useState(null);
   const [hasChanges, setHasChanges] = useState(false);
-
   const initialValues = useMemo(
     () => ({
-      ...formState?.personal?.data,
+      ...formState?.personal?.data[0],
       ...defaultValues?.data,
       dob: formatDate(
-        formState.personal?.data?.dob || defaultValues?.data?.dob
+        formState.personal?.data[0]?.dob || defaultValues?.data?.dob
       ),
       langHindiRead:
-        formState.personal?.data?.langHindiRead ||
+        formState.personal?.data[0]?.langHindiRead ||
         defaultValues?.data?.langHindiRead ||
         false,
       langHindiWrite:
-        formState.personal?.data?.langHindiWrite ||
+        formState.personal?.data[0]?.langHindiWrite ||
         defaultValues?.data?.langHindiWrite ||
         false,
       langHindiSpeak:
-        formState.personal?.data?.langHindiSpeak ||
+        formState.personal?.data[0]?.langHindiSpeak ||
         defaultValues?.data?.langHindiSpeak ||
         false,
     }),
@@ -158,10 +157,13 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
             }
           );
 
+          // Handle array format by accessing first item
+          const personalData = result?.data?.data?.[0] || {};
+
           dispatch({
             type: "UPDATE_SECTION",
             section: "personal",
-            data: result?.data || {},
+            data: personalData,
           });
         } catch (error) {
           console.error("Error loading personal details:", error);
@@ -194,16 +196,17 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
       );
 
       const res = await saveSectionData("personalDetails", dataToSave, token);
-      if (res?.status === 400) {
-        const backendErrors = res.response?.data?.errors || {};
+      console.log("after saving res", res);
+      if (!res?.success && res.errors) {
+        const backendErrors = res?.errors || {};
         setBackendErrors(backendErrors);
         Object.entries(backendErrors).forEach(([field, message]) => {
           setError(field, { type: "manual", message });
         });
+        toast.error(res?.msg || "Fix the errors first");
         return;
       }
-
-      if (res?.data?.success) {
+      if (res?.success) {
         toast.success(res?.msg || "Personal details updated successfully");
         dispatch({
           type: "UPDATE_SECTION",
@@ -275,12 +278,6 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
               </li>
             ))}
           </ul>
-        </div>
-      )}
-
-      {Object.keys(errors).length > 0 && (
-        <div className="text-red-600 text-sm mb-4">
-          Please fix the validation errors below.
         </div>
       )}
 

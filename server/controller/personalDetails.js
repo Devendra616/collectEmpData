@@ -21,12 +21,11 @@ const personalDetailsHandler = async (req, res) => {
     const savedDetails = await PersonalDetails.findOneAndUpdate(
       { employeeId },
       { ...personalDetails, employeeId },
-
       { new: true, upsert: true }
     );
     console.log("After update", savedDetails);
     res.status(200).json({
-      data: savedDetails,
+      data: [savedDetails],
       success: true,
       msg: "Updated personal details",
     });
@@ -54,14 +53,16 @@ const fetchPersonalDetails = async (req, res) => {
 
     const { employeeId: id, ...personalDetails } = personalData.toObject();
     return res.status(200).json({
-      data: {
-        ...personalDetails,
-        email: id.email,
-        sapId: id.sapId,
-        langHindiRead: personalDetails.langHindiRead || false,
-        langHindiWrite: personalDetails.langHindiWrite || false,
-        langHindiSpeak: personalDetails.langHindiSpeak || false,
-      },
+      data: [
+        {
+          ...personalDetails,
+          email: id.email,
+          sapId: id.sapId,
+          langHindiRead: personalDetails.langHindiRead || false,
+          langHindiWrite: personalDetails.langHindiWrite || false,
+          langHindiSpeak: personalDetails.langHindiSpeak || false,
+        },
+      ],
       success: true,
       msg: "Data successfully fetched from DB",
     });
