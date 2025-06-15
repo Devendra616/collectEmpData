@@ -1,0 +1,50 @@
+version: "3.8"
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: employee_data_mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password123
+    networks:
+      - app-network
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: employee_data_server
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./server/.env
+    depends_on:
+      - shared-mongodb
+    networks:
+      - shared-apps
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: employee_data_client
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./client/.env
+    depends_on:
+      - server
+    networks:
+      - shared-apps
+
+networks:
+  shared-apps:
+    external: true
+
+volumes:
+  mongodb_data:
