@@ -23,8 +23,8 @@ services:
       - "5000:5000"
     env_file:
       - ./server/.env
-    depends_on:
-      - shared-mongodb
+    # depends_on:
+    # - shared-mongodb
     networks:
       - shared-apps
 
