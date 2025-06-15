@@ -1,12 +1,10 @@
-import React, { useState } from "react";
-import axios from "axios";
+import React from "react";
+import axiosInstance from "../services/axiosInstance.js";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { toast } from "react-toastify";
 import * as yup from "yup";
-
-const apiUrl = import.meta.env.VITE_API_URL;
 
 // Validation schema
 const passwordRegex =
@@ -37,7 +35,6 @@ const schema = yup.object().shape({
 });
 
 const Register = () => {
-  const [message, setMessage] = useState("");
   const navigate = useNavigate();
 
   const {
@@ -48,102 +45,99 @@ const Register = () => {
     resolver: yupResolver(schema),
   });
 
-  const onSubmit = async (formData) => {
+  const onSubmit = async (data) => {
     try {
-      const res = await axios.post(`${apiUrl}/register`, formData);
-      const { success, msg } = res?.data;
-      if (success) {
-        toast.success(msg || "Registration successful!");
-        setMessage(msg || "Registration successful!");
-        navigate("/login");
-      } else {
-        toast.warn(msg || "SAP ID is already registered! Please login");
-        setMessage(msg || "Already registered!");
-      }
+      const response = await axiosInstance.post("/register", data);
+      toast.success(response.data.msg || "Registration successful!");
+      navigate("/");
     } catch (error) {
-      const errMsg =
-        error.response?.data?.msg ||
-        error.message ||
-        "Registration failed. Please try again.";
-      toast.error(errMsg);
-      console.error("API error:", error);
-      setMessage(errMsg);
+      console.error("Registration error:", error);
+      toast.error(error?.response?.data?.msg || "Registration failed.");
     }
   };
 
   return (
-    <div className="flex flex-col justify-center items-center text-white border rounded-2xl">
+    <div className="flex border rounded-2xl flex-col justify-center items-center text-white">
       <div className="m-5">
         <h2 className="text-3xl">Register</h2>
       </div>
-
       <div className="mt-2">
-        <form onSubmit={handleSubmit(onSubmit)} className="w-80">
-          <div className="mb-4 flex flex-col">
-            <label className="text-xl mb-1">Email</label>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <div className="mb-4">
+            <label className="text-xl">Email</label>
             <input
               type="email"
               {...register("email")}
-              placeholder="Email"
-              className="p-2 border rounded-md"
+              placeholder="Enter NMDC Email"
+              className="p-2 ml-8 border rounded-md"
             />
             {errors.email && (
-              <p className="text-red-500 text-sm">{errors.email.message}</p>
+              <p className="text-red-500 text-sm mt-1">
+                {errors.email.message}
+              </p>
             )}
           </div>
 
-          <div className="mb-4 flex flex-col">
-            <label className="text-xl mb-1">SAP ID</label>
+          <div className="mb-4">
+            <label className="text-xl">SAP ID</label>
             <input
               type="text"
               {...register("sapId")}
-              placeholder="SAP ID"
-              className="p-2 border rounded-md"
+              placeholder="Enter SAP ID"
+              className="p-2 ml-8 border rounded-md"
             />
             {errors.sapId && (
-              <p className="text-red-500 text-sm">{errors.sapId.message}</p>
+              <p className="text-red-500 text-sm mt-1">
+                {errors.sapId.message}
+              </p>
             )}
           </div>
 
-          <div className="mb-4 flex flex-col">
-            <label className="text-xl mb-1">Password</label>
+          <div className="mb-4">
+            <label className="text-xl">Password</label>
             <input
               type="password"
               {...register("password")}
-              placeholder="Password"
-              className="p-2 border rounded-md"
+              placeholder="Enter Password"
+              className="p-2 ml-2 border rounded-md"
             />
             {errors.password && (
-              <p className="text-red-500 text-sm">{errors.password.message}</p>
+              <p className="text-red-500 text-sm mt-1">
+                {errors.password.message}
+              </p>
             )}
           </div>
 
-          <div className="mb-4 flex flex-col">
-            <label className="text-xl mb-1">Confirm Password</label>
+          <div className="mb-4">
+            <label className="text-xl">Confirm Password</label>
             <input
               type="password"
               {...register("cpassword")}
               placeholder="Confirm Password"
-              className="p-2 border rounded-md"
+              className="p-2 ml-2 border rounded-md"
             />
             {errors.cpassword && (
-              <p className="text-red-500 text-sm">{errors.cpassword.message}</p>
+              <p className="text-red-500 text-sm mt-1">
+                {errors.cpassword.message}
+              </p>
             )}
           </div>
 
-          <button
-            type="submit"
-            className="w-full mt-2 border border-black rounded-md bg-blue-500 hover:bg-blue-600 px-3 py-2 text-white"
-          >
-            Register
-          </button>
-
-          <span className="mt-4 block text-center hover:text-blue-500">
-            <Link to={"/"}>Already Registered ? Login now.</Link>
-          </span>
+          <div className="flex justify-center">
+            <button
+              type="submit"
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            >
+              Register
+            </button>
+          </div>
         </form>
+        <div className="mt-4 text-center">
+          <Link to="/" className="text-blue-400 hover:text-blue-300">
+            Already have an account? Login here
+          </Link>
+        </div>
       </div>
-      {message && <p className="text-green-400 text-xl ">{message}</p>}
     </div>
   );
 };

@@ -74,7 +74,7 @@ const schema = yup.object().shape({
 });
 
 const PersonalDetailsForm = ({ onNext, defaultValues }) => {
-  const { token, empData } = useAuth();
+  const { token } = useAuth();
   const { state: formState, dispatch } = useFormData();
 
   const [backendErrors, setBackendErrors] = useState({});
@@ -82,23 +82,31 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
   const [loading, setLoading] = useState(true);
   const [age, setAge] = useState(null);
   const [hasChanges, setHasChanges] = useState(false);
+
+  // Get the first item from the data array, handling nested structure
+  const getPersonalData = () => {
+    const data = formState?.personal?.data;
+    if (!data) return {};
+    // Handle both nested and flat data structures
+    const firstItem = Array.isArray(data) ? data[0] : data;
+    return firstItem?.data || firstItem || {};
+  };
+
   const initialValues = useMemo(
     () => ({
-      ...formState?.personal?.data[0],
+      ...getPersonalData(),
       ...defaultValues?.data,
-      dob: formatDate(
-        formState?.personal?.data[0]?.dob || defaultValues?.data?.dob
-      ),
+      dob: formatDate(getPersonalData()?.dob || defaultValues?.data?.dob),
       langHindiRead:
-        formState?.personal?.data[0]?.langHindiRead ||
+        getPersonalData()?.langHindiRead ||
         defaultValues?.data?.langHindiRead ||
         false,
       langHindiWrite:
-        formState?.personal?.data[0]?.langHindiWrite ||
+        getPersonalData()?.langHindiWrite ||
         defaultValues?.data?.langHindiWrite ||
         false,
       langHindiSpeak:
-        formState?.personal?.data[0]?.langHindiSpeak ||
+        getPersonalData()?.langHindiSpeak ||
         defaultValues?.data?.langHindiSpeak ||
         false,
     }),
@@ -145,7 +153,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
   // Load data if not already in FormContext
   useEffect(() => {
     const loadData = async () => {
-      if (!formState.personal || Object.keys(formState.personal).length === 0) {
+      if (!formState.personal?.data?.length) {
         setLoading(true);
         try {
           const result = await axios.get(
@@ -157,6 +165,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
             }
           );
 
+          console.log("🚀 ~ loadData ~ personalData:", result);
           // Handle array format by accessing first item
           const personalData = result?.data?.data?.[0] || {};
 
@@ -167,7 +176,20 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
           });
         } catch (error) {
           console.error("Error loading personal details:", error);
-          toast.error("Failed to load personal details");
+          // Handle 404 error specifically
+          if (error.response?.status === 404) {
+            // Initialize with empty data structure
+            dispatch({
+              type: "UPDATE_SECTION",
+              section: "personal",
+              data: {},
+            });
+            toast.info(
+              "No existing personal details found. Please fill in your details."
+            );
+          } else {
+            toast.error("Failed to load personal details");
+          }
         } finally {
           setLoading(false);
         }
@@ -216,10 +238,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
         dispatch({
           type: "UPDATE_SECTION",
           section: "personal",
-          data: {
-            ...formState.personal,
-            data: dataToSave,
-          },
+          data: dataToSave,
         });
       } else {
         toast.error(res?.msg || "Something went wrong, not updated");

@@ -1,4 +1,6 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
+import { useFormData } from "./FormContext";
+import { toast } from "react-toastify";
 
 const AuthContext = createContext();
 
@@ -17,6 +19,41 @@ export const AuthProvider = ({ children }) => {
     return stored ? JSON.parse(stored) : "";
   });
 
+  const { dispatch: formDispatch } = useFormData();
+
+  // Add token validation effect
+  useEffect(() => {
+    const validateToken = async () => {
+      if (!token) return;
+
+      try {
+        const response = await fetch("/api/validate-token", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          console.log("session expired");
+          toast.error("Session invalid or expired.");
+          throw new Error("Token invalid or expired");
+        }
+      } catch (error) {
+        console.error("Token validation failed:", error);
+        toast.error("Session invalid or expired.");
+        handleSessionTimeout();
+      }
+    };
+
+    validateToken();
+  }, [token]);
+
+  const handleSessionTimeout = () => {
+    logout();
+    // Instead of using navigate directly, we'll dispatch a custom event
+    window.dispatchEvent(new CustomEvent("auth:sessionTimeout"));
+  };
+
   const login = (token, user) => {
     localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(user));
@@ -29,6 +66,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     sessionStorage.removeItem("empData");
+    formDispatch({ type: "CLEAR_FORM_DATA" }); // This will handle both state reset and localStorage clearing
     setToken(null);
     setUser(null);
     setEmpData("");
@@ -51,6 +89,7 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated,
         fetchData,
         empData,
+        handleSessionTimeout,
       }}
     >
       {children}

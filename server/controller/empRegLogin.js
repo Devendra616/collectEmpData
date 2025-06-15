@@ -59,7 +59,7 @@ const loginHandler = async (req, res) => {
     console.log("Employee Id:", req.session.employeeId);
 
     const token = jwt.sign({ id: empFound._id }, process.env.JWT_SECRET, {
-      expiresIn: "2h",
+      expiresIn: "1h",
     });
 
     res.status(200).json({
@@ -69,6 +69,7 @@ const loginHandler = async (req, res) => {
       token,
       user: {
         email: empFound.email,
+        sapId,
       },
     });
   });

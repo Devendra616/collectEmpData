@@ -42,6 +42,16 @@ const { registrationHandler, loginHandler } = handlers;
 //   res.status(200).json({ message: 'Welcome! Your route is working.' });
 // });
 
+router.get("/validate-token", verifyToken, (req, res) => {
+  // if passed middleware then valid
+  res.status(200).json({
+    success: true,
+    msg: "Token is valid",
+    statusCode: 200,
+    user: req.user,
+  });
+});
+
 router.post("/register", validateReg, registrationHandler);
 
 router.post("/login", loginHandler);

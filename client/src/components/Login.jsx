@@ -1,7 +1,7 @@
 import { useAuth } from "../context/AuthContext.jsx";
 import { useFormData } from "../context/FormContext";
 import React, { useState } from "react";
-import axios from "axios";
+import axiosInstance from "../services/axiosInstance.js";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
@@ -17,7 +17,6 @@ const Login = () => {
 
   // const [result, setResult] =useState(null);
   // const [error, setError] = useState("")
-  const apiUrl = import.meta.env.VITE_API_URL;
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -26,10 +25,8 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(`${apiUrl}/login`, formData);
+      const res = await axiosInstance.post("/login", formData);
       const { token, user } = res.data;
-      console.log("🚀 ~ handleSubmit ~ token:", token);
-      console.log("🚀 ~ handleSubmit ~ user:", user);
 
       login(token, user);
       if (token) {
@@ -44,11 +41,7 @@ const Login = () => {
 
         for (const section of sections) {
           try {
-            const result = await axios.get(`${apiUrl}/${section}`, {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            });
+            const result = await axiosInstance.get(`/${section}`);
             allData[section] = result?.data || {};
             console.log(`Fetched ${section} data:`, result?.data);
           } catch (error) {
@@ -75,7 +68,7 @@ const Login = () => {
       // setResult(successMsg);
       // You can save user info or token here, e.g. localStorage
     } catch (error) {
-      console.log("🚀 ~ handleSubmit ~ error:", error);
+      console.error("Login error:", error);
       toast.error(error?.response?.data?.msg || "Login failed.");
       // const errorMsg = error?.response?.data?.msg || "Login failed."
       // setError(errorMsg);
@@ -113,17 +106,20 @@ const Login = () => {
           />
           <br />
 
-          <button
-            type="submit"
-            className="m-2 border border-black rounded-md bg-blue-500 hover:bg-blue-600 px-3 py-2 text-white cursor-pointer ml-2 "
-          >
-            Login
-          </button>
-
-          <span className="ml-23 hover:text-blue-500">
-            <Link to={"/register"}>Register Yourself</Link>
-          </span>
+          <div className="flex justify-center">
+            <button
+              type="submit"
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            >
+              Login
+            </button>
+          </div>
         </form>
+        <div className="mt-4 text-center">
+          <Link to="/register" className="text-blue-400 hover:text-blue-300">
+            Don't have an account? Register here
+          </Link>
+        </div>
       </div>
       {/* {error && <p >{error}</p>} */}
     </div>
