@@ -1,6 +1,6 @@
 import React from "react";
 import MultiStepForm from "./components/MultiStepForm";
-import Register from "./components/register";
+import Register from "./components/Register";
 import Login from "./components/Login";
 import PrivateRoute from "./components/PrivateRoute";
 import { Route, Routes } from "react-router-dom";
