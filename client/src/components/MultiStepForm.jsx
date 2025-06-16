@@ -10,7 +10,7 @@ import WorkExperienceForm from "./forms/work/WorkExperience";
 import ReviewForm from "./forms/ReviewForm";
 import Navbar from "./Navbar";
 import StepTabs from "./StepTabs";
-import { generatePDF } from "../pdf/generatePDF.js";
+// import { generatePDF } from "../pdf/generatePDF.js";
 
 const MultiStepForm = () => {
   const { token } = useAuth();
@@ -75,7 +75,7 @@ const MultiStepForm = () => {
 
   const handleDownloadForm = (dataToDownload) => {
     if (isSubmitted && dataToDownload) {
-      generatePDF(dataToDownload);
+      // generatePDF(dataToDownload);
     }
   };
 
