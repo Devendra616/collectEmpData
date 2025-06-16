@@ -46,7 +46,9 @@ const loginHandler = async (req, res) => {
   let empFound = await Employee.findOne({ sapId }).select("+password");
 
   if (!empFound) {
-    return res.json({ msg: "Employee not found....Please register!!!" });
+    return res
+      .status(400)
+      .json({ msg: "Employee not found....Please register!!!" });
   }
 
   empFound.checkpw(password, async function (err, result) {
