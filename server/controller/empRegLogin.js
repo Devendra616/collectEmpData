@@ -45,16 +45,18 @@ const loginHandler = async (req, res) => {
 
   let empFound = await Employee.findOne({ sapId }).select("+password");
 
+  console.log("🚀 ~ loginHandler ~ empFound:", empFound);
   if (!empFound) {
-    return res
-      .status(400)
-      .json({ msg: "Employee not found....Please register!!!" });
+    return res.status(400).json({
+      msg: "Employee not found....Please register!!!",
+      success: false,
+    });
   }
 
   empFound.checkpw(password, async function (err, result) {
     if (err) return next(err);
     if (!result) {
-      return res.status(400).json({ msg: "Invalid Password" });
+      return res.status(400).json({ msg: "Invalid Password", success: false });
     }
     req.session.employeeId = empFound._id;
 
