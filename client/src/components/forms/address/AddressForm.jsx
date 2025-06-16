@@ -6,7 +6,7 @@ import AddressDetails from "./Address";
 import { saveSectionData } from "../../../services/formApi.js";
 import { useAuth } from "../../../context/AuthContext";
 import { useFormData } from "../../../context/FormContext";
-import axios from "axios";
+import axiosInstance from "../../../services/axiosInstance.js";
 import { toast } from "react-toastify";
 
 const schema = yup.object().shape({
@@ -54,14 +54,7 @@ const AddressForm = ({ onNext }) => {
       if (!formState?.address?.data || formState.address.data.length === 0) {
         setLoading(true);
         try {
-          const result = await axios.get(
-            `${import.meta.env.VITE_API_URL}/address`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
+          const result = await axiosInstance.get("/address");
 
           if (result?.data?.success) {
             dispatch({

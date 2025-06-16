@@ -7,7 +7,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useFormData } from "../../context/FormContext";
 import { getAgeFromDOB } from "../../utils/getAge";
 import languageOptions from "../../constants/languageOptions";
-import axios from "axios";
+import axiosInstance from "../../services/axiosInstance.js";
 import { toast } from "react-toastify";
 import { formatDate } from "../../utils/dateConversion.js";
 
@@ -86,16 +86,23 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
   // Get the first item from the data array, handling nested structure
   const getPersonalData = () => {
     const data = formState?.personal?.data;
+
     if (!data) return {};
     // Handle both nested and flat data structures
     const firstItem = Array.isArray(data) ? data[0] : data;
     return firstItem?.data || firstItem || {};
   };
 
-  const initialValues = useMemo(
-    () => ({
+  const initialValues = useMemo(() => {
+    // Get employee data from session storage
+    const { emp } = JSON.parse(sessionStorage.getItem("empData") || "{}");
+
+    return {
       ...getPersonalData(),
       ...defaultValues?.data,
+      // Set SAP ID and email from session storage
+      sapId: emp?.sapId || defaultValues?.data?.sapId,
+      email: emp?.email || defaultValues?.data?.email,
       dob: formatDate(getPersonalData()?.dob || defaultValues?.data?.dob),
       langHindiRead:
         getPersonalData()?.langHindiRead ||
@@ -109,9 +116,8 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
         getPersonalData()?.langHindiSpeak ||
         defaultValues?.data?.langHindiSpeak ||
         false,
-    }),
-    [formState?.personal?.data, defaultValues?.data]
-  );
+    };
+  }, [formState?.personal?.data, defaultValues?.data]);
 
   const {
     register,
@@ -156,15 +162,9 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
       if (!formState.personal?.data?.length) {
         setLoading(true);
         try {
-          const result = await axios.get(
-            `${import.meta.env.VITE_API_URL}/personal`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-
+          console.log("before personal fetch", localStorage);
+          const result = await axiosInstance.get("/personal");
+          console.log("after personal fetch", localStorage);
           console.log("🚀 ~ loadData ~ personalData:", result);
           // Handle array format by accessing first item
           const personalData = result?.data?.data?.[0] || {};
@@ -199,7 +199,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
     };
 
     loadData();
-  }, [token, dispatch, formState.personal]);
+  }, [token, dispatch]);
 
   const saveData = async (data, proceed = false) => {
     if (!hasChanges) {
@@ -367,6 +367,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
             {...register("sapId")}
             placeholder="SAP ID"
             readOnly
+            disabled
           />
           {errors.sapId && (
             <p className="mt-1 text-sm text-red-600">{errors.sapId.message}</p>
@@ -586,6 +587,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
             {...register("email")}
             placeholder="example@nmdc.co.in"
             readOnly
+            disabled
           />
           {errors.email && (
             <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>

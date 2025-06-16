@@ -11,7 +11,12 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true, //allows cookies/session headers
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

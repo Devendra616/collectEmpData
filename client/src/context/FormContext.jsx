@@ -36,7 +36,7 @@ function reducer(state, action) {
       };
       break;
 
-    case "UPDATE_SECTION":
+    case "UPDATE_SECTION": {
       // Handle nested data structure
       const sectionData = action.data?.data || action.data;
       newState = {
@@ -45,7 +45,9 @@ function reducer(state, action) {
           data: Array.isArray(sectionData) ? sectionData : [sectionData],
         },
       };
+
       break;
+    }
 
     case "INITIAL_LOAD":
       // Handle initial data load from API
@@ -68,7 +70,7 @@ function reducer(state, action) {
 
     case "CLEAR_FORM_DATA":
       newState = initialState;
-      localStorage.removeItem("formData");
+      sessionStorage.removeItem("formData");
       return newState;
 
     default:
@@ -76,16 +78,20 @@ function reducer(state, action) {
   }
 
   console.log("FormContext - New State:", newState);
-  // Save to localStorage whenever state changes
-  localStorage.setItem("formData", JSON.stringify(newState));
+  // Save to sessionStorage whenever state changes
+  sessionStorage.setItem("formData", JSON.stringify(newState));
   return newState;
 }
 
 export const FormDataProvider = ({ children }) => {
-  // Get initial state from localStorage
+  // Get initial state from sessionStorage
   const getInitialState = () => {
-    const savedState = localStorage.getItem("formData");
-    console.log("FormContext - Loading from localStorage:", savedState);
+    const savedState = sessionStorage.getItem("formData");
+    console.log(
+      "FormContext - Loading from sessionStorage:",
+      sessionStorage,
+      savedState
+    );
     if (!savedState) return initialState;
 
     // Parse and restructure the saved state
@@ -106,7 +112,6 @@ export const FormDataProvider = ({ children }) => {
 
   // Initialize state
   const [state, dispatch] = useReducer(reducer, getInitialState());
-
   // Log state changes
   useEffect(() => {
     console.log("FormContext - Current State:", state);

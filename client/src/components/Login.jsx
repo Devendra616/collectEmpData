@@ -30,6 +30,7 @@ const Login = () => {
 
       login(token, user);
       if (token) {
+        console.log("login token", token);
         toast.success(res?.data?.msg || "Login successful!");
         toast.success("Getting employee's data...");
 
@@ -39,7 +40,21 @@ const Login = () => {
           emp: user, // Add the user data at the top level
         };
 
-        for (const section of sections) {
+        const fetchPromises = sections.map(async (section) => {
+          try {
+            const result = await axiosInstance.get(`/${section}`);
+            return { section, data: result?.data || {} };
+          } catch (error) {
+            console.error(`Error fetching ${section}:`, error);
+            return { section, data: {} };
+          }
+        });
+        const results = await Promise.all(fetchPromises);
+        results.forEach(({ section, data }) => {
+          allData[section] = data;
+        });
+
+        /*  for (const section of sections) {
           try {
             const result = await axiosInstance.get(`/${section}`);
             allData[section] = result?.data || {};
@@ -48,7 +63,7 @@ const Login = () => {
             console.error(`Error fetching ${section}:`, error);
             allData[section] = {};
           }
-        }
+        } */
 
         // Update both AuthContext and FormContext with all fetched data
         fetchData(allData);

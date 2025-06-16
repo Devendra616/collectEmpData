@@ -6,7 +6,7 @@ import EducationEntry from "./EducationEntry";
 import { saveSectionData } from "../../../services/formApi";
 import { useAuth } from "../../../context/AuthContext";
 import { useFormData } from "../../../context/FormContext";
-import axios from "axios";
+import axiosInstance from "../../../services/axiosInstance.js";
 import { formatDate } from "../../../utils/dateConversion.js";
 import { toast } from "react-toastify";
 
@@ -89,14 +89,7 @@ const EducationDetailsForm = ({ onNext, defaultValues = [] }) => {
       ) {
         setLoading(true);
         try {
-          const result = await axios.get(
-            `${import.meta.env.VITE_API_URL}/education`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
+          const result = await axiosInstance.get("/education");
 
           if (result?.data?.success) {
             dispatch({
@@ -117,7 +110,7 @@ const EducationDetailsForm = ({ onNext, defaultValues = [] }) => {
     };
 
     loadData();
-  }, [token, dispatch, formState?.education?.data]);
+  }, [token, dispatch]);
 
   const {
     register,
@@ -127,7 +120,7 @@ const EducationDetailsForm = ({ onNext, defaultValues = [] }) => {
     getValues,
     formState: { errors, dirtyFields },
   } = useForm({
-    //resolver: yupResolver(schema),
+    resolver: yupResolver(schema),
     defaultValues: initialValues,
   });
 
@@ -356,7 +349,12 @@ const EducationDetailsForm = ({ onNext, defaultValues = [] }) => {
         </div>
       )}
 
-      <form onSubmit={handleNext}>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleNext();
+        }}
+      >
         <div className="mb-6">
           <button
             type="button"
@@ -468,10 +466,9 @@ const EducationDetailsForm = ({ onNext, defaultValues = [] }) => {
 
           <button
             type="submit"
-            disabled={saving}
-            className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-300"
+            className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer"
           >
-            {saving ? "Saving..." : "Save and Continue ➡️"}
+            Next ➡️
           </button>
         </div>
       </form>

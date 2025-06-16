@@ -3,14 +3,14 @@ import { useFormData } from "./FormContext";
 import { toast } from "react-toastify";
 
 const AuthContext = createContext();
-
+console.log("Token in auth mount", localStorage.getItem("token"));
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(
     localStorage.getItem("token") ? localStorage.getItem("token") : null
   );
   const [user, setUser] = useState(
-    localStorage.getItem("user")
-      ? JSON.parse(localStorage.getItem("user"))
+    sessionStorage.getItem("user")
+      ? JSON.parse(sessionStorage.getItem("user"))
       : null
   );
 
@@ -55,8 +55,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = (token, user) => {
+    console.log("setting token", token, "user", user);
     localStorage.setItem("token", token);
-    localStorage.setItem("user", JSON.stringify(user));
+    sessionStorage.setItem("user", JSON.stringify(user));
     setToken(token);
     setUser(user);
   };
@@ -64,8 +65,9 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("user");
     sessionStorage.removeItem("empData");
+    sessionStorage.removeItem("formData");
     formDispatch({ type: "CLEAR_FORM_DATA" }); // This will handle both state reset and localStorage clearing
     setToken(null);
     setUser(null);

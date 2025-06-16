@@ -5,7 +5,7 @@ import * as yup from "yup";
 import { saveSectionData } from "../../../services/formApi";
 import { useAuth } from "../../../context/AuthContext";
 import { useFormData } from "../../../context/FormContext";
-import axios from "axios";
+import axiosInstance from "../../../services/axiosInstance.js";
 import { toast } from "react-toastify";
 import { formatDate } from "../../../utils/dateConversion.js";
 
@@ -94,14 +94,7 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
       if (!formState?.family?.data || formState.family.data.length === 0) {
         setLoading(true);
         try {
-          const result = await axios.get(
-            `${import.meta.env.VITE_API_URL}/family`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
+          const result = await axiosInstance.get("/family");
 
           if (result?.data?.success) {
             dispatch({
@@ -122,7 +115,7 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
     };
 
     loadData();
-  }, [token, dispatch, formState?.family?.data]);
+  }, [token, dispatch]);
 
   const {
     register,
@@ -132,7 +125,7 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
     getValues,
     formState: { errors },
   } = useForm({
-    // resolver: yupResolver(schema),
+    resolver: yupResolver(schema),
     defaultValues: initialValues,
   });
 

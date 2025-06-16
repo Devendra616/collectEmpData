@@ -1,5 +1,5 @@
-import axios from "axios";
 // import { useAuth } from '../context/AuthContext';
+import axiosInstance from "./axiosInstance";
 
 const sectionEndpoints = {
   personalDetails: "personal",
@@ -23,11 +23,7 @@ export const saveSectionData = async (sectionName, data, token) => {
   }
 
   try {
-    const res = await axios.post(`${apiUrl}/${endpoint}`, data, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const res = await axiosInstance.post(`/${endpoint}`, data);
     console.log("response api", res);
     return res.data;
   } catch (error) {

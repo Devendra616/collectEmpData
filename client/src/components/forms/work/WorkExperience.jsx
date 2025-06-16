@@ -7,7 +7,7 @@ import { useAuth } from "../../../context/AuthContext";
 import { useFormData } from "../../../context/FormContext";
 import { toast } from "react-toastify";
 import { formatDuration } from "../../../utils/getAge.js";
-import axios from "axios";
+import axiosInstance from "../../../services/axiosInstance.js";
 import { formatDate } from "../../../utils/dateConversion.js";
 
 const industries = [
@@ -108,14 +108,7 @@ const WorkExperienceForm = ({ onNext, defaultValues = [] }) => {
       if (!formState.work || formState.work.length === 0) {
         setLoading(true);
         try {
-          const result = await axios.get(
-            `${import.meta.env.VITE_API_URL}/work`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
+          const result = await axiosInstance.get("/work");
 
           dispatch({
             type: "UPDATE_SECTION",
@@ -134,7 +127,7 @@ const WorkExperienceForm = ({ onNext, defaultValues = [] }) => {
     };
 
     loadData();
-  }, [token, dispatch, formState?.work?.data]);
+  }, [token, dispatch]);
 
   const {
     register,

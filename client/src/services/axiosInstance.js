@@ -6,6 +6,7 @@ const apiUrl = import.meta.env.VITE_API_URL;
 // Create axios instance with base URL
 const axiosInstance = axios.create({
   baseURL: apiUrl,
+  withCredentials: true, //allow cookies/session headers
 });
 
 // Request interceptor to add auth token
@@ -27,8 +28,10 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response) {
+      console.log("Axios error", error.response, localStorage);
       // Handle 401 (Unauthorized) or 403 (Forbidden) errors
       if (error.response.status === 401 || error.response.status === 403) {
+        console.log("***removing localStorage");
         // Clear local storage
         localStorage.removeItem("token");
         localStorage.removeItem("user");

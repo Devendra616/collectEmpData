@@ -46,6 +46,7 @@ const fetchPersonalDetails = async (req, res) => {
 
     if (!personalData) {
       return res.status(404).json({
+        data: null,
         success: false,
         msg: "No personal details found",
       });

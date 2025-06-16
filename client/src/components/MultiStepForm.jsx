@@ -10,6 +10,7 @@ import WorkExperienceForm from "./forms/work/WorkExperience";
 import ReviewForm from "./forms/ReviewForm";
 import Navbar from "./Navbar";
 import StepTabs from "./StepTabs";
+import { generatePDF } from "../pdf/generatePDF.js";
 
 const MultiStepForm = () => {
   const { token } = useAuth();
@@ -72,6 +73,12 @@ const MultiStepForm = () => {
 
   const CurrentForm = current.Component;
 
+  const handleDownloadForm = (dataToDownload) => {
+    if (isSubmitted && dataToDownload) {
+      generatePDF(dataToDownload);
+    }
+  };
+
   return (
     <div className="max-w-3xl mx-auto p-6 shadow-lg rounded-xl bg-white">
       <Navbar />
@@ -126,6 +133,12 @@ const MultiStepForm = () => {
         <div className="text-center space-y-4">
           <h2 className="text-2xl font-bold text-green-600">🎉 Thank you!</h2>
           <p>Your form has been submitted successfully.</p>
+          <button
+            onClick={() => handleDownloadForm(state)}
+            className="px-4 py-2 bg-blue-600 text-white rounded cursor-pointer"
+          >
+            Download Form
+          </button>
         </div>
       )}
     </div>
