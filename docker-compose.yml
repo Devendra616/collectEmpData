@@ -1,19 +1,6 @@
 version: "3.8"
 
 services:
-  mongodb:
-    image: mongo:latest
-    container_name: employee_data_mongodb
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongodb_data:/data/db
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=password123
-    networks:
-      - shared-apps
-
   server:
     build:
       context: ./server
@@ -23,8 +10,7 @@ services:
       - "5000:5000"
     env_file:
       - ./server/.env
-    # depends_on:
-    # - shared-mongodb
+
     networks:
       - shared-apps
 
@@ -45,6 +31,3 @@ services:
 networks:
   shared-apps:
     external: true
-
-volumes:
-  mongodb_data:

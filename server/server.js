@@ -1,12 +1,11 @@
+import dotenv from "dotenv";
+dotenv.config();
 import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
-import dotenv from "dotenv";
 import session from "express-session";
 
 import router from "./routes/formRoutes.js";
-
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
