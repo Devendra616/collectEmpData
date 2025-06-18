@@ -31,7 +31,7 @@ app.use(
 app.use("/api", router);
 
 app.get("/health", (req, res) => {
-  res.json({ message: "Severs is running" });
+  res.json({ message: "Server is running" });
 });
 
 mongoose
@@ -40,4 +40,4 @@ mongoose
     console.log("Connected to MongoDb");
     app.listen(PORT, () => console.log(`Server is listening at port ${PORT}`));
   })
-  .catch((err) => console.log("Mongodb connection error."));
+  .catch((err) => console.log("Mongodb connection error.", err));
