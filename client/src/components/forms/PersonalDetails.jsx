@@ -13,8 +13,11 @@ import { formatDate } from "../../utils/dateConversion.js";
 
 const schema = yup.object().shape({
   title: yup.string().required("Select your title"),
-  firstName: yup.string().required("First name is required"),
-  lastName: yup.string().required("Last name is required"),
+  firstName: yup
+    .string()
+    .required("First name is required")
+    .matches(/^\S+$/, "First name cannot contain spaces"),
+  lastName: yup.string(),
   sapId: yup
     .string()
     .matches(/^[0-9]{8}$/, "Provide a valid SAP ID")
@@ -26,7 +29,7 @@ const schema = yup.object().shape({
       originalValue ? new Date(originalValue) : null
     )
     .required("Date of Birth is required")
-    .max(new Date(), "Date of Birth cannot be in the future")
+    .max(new Date(), "Date of Birth cannot be future")
     .test("min-age", "Age must be at least 18 years", function (dob) {
       if (!dob) return true;
       const today = new Date();
@@ -127,7 +130,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
     clearErrors,
     setError,
   } = useForm({
-    //resolver: yupResolver(schema),
+    resolver: yupResolver(schema),
     defaultValues: initialValues,
   });
 
@@ -307,6 +310,37 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
 
       {/* Grid layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block font-medium">SAP ID</label>
+          <input
+            className={`w-full border rounded-md p-2 bg-gray-100 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.sapId ? "border-red-500" : "border-gray-300"
+            }`}
+            {...register("sapId")}
+            placeholder="SAP ID"
+            readOnly
+            disabled
+          />
+          {errors.sapId && (
+            <p className="mt-1 text-sm text-red-600">{errors.sapId.message}</p>
+          )}
+        </div>
+        <div>
+          <label className="block font-medium">Email</label>
+          <input
+            className={`w-full border rounded-md p-2 bg-gray-100 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.email ? "border-red-500" : "border-gray-300"
+            }`}
+            type="email"
+            {...register("email")}
+            placeholder="example@nmdc.co.in"
+            readOnly
+            disabled
+          />
+          {errors.email && (
+            <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+          )}
+        </div>
         {/* Title */}
         <div>
           <label className="block font-medium">Title</label>
@@ -327,7 +361,9 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
         </div>
 
         <div>
-          <label className="block font-medium">First Name</label>
+          <label className="block font-medium">
+            First Name <span className="text-red-500">*</span>
+          </label>
           <input
             className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
               errors.firstName ? "border-red-500" : "border-gray-300"
@@ -358,22 +394,6 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
           )}
         </div>
 
-        <div>
-          <label className="block font-medium">SAP ID</label>
-          <input
-            className={`w-full border rounded-md p-2 bg-gray-100 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.sapId ? "border-red-500" : "border-gray-300"
-            }`}
-            {...register("sapId")}
-            placeholder="SAP ID"
-            readOnly
-            disabled
-          />
-          {errors.sapId && (
-            <p className="mt-1 text-sm text-red-600">{errors.sapId.message}</p>
-          )}
-        </div>
-
         <div className="flex flex-col">
           <label className="block font-medium mb-1">Gender</label>
           <div className="space-x-4">
@@ -391,7 +411,9 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
         </div>
 
         <div>
-          <label className="block font-medium">Date of Birth</label>
+          <label className="block font-medium">
+            Date of Birth <span className="text-red-500">*</span>
+          </label>
           <input
             className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
               errors.dob ? "border-red-500" : "border-gray-300"
@@ -444,6 +466,47 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
           />
           {errors.state && (
             <p className="mt-1 text-sm text-red-600">{errors.state.message}</p>
+          )}
+        </div>
+
+        <div>
+          <label className="block font-medium">Marital Status</label>
+          <select
+            className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.maritalStatus ? "border-red-500" : "border-gray-300"
+            }`}
+            {...register("maritalStatus")}
+          >
+            <option value="">Select</option>
+            <option value="single">Single</option>
+            <option value="married">Married</option>
+            <option value="divorced">Divorced</option>
+            <option value="widowed">Widowed</option>
+            <option value="separated">Separated</option>
+          </select>
+          {errors.maritalStatus && (
+            <p className="mt-1 text-sm text-red-600">
+              {errors.maritalStatus.message}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <label className="block font-medium">No.Of Child/Children</label>
+          <input
+            type="number"
+            min={0}
+            step={1}
+            className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.countChild ? "border-red-500" : "border-gray-300"
+            }`}
+            {...register("countChild")}
+            placeholder="Count of Child/Children"
+          />
+          {errors.mobile && (
+            <p className="mt-1 text-sm text-red-600">
+              {errors.countChild.message}
+            </p>
           )}
         </div>
 
@@ -547,7 +610,9 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
         </div>
 
         <div>
-          <label className="block font-medium">Adhaar Number</label>
+          <label className="block font-medium">
+            Adhaar Number <span className="text-red-500">*</span>
+          </label>
           <input
             className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
               errors.adhaarId ? "border-red-500" : "border-gray-300"
@@ -563,9 +628,10 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
         </div>
 
         <div>
-          <label className="block font-medium">Mobile Number</label>
+          <label className="block font-medium">
+            Mobile Number <span className="text-red-500">*</span>
+          </label>
           <input
-            type="number"
             className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
               errors.mobile ? "border-red-500" : "border-gray-300"
             }`}
@@ -574,23 +640,6 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
           />
           {errors.mobile && (
             <p className="mt-1 text-sm text-red-600">{errors.mobile.message}</p>
-          )}
-        </div>
-
-        <div>
-          <label className="block font-medium">Email</label>
-          <input
-            className={`w-full border rounded-md p-2 bg-gray-100 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.email ? "border-red-500" : "border-gray-300"
-            }`}
-            type="email"
-            {...register("email")}
-            placeholder="example@nmdc.co.in"
-            readOnly
-            disabled
-          />
-          {errors.email && (
-            <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
           )}
         </div>
 
@@ -612,7 +661,9 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
         </div>
 
         <div>
-          <label className="block font-medium">Mother Tongue</label>
+          <label className="block font-medium">
+            Mother Tongue <span className="text-red-500">*</span>
+          </label>
           <select
             className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
               errors.motherTongue ? "border-red-500" : "border-gray-300"

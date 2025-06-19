@@ -32,7 +32,10 @@ const schema = yup.object().shape({
     yup.object().shape({
       relationship: yup.string().required("Family relation is required"),
       title: yup.string().required("Select title"),
-      firstName: yup.string().required("First name is required"),
+      firstName: yup
+        .string()
+        .required("First name is required")
+        .matches(/^\S+$/, "First name cannot contain spaces"),
       lastName: yup.string().required("Last name is required"),
       aadharNumber: yup
         .string()
@@ -464,7 +467,7 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
 
                   <div className="form-group">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      First Name
+                      First Name <span className="text-red-500">*</span>
                     </label>
                     <input
                       placeholder="Enter first name"
@@ -488,7 +491,7 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
 
                   <div className="form-group">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Aadhar Number
+                      Aadhar Number <span className="text-red-500">*</span>
                     </label>
                     <input
                       placeholder="Enter Aadhar number"
@@ -501,7 +504,7 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
 
                   <div className="form-group">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Blood Group
+                      Blood Group <span className="text-red-500">*</span>
                     </label>
                     <input
                       placeholder="Enter blood group"
@@ -513,7 +516,7 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
 
                   <div className="form-group">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Date of Birth
+                      Date of Birth <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="date"
@@ -572,7 +575,7 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                   {relationship === "Child" && (
                     <div className="form-group">
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Gender
+                        Gender <span className="text-red-500">*</span>
                       </label>
                       <select
                         {...register(`family.${index}.gender`)}

@@ -24,7 +24,7 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="form-group">
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Education Type
+            Education Type <span className="text-red-500">*</span>
           </label>
           <select
             {...register(`education[${index}].educationType`)}
@@ -42,7 +42,7 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
 
         <div className="form-group">
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Institute Name
+            Institute Name <span className="text-red-500">*</span>
           </label>
           <input
             placeholder="Enter institute name"
@@ -54,7 +54,7 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
 
         <div className="form-group">
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Certificate Type
+            Certificate Type <span className="text-red-500">*</span>
           </label>
           <select
             {...register(`education[${index}].certificateType`)}
@@ -83,7 +83,7 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
         </div>
         <div className="form-group">
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Final Grade
+            Final Grade <span className="text-red-500">*</span>
           </label>
           <input
             placeholder="Enter final grade"
@@ -154,7 +154,7 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
             </div>
             <div className="form-group">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Specialization
+                Specialization <span className="text-red-500">*</span>
               </label>
               <input
                 placeholder="Enter specialization"
@@ -168,7 +168,7 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
 
         <div className="form-group">
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Course Starting Date
+            Course Starting Date <span className="text-red-500">*</span>
           </label>
           <input
             type="date"
@@ -180,7 +180,7 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
 
         <div className="form-group">
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Passing Date
+            Passing Date <span className="text-red-500">*</span>
           </label>
           <input
             type="date"

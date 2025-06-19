@@ -32,13 +32,12 @@ const validateReg = (req, res, next) => {
     return res.status(400).json("All fields are required...");
   }
 
-  const passwordRegex =
-    /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@#$%!?*&])[a-zA-Z\d@#$%!?*&]{8,}$/;
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])[a-zA-Z0-9]{6,}$/;
   if (!passwordRegex.test(password))
     return res
       .status(400)
       .json(
-        "Password must be of minimum 8 charcter and contain digits, lowercase, uppercase and special characters"
+        "Password must be of minimum length 6 and contain at least 1 lowercase letter, 1 uppercase letter, and can include numbers"
       );
 
   const emailRegex = /^[a-zA-Z0-9._%+-]+@nmdc\.co\.in$/;
@@ -75,6 +74,8 @@ const validatePersonalDetails = (req, res, next) => {
     pwd,
     motherTongue,
     hindiKnowledge,
+    maritalStatus,
+    countChild,
   } = req.body;
 
   const errors = {};
@@ -167,6 +168,11 @@ const validatePersonalDetails = (req, res, next) => {
     }
   }
 
+  // validate count of children
+  if (countChild && countChild < 0) {
+    errors.countChild = "No.Of Children can me min 0.";
+  }
+
   // Validate title
   const validTitles = ["Shri", "Smt", "Ms"];
   if (title && !validTitles.includes(title)) {
@@ -177,6 +183,17 @@ const validatePersonalDetails = (req, res, next) => {
   const validGenders = ["Male", "Female"];
   if (gender && !validGenders.includes(gender)) {
     errors.gender = "Invalid Gender selected";
+  }
+  // Validate marital status
+  const validMaritalStatus = [
+    "single",
+    "married",
+    "divorced",
+    "widowed",
+    "separated",
+  ];
+  if (maritalStatus && !validMaritalStatus.includes(maritalStatus)) {
+    errors.maritalStatus = "Invalid Marital Status selected";
   }
 
   // Validate exServiceman

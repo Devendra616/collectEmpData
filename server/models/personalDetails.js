@@ -11,6 +11,8 @@ const personalDetailsSchema = new mongoose.Schema({
   // sapId: String,
   gender: String,
   dob: Date,
+  countChild: Number,
+  maritalStatus: String,
   mobile: String,
   // email: String,
   adhaarId: String,

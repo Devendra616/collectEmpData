@@ -7,8 +7,7 @@ import { toast } from "react-toastify";
 import * as yup from "yup";
 
 // Validation schema
-const passwordRegex =
-  /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@#$%!?*&])[a-zA-Z\d@#$%!?*&]{8,}$/;
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])[a-zA-Z0-9]{6,}$/;
 const schema = yup.object().shape({
   email: yup
     .string()
@@ -26,7 +25,7 @@ const schema = yup.object().shape({
     .required("Password is required")
     .matches(
       passwordRegex,
-      "Password must be of minimum length 8 and contain digits, lowercase, uppercase and special characters"
+      "Password must be of minimum length 6 and contain at least 1 lowercase letter, 1 uppercase letter, and can include numbers"
     ),
   cpassword: yup
     .string()
