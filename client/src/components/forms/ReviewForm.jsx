@@ -68,6 +68,7 @@ const ReviewForm = ({ data, onBack, onSubmit }) => {
         dob: "Date of Birth",
         cityOfBirth: "Birth Place",
         age: "Age",
+        nationality: "Nationality",
         isWorking: "Spouse Status",
         employmentDetails: "Employment Details",
       },

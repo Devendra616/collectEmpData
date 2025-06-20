@@ -56,6 +56,7 @@ const schema = yup.object().shape({
       isWorking: yup.boolean(),
       employmentDetails: yup.string(),
       gender: yup.string(),
+      nationality: yup.string().required("Nationality is required"),
     })
   ),
 });
@@ -536,6 +537,18 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                       className={getErrorClass("cityOfBirth")}
                     />
                     {renderError("cityOfBirth")}
+                  </div>
+
+                  <div className="form-group">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Nationality <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      placeholder="Enter nationality Indian or others"
+                      {...register(`family.${index}.nationality`)}
+                      className={getErrorClass("cityOfBirth")}
+                    />
+                    {renderError("nationality")}
                   </div>
 
                   {/* Conditional Fields */}

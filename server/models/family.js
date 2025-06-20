@@ -55,6 +55,10 @@ const familyMembersSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    nationality: {
+      type: String,
+      trim: true,
+    },
 
     // Conditional fields
     gender: {

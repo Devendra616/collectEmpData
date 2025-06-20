@@ -304,8 +304,13 @@ const validateFamilyDetails = (req, res, next) => {
       }
     }
 
-    // Spouse specific validations
+    // nationality validation
+    if (!member.nationality) {
+      memberErrors.nationality = "Nationality is required";
+    }
+
     if (member.relationship === "Spouse") {
+      // Spouse specific validations
       if (member.isWorking === "") {
         memberErrors.isWorking = "Employment status is required for spouse";
       } else if (
