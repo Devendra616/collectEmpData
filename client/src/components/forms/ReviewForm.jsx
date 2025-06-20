@@ -52,6 +52,11 @@ const ReviewForm = ({ data, onBack, onSubmit }) => {
         passingDate: "Passing Date",
         courseDetails: "Course Details",
         specialization: "Specialization",
+        licenseType: "License Type",
+        licenseNumber: "License Number",
+        licenseIssueDate: "License Issue Date",
+        licenseIssuingAuthority: "License Issuing Authority",
+        licenseOtherDetails: "License Other Details",
       },
     },
     {
@@ -114,9 +119,16 @@ const ReviewForm = ({ data, onBack, onSubmit }) => {
     if (fieldName === "grossSalary") return `₹${value.toLocaleString()}`;
 
     if (
-      ["dob", "startDate", "relievingDate", "passingDate"].includes(fieldName)
+      [
+        "dob",
+        "startDate",
+        "relievingDate",
+        "passingDate",
+        "licenseIssueDate",
+      ].includes(fieldName)
     ) {
-      return formatDate(value, "dd-mm-yyyy");
+      if (!value) return "";
+      else return formatDate(value, "dd-mm-yyyy");
     }
     if (fieldName === "duration") {
       console.log(value, value.years, sectionTitle);

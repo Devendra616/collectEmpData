@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const completeEducationSchema = new mongoose.Schema({
   educationType: String,
@@ -12,19 +12,28 @@ const completeEducationSchema = new mongoose.Schema({
   passingDate: Date,
   courseDetails: String,
   specialization: String,
-})
+  licenseType: String,
+  licenseNumber: String,
+  licenseIssueDate: Date,
+  licenseExpiryDate: Date,
+  licenseIssuingAuthority: String,
+  licenseOtherDetails: String,
+});
 
 const educationDetailsSchema = new mongoose.Schema({
-    employeeId:{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Employee',
-        required: true,
-    },
-    education: {
-        type: [completeEducationSchema],
-        default: [],
-    }
-})
+  employeeId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Employee",
+    required: true,
+  },
+  education: {
+    type: [completeEducationSchema],
+    default: [],
+  },
+});
 
-const EducationDetails = mongoose.model('educationDetails', educationDetailsSchema);
+const EducationDetails = mongoose.model(
+  "educationDetails",
+  educationDetailsSchema
+);
 export default EducationDetails;

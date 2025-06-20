@@ -17,6 +17,7 @@ const WorkDetailsHandler = async (req, res) => {
     // Transform the data to match the schema
     const transformedWorkDetails = workDetails.map((exp) => {
       const duration = getDiffFromDates(exp.startDate, exp.relievingDate);
+      console.log("🚀 ~ transformedWorkDetails ~ duration:", duration);
 
       return {
         ...exp,
@@ -29,9 +30,7 @@ const WorkDetailsHandler = async (req, res) => {
     });
 
     // Log the update operation data
-    console.log("Update operation data:", {
-      $set: { experiences: transformedWorkDetails },
-    });
+    console.log("Update operation data:", { ...transformedWorkDetails });
 
     const savedWorkDetails = await WorkExperience.findOneAndUpdate(
       { employeeId },

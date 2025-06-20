@@ -35,160 +35,241 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
             <option value="12TH">12th Class</option>
             <option value="GRAD">Graduation / Diploma / ITI</option>
             <option value="POSTGRAD">Post-graduation / PhD</option>
+
             <option value="CERTIFICATE">Course Certificate / Others</option>
+            <option value="LICENSE">License/Skills</option>
           </select>
           {renderError("educationType")}
         </div>
-
-        <div className="form-group">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Institute Name <span className="text-red-500">*</span>
-          </label>
-          <input
-            placeholder="Enter institute name"
-            {...register(`education[${index}].instituteName`)}
-            className={getErrorClass("instituteName")}
-          />
-          {renderError("instituteName")}
-        </div>
-
-        <div className="form-group">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Certificate Type <span className="text-red-500">*</span>
-          </label>
-          <select
-            {...register(`education[${index}].certificateType`)}
-            className={getErrorClass("certificateType")}
-          >
-            <option value="">Select Certificate Type</option>
-            <option value="REGULAR">Regular</option>
-            <option value="CORRESPONDANCE">Correspondance</option>
-          </select>
-          {renderError("certificateType")}
-        </div>
-
-        <div className="form-group">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Duration (years)
-          </label>
-          <input
-            type="number"
-            step={0.1}
-            min={0}
-            placeholder="Enter duration"
-            {...register(`education[${index}].duration`)}
-            className={getErrorClass("duration")}
-          />
-          {renderError("duration")}
-        </div>
-        <div className="form-group">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Final Grade <span className="text-red-500">*</span>
-          </label>
-          <input
-            placeholder="Enter final grade"
-            {...register(`education[${index}].grade`)}
-            className={getErrorClass("grade")}
-          />
-          {renderError("grade")}
-        </div>
-
-        <div className="form-group">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Medium of Education
-          </label>
-          <div className="flex space-x-4">
-            <label className="inline-flex items-center">
-              <input
-                type="radio"
-                value="ENGLISH"
-                {...register(`education[${index}].medium`)}
-                className="form-radio h-4 w-4 text-blue-600"
-              />
-              <span className="ml-2">English</span>
-            </label>
-            <label className="inline-flex items-center">
-              <input
-                type="radio"
-                value="HINDI"
-                {...register(`education[${index}].medium`)}
-                className="form-radio h-4 w-4 text-blue-600"
-              />
-              <span className="ml-2">Hindi</span>
-            </label>
-          </div>
-          {renderError("medium")}
-        </div>
-
-        <div className="form-group">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Hindi Subject Level
-          </label>
-          <select
-            {...register(`education[${index}].hindiSubjectLevel`)}
-            className={getErrorClass("hindiSubjectLevel")}
-          >
-            <option value="">Select Level</option>
-            <option value="FIRST">1st Language</option>
-            <option value="SECOND">2nd Language</option>
-            <option value="THIRD">3rd Language</option>
-            <option value="NONE">None</option>
-          </select>
-          {renderError("hindiSubjectLevel")}
-        </div>
-
-        {(educationType === "GRAD" ||
-          educationType === "POSTGRAD" ||
-          educationType === "CERTIFICATE") && (
+        {educationType !== "LICENSE" && (
           <>
             <div className="form-group">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Course Details
+                Institute Name <span className="text-red-500">*</span>
               </label>
               <input
-                placeholder="Enter course details"
-                {...register(`education[${index}].courseDetails`)}
-                className={getErrorClass("courseDetails")}
+                placeholder="Enter institute name"
+                {...register(`education[${index}].instituteName`)}
+                className={getErrorClass("instituteName")}
               />
-              {renderError("courseDetails")}
+              {renderError("instituteName")}
             </div>
             <div className="form-group">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Specialization <span className="text-red-500">*</span>
+                Certificate Type <span className="text-red-500">*</span>
+              </label>
+              <select
+                {...register(`education[${index}].certificateType`)}
+                className={getErrorClass("certificateType")}
+              >
+                <option value="">Select Certificate Type</option>
+                <option value="REGULAR">Regular</option>
+                <option value="CORRESPONDANCE">Correspondance</option>
+              </select>
+              {renderError("certificateType")}
+            </div>
+            <div className="form-group">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Duration (years)
               </label>
               <input
-                placeholder="Enter specialization"
-                {...register(`education[${index}].specialization`)}
-                className={getErrorClass("specialization")}
+                type="number"
+                step={0.1}
+                min={0}
+                placeholder="Enter duration"
+                {...register(`education[${index}].duration`)}
+                className={getErrorClass("duration")}
               />
-              {renderError("specialization")}
+              {renderError("duration")}
+            </div>
+            <div className="form-group">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Final Grade <span className="text-red-500">*</span>
+              </label>
+              <input
+                placeholder="Enter final grade"
+                {...register(`education[${index}].grade`)}
+                className={getErrorClass("grade")}
+              />
+              {renderError("grade")}
+            </div>
+            <div className="form-group">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Medium of Education
+              </label>
+              <div className="flex space-x-4">
+                <label className="inline-flex items-center">
+                  <input
+                    type="radio"
+                    value="ENGLISH"
+                    {...register(`education[${index}].medium`)}
+                    className="form-radio h-4 w-4 text-blue-600"
+                  />
+                  <span className="ml-2">English</span>
+                </label>
+                <label className="inline-flex items-center">
+                  <input
+                    type="radio"
+                    value="HINDI"
+                    {...register(`education[${index}].medium`)}
+                    className="form-radio h-4 w-4 text-blue-600"
+                  />
+                  <span className="ml-2">Hindi</span>
+                </label>
+              </div>
+              {renderError("medium")}
+            </div>
+            <div className="form-group">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Hindi Subject Level
+              </label>
+              <select
+                {...register(`education[${index}].hindiSubjectLevel`)}
+                className={getErrorClass("hindiSubjectLevel")}
+              >
+                <option value="">Select Level</option>
+                <option value="FIRST">1st Language</option>
+                <option value="SECOND">2nd Language</option>
+                <option value="THIRD">3rd Language</option>
+                <option value="NONE">None</option>
+              </select>
+              {renderError("hindiSubjectLevel")}
+            </div>
+            {(educationType === "GRAD" ||
+              educationType === "POSTGRAD" ||
+              educationType === "CERTIFICATE") && (
+              <>
+                <div className="form-group">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Course Details
+                  </label>
+                  <input
+                    placeholder="Enter course details"
+                    {...register(`education[${index}].courseDetails`)}
+                    className={getErrorClass("courseDetails")}
+                  />
+                  {renderError("courseDetails")}
+                </div>
+                <div className="form-group">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Specialization <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    placeholder="Enter specialization"
+                    {...register(`education[${index}].specialization`)}
+                    className={getErrorClass("specialization")}
+                  />
+                  {renderError("specialization")}
+                </div>
+              </>
+            )}
+            <div className="form-group">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Course Starting Date <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                {...register(`education[${index}].startDate`)}
+                className={getErrorClass("startDate")}
+              />
+              {renderError("startDate")}
+            </div>
+            <div className="form-group">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Passing Date <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                {...register(`education[${index}].passingDate`)}
+                className={getErrorClass("startDate")}
+              />
+              {renderError("passingDate")}
             </div>
           </>
         )}
 
-        <div className="form-group">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Course Starting Date <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="date"
-            {...register(`education[${index}].startDate`)}
-            className={getErrorClass("startDate")}
-          />
-          {renderError("startDate")}
-        </div>
+        {educationType === "LICENSE" && (
+          <>
+            <div className="form-group">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                License Type <span className="text-red-500">*</span>
+              </label>
+              <select
+                {...register(`education[${index}].licenseType`)}
+                className={getErrorClass("licenseType")}
+              >
+                <option value="">Select License Type</option>
+                <option value="ELECTRICAL_SUPERVISORY">
+                  Electrical Supervisory
+                </option>
+                <option value="HVD">HVD(Heavy Vehicle Driver)</option>
+                <option value="LVD">LVD(Light Vehicle Driver)</option>
+              </select>
+              {renderError("licenseType")}
+            </div>
 
-        <div className="form-group">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Passing Date <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="date"
-            {...register(`education[${index}].passingDate`)}
-            className={getErrorClass("startDate")}
-          />
-          {renderError("passingDate")}
-        </div>
+            <div className="form-group">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                License Number <span className="text-red-500">*</span>
+              </label>
+              <input
+                placeholder="Enter license number"
+                {...register(`education[${index}].licenseNumber`)}
+                className={getErrorClass("licenseNumber")}
+              />
+              {renderError("licenseNumber")}
+            </div>
+
+            <div className="form-group">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Issue Date <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                {...register(`education[${index}].licenseIssueDate`)}
+                className={getErrorClass("issueDate")}
+              />
+              {renderError("licenseIssueDate")}
+            </div>
+
+            <div className="form-group">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Date Expiry (if any)
+              </label>
+              <input
+                type="date"
+                {...register(`education[${index}].licenseExpiryDate`)}
+                className={getErrorClass("expiryDate")}
+              />
+              {renderError("licenseExpiryDate")}
+            </div>
+
+            <div className="form-group">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Issuing Authority <span className="text-red-500">*</span>
+              </label>
+              <input
+                placeholder="Enter issuing authority"
+                {...register(`education[${index}].licenseIssuingAuthority`)}
+                className={getErrorClass("issuingAuthority")}
+              />
+              {renderError("licenseIssuingAuthority")}
+            </div>
+
+            <div className="form-group md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Other License Details
+              </label>
+              <textarea
+                placeholder="Enter other details of License"
+                rows={3}
+                {...register(`education[${index}].licenseOtherDetails`)}
+                className={getErrorClass("otherDetails")}
+              />
+              {renderError("licenseOtherDetails")}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

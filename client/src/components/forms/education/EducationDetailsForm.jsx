@@ -14,18 +14,32 @@ const schema = yup.object().shape({
   education: yup.array().of(
     yup.object().shape({
       educationType: yup.string().required("Education type is required"),
-      instituteName: yup.string().required("Institute name is required"),
-      certificateType: yup.string().required("Certificate type is required"),
+      instituteName: yup.string().when("educationType", {
+        is: (val) => val !== "LICENSE",
+        then: (schema) => schema.required("Institute name is required"),
+        otherwise: (schema) => schema.notRequired(),
+      }),
+      certificateType: yup.string().when("educationType", {
+        is: (val) => val !== "LICENSE",
+        then: (schema) => schema.required("Certificate type is required"),
+        otherwise: (schema) => schema.notRequired(),
+      }),
       duration: yup
         .number()
         .transform((value) =>
           isNaN(value) || value === "" ? 0 : Number(value)
         )
-        .required("Duration is required")
-        .min(0, "Duration must be a positive number")
-        .typeError(
-          "Duration must be a number (e.g., 2.5 for 2 years and 6 months)"
-        ),
+        .when("educationType", {
+          is: (val) => val !== "LICENSE",
+          then: (schema) =>
+            schema
+              .required("Duration is required")
+              .min(0, "Duration must be a positive number")
+              .typeError(
+                "Duration must be a number (e.g., 2.5 for 2 years and 6 months)"
+              ),
+          otherwise: (schema) => schema.notRequired(),
+        }),
       grade: yup.string(),
       medium: yup.string(),
       hindiSubjectLevel: yup.string(),
@@ -34,14 +48,27 @@ const schema = yup.object().shape({
         .transform((value, originalValue) =>
           originalValue ? new Date(originalValue) : null
         )
-        .required("Start date is required"),
+        .when("educationType", {
+          is: (val) => val !== "LICENSE",
+          then: (schema) => schema.required("Start date is required"),
+          otherwise: (schema) => schema.notRequired(),
+        }),
       passingDate: yup
         .date()
         .transform((value, originalValue) =>
           originalValue ? new Date(originalValue) : null
         )
-        .required("Passing date is required")
-        .min(yup.ref("startDate"), "Passing date must be after start date"),
+        .when("educationType", {
+          is: (val) => val !== "LICENSE",
+          then: (schema) =>
+            schema
+              .required("Passing date is required")
+              .min(
+                yup.ref("startDate"),
+                "Passing date must be after start date"
+              ),
+          otherwise: (schema) => schema.notRequired(),
+        }),
       courseDetails: yup.string(),
       specialization: yup.string(),
     })

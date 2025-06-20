@@ -32,7 +32,7 @@ const validateReg = (req, res, next) => {
     return res.status(400).json("All fields are required...");
   }
 
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])[a-zA-Z0-9]{6,}$/;
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z]).{6,}$/;
   if (!passwordRegex.test(password))
     return res
       .status(400)
@@ -275,10 +275,6 @@ const validateFamilyDetails = (req, res, next) => {
       memberErrors.firstName = "First name is required";
     }
 
-    if (!member.lastName?.trim()) {
-      memberErrors.lastName = "Last name is required";
-    }
-
     // Aadhaar validation
     if (!member.aadharNumber?.trim()) {
       memberErrors.aadharNumber = "Member Aadhaar number is required";
@@ -367,10 +363,12 @@ const validateEducationalDetails = (req, res, next) => {
     "GRAD",
     "POSTGRAD",
     "CERTIFICATE",
+    "LICENSE",
   ];
   const validCertificateTypes = ["REGULAR", "CORRESPONDANCE"];
   const validMediums = ["ENGLISH", "HINDI"];
   const validHindiSubjectLevels = ["FIRST", "SECOND", "THIRD", "NONE"];
+  const validLicenseTypes = ["HVD", "LVD", "ELECTRICAL_SUPERVISORY"];
 
   education.forEach((entry, index) => {
     const entryErrors = {};
@@ -382,80 +380,89 @@ const validateEducationalDetails = (req, res, next) => {
       entryErrors.educationType = "Invalid education type";
     }
 
-    if (!entry.instituteName?.trim()) {
-      entryErrors.instituteName = "Institute name is required";
+    let isLicense = false;
+    if (entry.educationType === "LICENSE") {
+      isLicense = true;
     }
 
-    if (!entry.certificateType?.trim()) {
-      entryErrors.certificateType = "Certificate type is required";
-    } else if (!validCertificateTypes.includes(entry.certificateType)) {
-      entryErrors.certificateType = "Invalid certificate type";
-    }
-
-    // Duration validation
-    if (entry.duration !== undefined && entry.duration !== null) {
-      const duration = Number(entry.duration);
-      if (isNaN(duration)) {
-        entryErrors.duration = "Duration must be a number";
-      } else if (duration < 0) {
-        entryErrors.duration = "Duration must be a positive number";
+    if (!isLicense) {
+      // type is not LICENSE
+      if (!entry.instituteName?.trim()) {
+        entryErrors.instituteName = "Institute name is required";
       }
-    }
-
-    // Medium validation
-    if (entry.medium && !validMediums.includes(entry.medium)) {
-      entryErrors.medium = "Invalid medium of education";
-    }
-
-    // Hindi subject level validation
-    if (
-      entry.hindiSubjectLevel &&
-      !validHindiSubjectLevels.includes(entry.hindiSubjectLevel)
-    ) {
-      entryErrors.hindiSubjectLevel = "Invalid Hindi subject level";
-    }
-
-    // Date validations
-    if (!entry.startDate) {
-      entryErrors.startDate = "Start date is required";
-    } else {
-      const startDate = new Date(entry.startDate);
-      startDate.setHours(0, 0, 0, 0); // Set time to midnight
-      const today = new Date();
-      today.setHours(0, 0, 0, 0); // Set time to midnight
-
-      if (isNaN(startDate.getTime())) {
-        entryErrors.startDate = "Invalid start date";
-      } else if (startDate >= today) {
-        entryErrors.startDate = "Start date must be past date";
+      if (!entry.certificateType?.trim()) {
+        entryErrors.certificateType = "Certificate type is required";
+      } else if (!validCertificateTypes.includes(entry.certificateType)) {
+        entryErrors.certificateType = "Invalid certificate type";
       }
-    }
 
-    if (!entry.passingDate) {
-      entryErrors.passingDate = "Passing date is required";
-    } else {
-      const passingDate = new Date(entry.passingDate);
-      passingDate.setHours(0, 0, 0, 0); // Set time to midnight
-      if (isNaN(passingDate.getTime())) {
-        entryErrors.passingDate = "Invalid passing date";
-      } else if (entry.startDate) {
-        const startDate = new Date(entry.startDate);
-        startDate.setHours(0, 0, 0, 0); // Set time to midnight
-        if (passingDate < startDate) {
-          entryErrors.passingDate = "Passing date must be after start date";
+      // Duration validation
+      if (entry.duration !== undefined && entry.duration !== null) {
+        const duration = Number(entry.duration);
+        if (isNaN(duration)) {
+          entryErrors.duration = "Duration must be a number";
+        } else if (duration < 0) {
+          entryErrors.duration = "Duration must be a positive number";
         }
       }
-    }
 
-    // Course details and specialization validation for higher education
-    if (["GRAD", "POSTGRAD", "CERTIFICATE"].includes(entry.educationType)) {
-      if (!entry.courseDetails?.trim()) {
-        entryErrors.courseDetails =
-          "Course details are required for higher education";
+      // Medium validation
+      if (entry.medium && !validMediums.includes(entry.medium)) {
+        entryErrors.medium = "Invalid medium of education";
       }
-      if (!entry.specialization?.trim()) {
-        entryErrors.specialization =
-          "Specialization is required for higher education";
+      // Hindi subject level validation
+      if (
+        entry.hindiSubjectLevel &&
+        !validHindiSubjectLevels.includes(entry.hindiSubjectLevel)
+      ) {
+        entryErrors.hindiSubjectLevel = "Invalid Hindi subject level";
+      }
+
+      // Date validations
+      if (!entry.startDate) {
+        entryErrors.startDate = "Start date is required";
+      } else {
+        const startDate = new Date(entry.startDate);
+        startDate.setHours(0, 0, 0, 0); // Set time to midnight
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Set time to midnight
+
+        if (isNaN(startDate.getTime())) {
+          entryErrors.startDate = "Invalid start date";
+        } else if (startDate >= today) {
+          entryErrors.startDate = "Start date must be past date";
+        }
+      }
+
+      if (!entry.passingDate) {
+        entryErrors.passingDate = "Passing date is required";
+      } else {
+        const passingDate = new Date(entry.passingDate);
+        passingDate.setHours(0, 0, 0, 0); // Set time to midnight
+        if (isNaN(passingDate.getTime())) {
+          entryErrors.passingDate = "Invalid passing date";
+        } else if (entry.startDate) {
+          const startDate = new Date(entry.startDate);
+          startDate.setHours(0, 0, 0, 0); // Set time to midnight
+          if (passingDate < startDate) {
+            entryErrors.passingDate = "Passing date must be after start date";
+          }
+        }
+      }
+    } else {
+      // for licenses
+      if (!validLicenseTypes.includes(entry.licenseType)) {
+        entryErrors.entryErrors = "Invalid License Type Selected";
+      }
+      if (!entry.licenseNumber?.trim()) {
+        entryErrors.licenseNumber = "License Number is required";
+      }
+      if (!entry.licenseIssueDate?.trim()) {
+        entryErrors.licenseIssueDate = "License Issue Date is required";
+      }
+      if (!entry.licenseIssuingAuthority?.trim()) {
+        entryErrors.licenseIssuingAuthority =
+          "License Issuing Authority is required";
       }
     }
 

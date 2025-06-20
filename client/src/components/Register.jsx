@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 import * as yup from "yup";
 
 // Validation schema
-const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])[a-zA-Z0-9]{6,}$/;
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z]).{6,}$/;
 const schema = yup.object().shape({
   email: yup
     .string()

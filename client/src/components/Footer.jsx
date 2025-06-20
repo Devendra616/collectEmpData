@@ -46,8 +46,8 @@ const Footer = () => {
           <div className="md:text-right">
             <h4 className="text-md font-semibold mb-2">Contact Information</h4>
             <div className="text-xs text-gray-300 space-y-1">
-              <p>📧 kdlest@nmdc.co.in</p>
-              <p>📞 6747, 6453</p>
+              <p>📧 kdlestb@nmdc.co.in</p>
+              <p>📞 6647, 6663, 6747, 6453</p>
               <p>🏢 Admin Block, NMDC Kirandul</p>
             </div>
           </div>

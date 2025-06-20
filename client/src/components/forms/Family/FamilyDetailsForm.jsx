@@ -36,7 +36,7 @@ const schema = yup.object().shape({
         .string()
         .required("First name is required")
         .matches(/^\S+$/, "First name cannot contain spaces"),
-      lastName: yup.string().required("Last name is required"),
+      lastName: yup.string(),
       aadharNumber: yup
         .string()
         .matches(
