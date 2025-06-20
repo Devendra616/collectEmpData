@@ -56,19 +56,25 @@ const Register = () => {
   };
 
   return (
-    <div className="flex border rounded-2xl flex-col justify-center items-center text-white">
-      <div className="m-5">
-        <h2 className="text-3xl">Register</h2>
-      </div>
-      <div className="mt-2">
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="mb-4">
-            <label className="text-xl">Email</label>
+    <div className="flex justify-center items-center min-h-full">
+      <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-200 max-w-md w-full">
+        <div className="text-center mb-6">
+          <h2 className="text-3xl font-bold text-gray-800">Register</h2>
+          <p className="text-gray-600 mt-2">
+            Create your Employee Data Management account
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Email
+            </label>
             <input
               type="email"
               {...register("email")}
               placeholder="Enter NMDC Email"
-              className="p-2 ml-8 border rounded-md"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             {errors.email && (
               <p className="text-red-500 text-sm mt-1">
@@ -77,13 +83,15 @@ const Register = () => {
             )}
           </div>
 
-          <div className="mb-4">
-            <label className="text-xl">SAP ID</label>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              SAP ID
+            </label>
             <input
               type="text"
               {...register("sapId")}
               placeholder="Enter SAP ID"
-              className="p-2 ml-8 border rounded-md"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             {errors.sapId && (
               <p className="text-red-500 text-sm mt-1">
@@ -92,13 +100,15 @@ const Register = () => {
             )}
           </div>
 
-          <div className="mb-4">
-            <label className="text-xl">Password</label>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Password
+            </label>
             <input
               type="password"
               {...register("password")}
               placeholder="Enter Password"
-              className="p-2 ml-2 border rounded-md"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             {errors.password && (
               <p className="text-red-500 text-sm mt-1">
@@ -107,13 +117,15 @@ const Register = () => {
             )}
           </div>
 
-          <div className="mb-4">
-            <label className="text-xl">Confirm Password</label>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Confirm Password
+            </label>
             <input
               type="password"
               {...register("cpassword")}
               placeholder="Confirm Password"
-              className="p-2 ml-2 border rounded-md"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             {errors.cpassword && (
               <p className="text-red-500 text-sm mt-1">
@@ -122,17 +134,19 @@ const Register = () => {
             )}
           </div>
 
-          <div className="flex justify-center">
-            <button
-              type="submit"
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            >
-              Register
-            </button>
-          </div>
+          <button
+            type="submit"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200"
+          >
+            Register
+          </button>
         </form>
-        <div className="mt-4 text-center">
-          <Link to="/" className="text-blue-400 hover:text-blue-300">
+
+        <div className="mt-6 text-center">
+          <Link
+            to="/"
+            className="text-blue-600 hover:text-blue-700 font-medium"
+          >
             Already have an account? Login here
           </Link>
         </div>

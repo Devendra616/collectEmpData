@@ -91,52 +91,63 @@ const Login = () => {
   };
 
   return (
-    <div className="flex border rounded-2xl flex-col justify-center items-center text-white">
-      <div className="m-5">
-        <h2 className="text-3xl">Login</h2>
-      </div>
-      <div className="mt-2 ">
-        <form onSubmit={handleSubmit}>
-          <label className="text-xl">SAP ID</label>
-          <input
-            type="text"
-            name="sapId"
-            placeholder="Enter SAP ID"
-            value={formData.sapId}
-            onChange={handleChange}
-            required
-            className="p-2 ml-8 mb-5 border rounded-md"
-          />
-          <br />
+    <div className="flex justify-center items-center min-h-full">
+      <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-200 max-w-md w-full">
+        <div className="text-center mb-6">
+          <h2 className="text-3xl font-bold text-gray-800">Login</h2>
+          <p className="text-gray-600 mt-2">
+            Welcome back to Employee Data Management
+          </p>
+        </div>
 
-          <label className="text-xl">Password</label>
-          <input
-            type="password"
-            name="password"
-            placeholder="Enter Password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-            className="p-2 border rounded-md ml-2 mb-5"
-          />
-          <br />
-
-          <div className="flex justify-center">
-            <button
-              type="submit"
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            >
-              Login
-            </button>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              SAP ID
+            </label>
+            <input
+              type="text"
+              name="sapId"
+              placeholder="Enter SAP ID"
+              value={formData.sapId}
+              onChange={handleChange}
+              required
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Password
+            </label>
+            <input
+              type="password"
+              name="password"
+              placeholder="Enter Password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200"
+          >
+            Login
+          </button>
         </form>
-        <div className="mt-4 text-center">
-          <Link to="/register" className="text-blue-400 hover:text-blue-300">
+
+        <div className="mt-6 text-center">
+          <Link
+            to="/register"
+            className="text-blue-600 hover:text-blue-700 font-medium"
+          >
             Don't have an account? Register here
           </Link>
         </div>
       </div>
-      {/* {error && <p >{error}</p>} */}
     </div>
   );
 };

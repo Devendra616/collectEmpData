@@ -1,6 +1,4 @@
 import { useFormData } from "../context/FormContext";
-import { useAuth } from "../context/AuthContext";
-import { saveSectionData } from "../services/formApi";
 import { useState } from "react";
 import PersonalDetailsForm from "./forms/PersonalDetails";
 import EducationDetailsForm from "./forms/education/EducationDetailsForm";
@@ -8,12 +6,11 @@ import FamilyDetailsForm from "./forms/Family/FamilyDetailsForm";
 import AddressForm from "./forms/address/AddressForm";
 import WorkExperienceForm from "./forms/work/WorkExperience";
 import ReviewForm from "./forms/ReviewForm";
-import Navbar from "./Navbar";
+import FormNavbar from "./FormNavbar";
 import StepTabs from "./StepTabs";
 // import { generatePDF } from "../pdf/generatePDF.js";
 
 const MultiStepForm = () => {
-  const { token } = useAuth();
   const { state, dispatch } = useFormData();
   const [currentStep, setStep] = useState(0);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -81,7 +78,7 @@ const MultiStepForm = () => {
 
   return (
     <div className="max-w-3xl mx-auto p-6 shadow-lg rounded-xl bg-white">
-      <Navbar />
+      <FormNavbar />
       <StepTabs currentStep={currentStep} setStep={setStep} />
       {loading && (
         <div className="flex items-center justify-center p-4">
