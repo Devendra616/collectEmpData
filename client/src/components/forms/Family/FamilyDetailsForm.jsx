@@ -317,7 +317,7 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
           ))}
         </div>
       )}
-
+      {errors.family && console.log(errors.family)}
       {errors.family && (
         <div className="text-red-600 text-sm mb-4">
           Please fix the validation errors below.
@@ -339,7 +339,7 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                 bloodGroup: "",
                 dob: "",
                 cityOfBirth: "",
-                isWorking: "",
+                isWorking: false,
                 employmentDetails: "",
                 gender: "",
               })
