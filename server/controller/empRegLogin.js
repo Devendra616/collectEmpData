@@ -6,7 +6,7 @@ dotenv.config();
 
 const registrationHandler = async (req, res) => {
   try {
-    const { email, sapId, password } = req.body;
+    const { email, sapId, password, location } = req.body;
 
     const existingEmployee = await Employee.findOne({ sapId });
     if (existingEmployee) {
@@ -21,6 +21,7 @@ const registrationHandler = async (req, res) => {
       email,
       sapId,
       password,
+      location,
     });
 
     console.log("New employee Details Added:", newEmployee);
@@ -45,7 +46,6 @@ const loginHandler = async (req, res) => {
 
   let empFound = await Employee.findOne({ sapId }).select("+password");
 
-  console.log("🚀 ~ loginHandler ~ empFound:", empFound);
   if (!empFound) {
     return res.status(400).json({
       msg: "Employee not found....Please register!!!",
@@ -74,6 +74,7 @@ const loginHandler = async (req, res) => {
       user: {
         email: empFound.email,
         sapId,
+        location,
       },
     });
   });

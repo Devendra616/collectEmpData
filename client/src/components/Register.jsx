@@ -31,6 +31,7 @@ const schema = yup.object().shape({
     .string()
     .required("Confirm password is required")
     .oneOf([yup.ref("password")], "Passwords must match"),
+  location: yup.string().required("Location is required"),
 });
 
 const Register = () => {
@@ -130,6 +131,28 @@ const Register = () => {
             {errors.cpassword && (
               <p className="text-red-500 text-sm mt-1">
                 {errors.cpassword.message}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Location
+            </label>
+            <select
+              {...register("location")}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Select Location</option>
+              <option value="BCH">Bacheli</option>
+              <option value="DNM">Donimalai</option>
+              <option value="HO">Head Office</option>
+              <option value="KDL">Kirandul</option>
+              <option value="Panna">Panna</option>
+            </select>
+            {errors.location && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.location.message}
               </p>
             )}
           </div>

@@ -1,5 +1,5 @@
-import mongoose from 'mongoose';
-import bcrypt from 'bcrypt';
+import mongoose from "mongoose";
+import bcrypt from "bcrypt";
 
 const employeeSchema = new mongoose.Schema({
   email: {
@@ -14,26 +14,29 @@ const employeeSchema = new mongoose.Schema({
   password: {
     type: String,
     required: true,
-    select:false
+    select: false,
+  },
+  location: {
+    type: String,
+    required: true,
   },
 });
 
-employeeSchema.pre("save",
-  async function (next) {
-    try {
-      if (this.password && this.isModified("password")) {
-        this.password = await bcrypt.hash(this.password, 10);
-      }
-      next();
-    } catch (error) {
-      return next(error);
+employeeSchema.pre("save", async function (next) {
+  try {
+    if (this.password && this.isModified("password")) {
+      this.password = await bcrypt.hash(this.password, 10);
     }
-})
+    next();
+  } catch (error) {
+    return next(error);
+  }
+});
 
-employeeSchema.methods.checkpw = function(password, cb){
-  bcrypt.compare(password, this.password, (err, result)=>{
+employeeSchema.methods.checkpw = function (password, cb) {
+  bcrypt.compare(password, this.password, (err, result) => {
     return cb(err, result);
-  })
-}
+  });
+};
 
-export default mongoose.model('Employee', employeeSchema);
+export default mongoose.model("Employee", employeeSchema);

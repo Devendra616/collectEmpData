@@ -24,12 +24,16 @@ const fieldNameMapping = {
 };
 
 const validateReg = (req, res, next) => {
-  const { email, sapId, password, cpassword } = req.body;
+  const { email, sapId, password, cpassword, location } = req.body;
 
   if (
-    [email, sapId, password, cpassword].some((field) => field?.trim() === "")
+    [email, sapId, password, cpassword, location].some(
+      (field) => field?.trim() === ""
+    )
   ) {
-    return res.status(400).json("All fields are required...");
+    return res
+      .status(400)
+      .json({ success: false, msg: "All fields are required..." });
   }
 
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z]).{6,}$/;
