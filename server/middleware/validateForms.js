@@ -657,11 +657,12 @@ const validateWorkExperience = (req, res, next) => {
       }
     }
 
-    // Duration validations
+    /* // Duration validations
     if (
       entry.numberOfYears !== undefined &&
       (entry.numberOfYears < 0 || !Number.isInteger(entry.numberOfYears))
     ) {
+      console.log("numberOfYears", entry.numberOfYears);
       entryErrors.numberOfYears =
         "Number of years must be a non-negative integer";
     }
@@ -673,7 +674,7 @@ const validateWorkExperience = (req, res, next) => {
         !Number.isInteger(entry.numberOfMonths))
     ) {
       entryErrors.numberOfMonths = "Number of months must be between 0 and 11";
-    }
+    } */
 
     // If there are errors for this entry, add them to the main errors object
     if (Object.keys(entryErrors).length > 0) {
