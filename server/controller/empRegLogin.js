@@ -74,7 +74,7 @@ const loginHandler = async (req, res) => {
       user: {
         email: empFound.email,
         sapId,
-        location,
+        location: empFound.location,
       },
     });
   });

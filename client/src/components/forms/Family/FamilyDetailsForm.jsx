@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
@@ -39,11 +39,45 @@ const schema = yup.object().shape({
       lastName: yup.string(),
       aadharNumber: yup
         .string()
-        .matches(
-          /^[2-9]{1}[0-9]{11}$/,
-          "Aadhaar must be a 12-digit number starting with 2-9"
+        .test(
+          "conditional-aadhar",
+          "Aadhaar number is required",
+          function (value) {
+            const { relationship } = this.parent;
+
+            // If relationship is Child, Aadhar is optional
+            if (relationship === "Child") {
+              return true; // Always pass validation for Child
+            }
+
+            // For all other relationships, Aadhar is required
+            if (!value) {
+              return false;
+            }
+
+            // Validate format if value is provided
+            return /^[2-9]{1}[0-9]{11}$/.test(value);
+          }
         )
-        .required("Aadhaar number is required"),
+        .test(
+          "aadhar-format",
+          "Aadhaar must be a 12-digit number starting with 2-9",
+          function (value) {
+            const { relationship } = this.parent;
+
+            // If no value provided and relationship is Child, skip format validation
+            if (!value && relationship === "Child") {
+              return true;
+            }
+
+            // If value is provided, validate format
+            if (value) {
+              return /^[2-9]{1}[0-9]{11}$/.test(value);
+            }
+
+            return true;
+          }
+        ),
       bloodGroup: yup.string(),
       dob: yup
         .date()
@@ -69,7 +103,6 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [hasChanges, setHasChanges] = useState(false);
-  const [fieldChanges, setFieldChanges] = useState({});
 
   // Memoize initial values to prevent unnecessary re-renders
   const initialValues = useMemo(() => {
@@ -167,47 +200,6 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
     checkForChanges();
   }, [formValues, initialValues, getValues]);
 
-  // Create onBlur handlers for different field types
-  const createTextBlurHandler = useCallback(
-    (fieldPath) => (e) => {
-      const currentValue = e.target.value;
-      const initialValue = getFieldValue(initialValues, fieldPath);
-      const hasChanged = currentValue !== initialValue;
-
-      setFieldChanges((prev) => {
-        const updated = { ...prev, [fieldPath]: hasChanged };
-        return updated;
-      });
-    },
-    [initialValues]
-  );
-
-  const createSelectBlurHandler = useCallback(
-    (fieldPath) => (e) => {
-      const currentValue = e.target.value;
-      const initialValue = getFieldValue(initialValues, fieldPath);
-      const hasChanged = currentValue !== initialValue;
-
-      setFieldChanges((prev) => {
-        const updated = { ...prev, [fieldPath]: hasChanged };
-        return updated;
-      });
-    },
-    [initialValues]
-  );
-
-  // Helper to get nested field value
-  const getFieldValue = useCallback((obj, path) => {
-    return path.split(".").reduce((curr, key) => {
-      if (key.includes("[") && key.includes("]")) {
-        const arrayKey = key.split("[")[0];
-        const index = parseInt(key.split("[")[1].split("]")[0]);
-        return curr?.[arrayKey]?.[index];
-      }
-      return curr?.[key];
-    }, obj);
-  }, []);
-
   const saveData = async (data, proceed = false) => {
     if (!hasChanges) {
       console.log("No changes detected, skipping save");
@@ -251,7 +243,6 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
       }
 
       setHasChanges(false);
-      setFieldChanges({});
       if (proceed) onNext(dataToSave);
     } catch (error) {
       console.error("Error saving data:", error);
@@ -492,7 +483,10 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
 
                   <div className="form-group">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Aadhar Number <span className="text-red-500">*</span>
+                      Aadhar Number{" "}
+                      {relationship !== "Child" && (
+                        <span className="text-red-500">*</span>
+                      )}
                     </label>
                     <input
                       placeholder="Enter Aadhar number"

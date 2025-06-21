@@ -257,7 +257,7 @@ const validateFamilyDetails = (req, res, next) => {
 
   familyMembers.forEach((member, index) => {
     const memberErrors = {};
-
+    let isChild = false;
     // Required fields validation
     if (!member.relationship?.trim()) {
       memberErrors.relationship = "Family relation is required";
@@ -274,19 +274,24 @@ const validateFamilyDetails = (req, res, next) => {
     ) {
       memberErrors.title = "Invalid title for selected family member type";
     }
+    if (member.relationship === "Child") {
+      isChild = true;
+    }
 
     if (!member.firstName?.trim()) {
       memberErrors.firstName = "First name is required";
     }
 
     // Aadhaar validation
-    if (!member.aadharNumber?.trim()) {
-      memberErrors.aadharNumber = "Member Aadhaar number is required";
-    } else {
-      const aadhaarRegex = /^[2-9]{1}[0-9]{11}$/;
-      if (!aadhaarRegex.test(member.aadharNumber)) {
-        memberErrors.aadharNumber =
-          "Aadhaar must be a 12-digit number starting with 2-9";
+    if (!isChild) {
+      if (!member.aadharNumber?.trim()) {
+        memberErrors.aadharNumber = "Member Aadhaar number is required";
+      } else {
+        const aadhaarRegex = /^[2-9]{1}[0-9]{11}$/;
+        if (!aadhaarRegex.test(member.aadharNumber)) {
+          memberErrors.aadharNumber =
+            "Aadhaar must be a 12-digit number starting with 2-9";
+        }
       }
     }
 
@@ -327,7 +332,7 @@ const validateFamilyDetails = (req, res, next) => {
     }
 
     // Child specific validations
-    if (member.relationship === "Child") {
+    if (isChild) {
       if (!member.gender?.trim()) {
         memberErrors.gender = "Gender is required for child";
       } else if (!["Male", "Female"].includes(member.gender)) {
