@@ -26,7 +26,7 @@ const schema = yup.object().shape({
   ),
 });
 
-const AddressForm = ({ onNext }) => {
+const AddressForm = ({ onNext, defaultValues = [], readOnly = false }) => {
   const { token } = useAuth();
   const { state: formState, dispatch } = useFormData();
   const [sameAsPresent, setSameAsPresent] = useState(false);
@@ -297,6 +297,7 @@ const AddressForm = ({ onNext }) => {
               checked={sameAsPresent}
               onChange={handleCheckboxChange}
               className="h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+              disabled={readOnly}
             />
             <label
               htmlFor="sameAsPresent"
@@ -317,33 +318,44 @@ const AddressForm = ({ onNext }) => {
               watch={watch}
               errors={errors?.address?.[1]}
               backendErrors={backendErrors?.[1]}
-              disabled={sameAsPresent}
+              disabled={sameAsPresent || readOnly}
             />
           </div>
 
           {/* Action Buttons */}
           <div className="flex justify-between mt-6">
-            <button
-              type="button"
-              onClick={handleSaveDraft}
-              disabled={!hasChanges || saving}
-              className={`px-4 py-2 rounded ${
-                hasChanges
-                  ? "bg-green-400 text-gray-800 hover:bg-gray-400 cursor-pointer"
-                  : "bg-gray-200 text-gray-500 cursor-not-allowed"
-              }`}
-            >
-              💾 Save Draft
-            </button>
+            {!readOnly && (
+              <>
+                <button
+                  type="button"
+                  onClick={handleSaveDraft}
+                  disabled={!hasChanges || saving}
+                  className={`px-4 py-2 rounded ${
+                    hasChanges
+                      ? "bg-green-400 text-gray-800 hover:bg-gray-400 cursor-pointer"
+                      : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  }`}
+                >
+                  💾 Save Draft
+                </button>
 
-            <button
-              type="button"
-              disabled={saving}
-              onClick={handleNext}
-              className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-300"
-            >
-              {saving ? "Saving..." : "Next ➡️"}
-            </button>
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={handleNext}
+                  className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-300"
+                >
+                  {saving ? "Saving..." : "Next ➡️"}
+                </button>
+              </>
+            )}
+            {readOnly && (
+              <div className="w-full text-center">
+                <p className="text-gray-600 italic">
+                  Form is in read-only mode
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </form>

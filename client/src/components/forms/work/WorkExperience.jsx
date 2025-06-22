@@ -70,7 +70,11 @@ const schema = yup.object().shape({
   ),
 });
 
-const WorkExperienceForm = ({ onNext, defaultValues = [] }) => {
+const WorkExperienceForm = ({
+  onNext,
+  defaultValues = [],
+  readOnly = false,
+}) => {
   const { token } = useAuth();
   const { state: formState, dispatch } = useFormData();
 
@@ -308,42 +312,44 @@ const WorkExperienceForm = ({ onNext, defaultValues = [] }) => {
 
       <form onSubmit={handleNext}>
         <div className="mb-6">
-          <button
-            type="button"
-            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200 flex items-center"
-            onClick={() =>
-              append({
-                companyName: "",
-                role: "",
-                city: "",
-                startDate: "",
-                relievingDate: "",
-                industry: "",
-                scaleOnLeaving: "",
-                reasonForLeaving: "",
-                grossSalary: "",
-                isGreenfield: false,
-                numberOfMonths: "",
-                numberOfYears: "",
-                responsibilities: "",
-              })
-            }
-          >
-            <svg
-              className="w-5 h-5 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          {!readOnly && (
+            <button
+              type="button"
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200 flex items-center"
+              onClick={() =>
+                append({
+                  companyName: "",
+                  role: "",
+                  city: "",
+                  startDate: "",
+                  relievingDate: "",
+                  industry: "",
+                  scaleOnLeaving: "",
+                  reasonForLeaving: "",
+                  grossSalary: "",
+                  isGreenfield: false,
+                  numberOfMonths: "",
+                  numberOfYears: "",
+                  responsibilities: "",
+                })
+              }
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-            Add Employer
-          </button>
+              <svg
+                className="w-5 h-5 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              Add Employer
+            </button>
+          )}
         </div>
 
         {fields.length === 0 && (
@@ -389,6 +395,7 @@ const WorkExperienceForm = ({ onNext, defaultValues = [] }) => {
                     type="button"
                     className="text-red-600 hover:text-red-800 transition-colors duration-200"
                     onClick={() => remove(index)}
+                    disabled={readOnly}
                   >
                     <svg
                       className="w-5 h-5"
@@ -419,6 +426,7 @@ const WorkExperienceForm = ({ onNext, defaultValues = [] }) => {
                       {...register(`work.${index}.companyName`)}
                       placeholder="Enter company's name"
                       className={getErrorClass("companyName")}
+                      disabled={readOnly}
                     />
                     {renderError("companyName")}
                   </div>
@@ -431,6 +439,7 @@ const WorkExperienceForm = ({ onNext, defaultValues = [] }) => {
                       {...register(`work.${index}.city`)}
                       placeholder="Enter city"
                       className={getErrorClass("city")}
+                      disabled={readOnly}
                     />
                     {renderError("city")}
                   </div>
@@ -443,6 +452,7 @@ const WorkExperienceForm = ({ onNext, defaultValues = [] }) => {
                       type="date"
                       {...register(`work.${index}.startDate`)}
                       className={getErrorClass("startDate")}
+                      disabled={readOnly}
                     />
                     {renderError("startDate")}
                   </div>
@@ -467,6 +477,7 @@ const WorkExperienceForm = ({ onNext, defaultValues = [] }) => {
                           : undefined
                       }
                       max={new Date().toISOString().split("T")[0]}
+                      disabled={readOnly}
                     />
                     {startDates[index] && relievingDates[index] && (
                       <p className="text-sm text-green-600 mt-1">
@@ -487,6 +498,7 @@ const WorkExperienceForm = ({ onNext, defaultValues = [] }) => {
                     <select
                       {...register(`work.${index}.industry`)}
                       className={getErrorClass("industry")}
+                      disabled={readOnly}
                     >
                       <option value="">Select Industry</option>
                       {industries.map((ind, idx) => (
@@ -506,6 +518,7 @@ const WorkExperienceForm = ({ onNext, defaultValues = [] }) => {
                       {...register(`work.${index}.role`)}
                       className={getErrorClass("role")}
                       placeholder="Enter designation/role"
+                      disabled={readOnly}
                     />
                     {renderError("role")}
                   </div>
@@ -518,6 +531,7 @@ const WorkExperienceForm = ({ onNext, defaultValues = [] }) => {
                       {...register(`work.${index}.scaleOnLeaving`)}
                       placeholder="Enter scale on leaving"
                       className={getErrorClass("scaleOnLeaving")}
+                      disabled={readOnly}
                     />
                     {renderError("scaleOnLeaving")}
                   </div>
@@ -530,6 +544,7 @@ const WorkExperienceForm = ({ onNext, defaultValues = [] }) => {
                       {...register(`work.${index}.reasonForLeaving`)}
                       className={getErrorClass("reasonForLeaving")}
                       placeholder="Enter reason for leaving"
+                      disabled={readOnly}
                     />
                     {renderError("reasonForLeaving")}
                   </div>
@@ -544,6 +559,7 @@ const WorkExperienceForm = ({ onNext, defaultValues = [] }) => {
                       {...register(`work.${index}.grossSalary`)}
                       placeholder="Enter gross salary"
                       className={getErrorClass("grossSalary")}
+                      disabled={readOnly}
                     />
                     {renderError("grossSalary")}
                   </div>
@@ -560,6 +576,7 @@ const WorkExperienceForm = ({ onNext, defaultValues = [] }) => {
                         },
                       })}
                       className={getErrorClass("isGreenfield")}
+                      disabled={readOnly}
                     >
                       <option value="">Select</option>
                       <option value="false">No</option>
@@ -581,6 +598,7 @@ const WorkExperienceForm = ({ onNext, defaultValues = [] }) => {
                         "responsibilities"
                       )} min-h-[100px] resize-y w-full`}
                       rows={4}
+                      disabled={readOnly}
                     />
                     <div className="flex justify-between mt-1">
                       <p className="text-sm text-gray-500">
@@ -604,22 +622,31 @@ const WorkExperienceForm = ({ onNext, defaultValues = [] }) => {
         </div>
 
         <div className="mt-8 flex justify-between">
-          <button
-            type="button"
-            onClick={handleSaveDraft}
-            disabled={!hasChanges || saving}
-            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-300"
-          >
-            💾 Save Draft
-          </button>
+          {!readOnly && (
+            <>
+              <button
+                type="button"
+                onClick={handleSaveDraft}
+                disabled={!hasChanges || saving}
+                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-300"
+              >
+                💾 Save Draft
+              </button>
 
-          <button
-            type="submit"
-            disabled={saving}
-            className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-300"
-          >
-            {saving ? "Saving..." : "Next ➡️"}
-          </button>
+              <button
+                type="submit"
+                disabled={saving}
+                className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-300"
+              >
+                {saving ? "Saving..." : "Next ➡️"}
+              </button>
+            </>
+          )}
+          {readOnly && (
+            <div className="w-full text-center">
+              <p className="text-gray-600 italic">Form is in read-only mode</p>
+            </div>
+          )}
         </div>
       </form>
     </div>

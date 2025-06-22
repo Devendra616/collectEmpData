@@ -95,7 +95,11 @@ const schema = yup.object().shape({
   ),
 });
 
-const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
+const FamilyDetailsForm = ({
+  onNext,
+  defaultValues = [],
+  readOnly = false,
+}) => {
   const { token } = useAuth();
   const { state: formState, dispatch } = useFormData();
 
@@ -317,47 +321,50 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
 
       <form onSubmit={handleNext}>
         <div className="mb-6">
-          <button
-            type="button"
-            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200 flex items-center"
-            onClick={() =>
-              append({
-                relationship: "",
-                title: "",
-                firstName: "",
-                lastName: "",
-                aadharNumber: "",
-                bloodGroup: "",
-                dob: "",
-                cityOfBirth: "",
-                isWorking: false,
-                employmentDetails: "",
-                gender: "",
-              })
-            }
-          >
-            <svg
-              className="w-5 h-5 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          {!readOnly && (
+            <button
+              type="button"
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200 flex items-center"
+              onClick={() =>
+                append({
+                  relationship: "",
+                  title: "",
+                  firstName: "",
+                  lastName: "",
+                  aadharNumber: "",
+                  bloodGroup: "",
+                  dob: "",
+                  cityOfBirth: "",
+                  isWorking: false,
+                  employmentDetails: "",
+                  gender: "",
+                })
+              }
+              disabled={readOnly}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-            Add Family Member
-          </button>
+              <svg
+                className="w-5 h-5 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              Add Family Member
+            </button>
+          )}
         </div>
 
         {fields.length === 0 && (
           <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
             <p className="text-gray-600">
-              No family members added yet. Click the button above to add family
-              details.
+              No family members added yet.{" "}
+              {!readOnly && "Click the button above to add family details."}
             </p>
           </div>
         )}
@@ -375,7 +382,9 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                 fieldErrors?.[fieldName] || backendFieldErrors?.[fieldName];
               return `w-full p-2 border ${
                 hasError ? "border-red-500" : "border-gray-300"
-              } rounded-md focus:ring-blue-500 focus:border-blue-500`;
+              } rounded-md focus:ring-blue-500 focus:border-blue-500 ${
+                readOnly ? "bg-gray-100" : ""
+              }`;
             };
 
             const renderError = (fieldName) => {
@@ -394,27 +403,30 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                 key={item.id}
                 className="border border-gray-200 rounded-lg shadow-sm bg-white p-6 relative"
               >
-                <div className="absolute top-4 right-4">
-                  <button
-                    type="button"
-                    className="text-red-600 hover:text-red-800 transition-colors duration-200"
-                    onClick={() => remove(index)}
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                {!readOnly && (
+                  <div className="absolute top-4 right-4">
+                    <button
+                      type="button"
+                      className="text-red-600 hover:text-red-800 transition-colors duration-200"
+                      onClick={() => remove(index)}
+                      disabled={readOnly}
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      />
-                    </svg>
-                  </button>
-                </div>
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                )}
 
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">
                   Family Member {index + 1}
@@ -428,6 +440,7 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                     <select
                       {...register(`family.${index}.relationship`)}
                       className={getErrorClass("relatioship")}
+                      disabled={readOnly}
                     >
                       <option value="">Select Type</option>
                       {familyTypes.map((t) => (
@@ -446,6 +459,7 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                     <select
                       {...register(`family.${index}.title`)}
                       className={getErrorClass("title")}
+                      disabled={readOnly}
                     >
                       <option value="">Select Title</option>
                       {titles.map((title) => (
@@ -465,6 +479,7 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                       placeholder="Enter first name"
                       {...register(`family.${index}.firstName`)}
                       className={getErrorClass("firstName")}
+                      disabled={readOnly}
                     />
                     {renderError("firstName")}
                   </div>
@@ -477,6 +492,7 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                       placeholder="Enter last name"
                       {...register(`family.${index}.lastName`)}
                       className={getErrorClass("lastName")}
+                      disabled={readOnly}
                     />
                     {renderError("lastName")}
                   </div>
@@ -492,6 +508,7 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                       placeholder="Enter Aadhar number"
                       {...register(`family.${index}.aadharNumber`)}
                       className={getErrorClass("aadharNumber")}
+                      disabled={readOnly}
                     />
 
                     {renderError("aadharNumber")}
@@ -505,6 +522,7 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                       placeholder="Enter blood group"
                       {...register(`family.${index}.bloodGroup`)}
                       className={getErrorClass("bloodGroup")}
+                      disabled={readOnly}
                     />
                     {renderError("bloodGroup")}
                   </div>
@@ -517,6 +535,7 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                       type="date"
                       {...register(`family.${index}.dob`)}
                       className={getErrorClass("dob")}
+                      disabled={readOnly}
                     />
                     {renderError("dob")}
                   </div>
@@ -529,6 +548,7 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                       placeholder="Enter city of birth"
                       {...register(`family.${index}.cityOfBirth`)}
                       className={getErrorClass("cityOfBirth")}
+                      disabled={readOnly}
                     />
                     {renderError("cityOfBirth")}
                   </div>
@@ -541,6 +561,7 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                       placeholder="Enter nationality Indian or others"
                       {...register(`family.${index}.nationality`)}
                       className={getErrorClass("cityOfBirth")}
+                      disabled={readOnly}
                     />
                     {renderError("nationality")}
                   </div>
@@ -555,6 +576,7 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                         <select
                           {...register(`family.${index}.isWorking`)}
                           className={getErrorClass("isWorking")}
+                          disabled={readOnly}
                         >
                           <option value="">Select Status</option>
                           <option value="true">Working</option>
@@ -572,6 +594,7 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                             placeholder="Enter employment details"
                             {...register(`family.${index}.employmentDetails`)}
                             className={getErrorClass("employmentDetails")}
+                            disabled={readOnly}
                           />
                           {renderError("employmentDetails")}
                         </div>
@@ -587,6 +610,7 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
                       <select
                         {...register(`family.${index}.gender`)}
                         className={getErrorClass("gender")}
+                        disabled={readOnly}
                       >
                         <option value="">Select Gender</option>
                         <option value="Male">Male</option>
@@ -602,26 +626,35 @@ const FamilyDetailsForm = ({ onNext, defaultValues = [] }) => {
         </div>
 
         <div className="mt-8 flex justify-between">
-          <button
-            type="button"
-            onClick={handleSaveDraft}
-            disabled={!hasChanges || saving}
-            className={`px-4 py-2 rounded ${
-              hasChanges || !saving
-                ? "bg-green-400 text-gray-800 hover:bg-gray-400 cursor-pointer"
-                : "bg-gray-200 text-gray-500 cursor-not-allowed"
-            }`}
-          >
-            💾 Save Draft
-          </button>
+          {!readOnly && (
+            <>
+              <button
+                type="button"
+                onClick={handleSaveDraft}
+                disabled={!hasChanges || saving}
+                className={`px-4 py-2 rounded ${
+                  hasChanges || !saving
+                    ? "bg-green-400 text-gray-800 hover:bg-gray-400 cursor-pointer"
+                    : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                }`}
+              >
+                💾 Save Draft
+              </button>
 
-          <button
-            type="submit"
-            disabled={saving}
-            className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-300"
-          >
-            {saving ? "Saving..." : "Next ➡️"}
-          </button>
+              <button
+                type="submit"
+                disabled={saving}
+                className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-300"
+              >
+                {saving ? "Saving..." : "Next ➡️"}
+              </button>
+            </>
+          )}
+          {readOnly && (
+            <div className="w-full text-center">
+              <p className="text-gray-600 italic">Form is in read-only mode</p>
+            </div>
+          )}
         </div>
       </form>
     </div>

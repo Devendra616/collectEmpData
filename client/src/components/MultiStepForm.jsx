@@ -1,5 +1,5 @@
 import { useFormData } from "../context/FormContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import PersonalDetailsForm from "./forms/PersonalDetails";
 import EducationDetailsForm from "./forms/education/EducationDetailsForm";
 import FamilyDetailsForm from "./forms/Family/FamilyDetailsForm";
@@ -8,6 +8,8 @@ import WorkExperienceForm from "./forms/work/WorkExperience";
 import ReviewForm from "./forms/ReviewForm";
 import FormNavbar from "./FormNavbar";
 import StepTabs from "./StepTabs";
+import { submitForm, getSubmissionStatus } from "../services/formApi";
+import { toast } from "react-toastify";
 // import { generatePDF } from "../pdf/generatePDF.js";
 
 const MultiStepForm = () => {
@@ -16,8 +18,30 @@ const MultiStepForm = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [checkingStatus, setCheckingStatus] = useState(true);
 
   console.log("MultiStepForm - FormContext state:", state);
+
+  // Check submission status on component mount
+  useEffect(() => {
+    const checkSubmissionStatus = async () => {
+      try {
+        const response = await getSubmissionStatus();
+        if (response?.success && response?.isSubmitted) {
+          setIsSubmitted(true);
+          toast.info(
+            "Your form has already been submitted. You can only view the data."
+          );
+        }
+      } catch (error) {
+        console.error("Error checking submission status:", error);
+      } finally {
+        setCheckingStatus(false);
+      }
+    };
+
+    checkSubmissionStatus();
+  }, []);
 
   const stepConfig = [
     { name: "personalDetails", Component: PersonalDetailsForm },
@@ -65,6 +89,33 @@ const MultiStepForm = () => {
     }
   };
 
+  const handleFinalSubmit = async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await submitForm();
+
+      if (response?.success) {
+        setIsSubmitted(true);
+        toast.success(response?.msg || "Form submitted successfully!");
+      } else {
+        setError(response?.msg || "Failed to submit form");
+        toast.error(response?.msg || "Failed to submit form");
+      }
+    } catch (err) {
+      console.error("Error in final submit:", err);
+      const errorMsg =
+        err?.response?.data?.msg ||
+        err?.message ||
+        "An error occurred while submitting";
+      setError(errorMsg);
+      toast.error(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const current = stepConfig[currentStep];
   const isReview = current.name === "review";
 
@@ -76,6 +127,20 @@ const MultiStepForm = () => {
     }
   };
 
+  // Show loading while checking submission status
+  if (checkingStatus) {
+    return (
+      <div className="max-w-3xl mx-auto p-6 shadow-lg rounded-xl bg-white">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          <span className="ml-2 text-blue-600">
+            Checking submission status...
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-3xl mx-auto p-6 shadow-lg rounded-xl bg-white">
       <FormNavbar />
@@ -83,7 +148,9 @@ const MultiStepForm = () => {
       {loading && (
         <div className="flex items-center justify-center p-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-          <span className="ml-2 text-blue-600">Saving...</span>
+          <span className="ml-2 text-blue-600">
+            {isReview ? "Submitting..." : "Saving..."}
+          </span>
         </div>
       )}
 
@@ -117,25 +184,52 @@ const MultiStepForm = () => {
             ? {
                 data: state,
                 onBack: () => setStep((prev) => prev - 1),
-                onSubmit: () => setIsSubmitted(true),
+                onSubmit: handleFinalSubmit,
+                isSubmitted: isSubmitted,
               }
             : {
                 onNext: (data) => handleNext(current.name, data),
                 defaultValues: state[current.name] || {},
+                readOnly: false,
               })}
         />
       )}
 
       {isSubmitted && (
-        <div className="text-center space-y-4">
-          <h2 className="text-2xl font-bold text-green-600">🎉 Thank you!</h2>
-          <p>Your form has been submitted successfully.</p>
-          <button
-            onClick={() => handleDownloadForm(state)}
-            className="px-4 py-2 bg-blue-600 text-white rounded cursor-pointer"
-          >
-            Download Form
-          </button>
+        <div className="space-y-6">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-green-600">
+              🎉 Form Submitted!
+            </h2>
+            <p className="mt-2 text-gray-600">
+              Your form has been submitted successfully. You can view your data
+              below.
+            </p>
+          </div>
+
+          <CurrentForm
+            {...(isReview
+              ? {
+                  data: state,
+                  onBack: () => setStep((prev) => prev - 1),
+                  onSubmit: handleFinalSubmit,
+                  isSubmitted: isSubmitted,
+                }
+              : {
+                  onNext: (data) => handleNext(current.name, data),
+                  defaultValues: state[current.name] || {},
+                  readOnly: true,
+                })}
+          />
+
+          <div className="text-center space-y-4">
+            <button
+              onClick={() => handleDownloadForm(state)}
+              className="px-4 py-2 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700"
+            >
+              Download Form
+            </button>
+          </div>
         </div>
       )}
     </div>

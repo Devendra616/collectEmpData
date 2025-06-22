@@ -76,7 +76,7 @@ const schema = yup.object().shape({
   langHindiSpeak: yup.boolean(),
 });
 
-const PersonalDetailsForm = ({ onNext, defaultValues }) => {
+const PersonalDetailsForm = ({ onNext, defaultValues, readOnly = false }) => {
   const { token } = useAuth();
   const { state: formState, dispatch } = useFormData();
 
@@ -349,6 +349,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
               errors.title ? "border-red-500" : "border-gray-300"
             }`}
             {...register("title")}
+            disabled={readOnly}
           >
             <option value="">Select</option>
             <option value="Shri">Shri</option>
@@ -370,6 +371,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
             }`}
             {...register("firstName")}
             placeholder="First Name"
+            disabled={readOnly}
           />
           {errors.firstName && (
             <p className="mt-1 text-sm text-red-600">
@@ -386,6 +388,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
             }`}
             {...register("lastName")}
             placeholder="Last Name"
+            disabled={readOnly}
           />
           {errors.lastName && (
             <p className="mt-1 text-sm text-red-600">
@@ -398,10 +401,21 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
           <label className="block font-medium mb-1">Gender</label>
           <div className="space-x-4">
             <label>
-              <input type="radio" value="Male" {...register("gender")} /> Male
+              <input
+                type="radio"
+                value="Male"
+                {...register("gender")}
+                disabled={readOnly}
+              />{" "}
+              Male
             </label>
             <label>
-              <input type="radio" value="Female" {...register("gender")} />{" "}
+              <input
+                type="radio"
+                value="Female"
+                {...register("gender")}
+                disabled={readOnly}
+              />{" "}
               Female
             </label>
           </div>
@@ -422,6 +436,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
             max={new Date().toISOString().split("T")[0]}
             min="1960-01-01"
             {...register("dob")}
+            disabled={readOnly}
           />
           {age && (
             <p
@@ -447,6 +462,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
             }`}
             {...register("birthplace")}
             placeholder="Birthplace"
+            disabled={readOnly}
           />
           {errors.birthplace && (
             <p className="mt-1 text-sm text-red-600">
@@ -463,6 +479,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
             }`}
             {...register("state")}
             placeholder="State"
+            disabled={readOnly}
           />
           {errors.state && (
             <p className="mt-1 text-sm text-red-600">{errors.state.message}</p>
@@ -476,6 +493,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
               errors.maritalStatus ? "border-red-500" : "border-gray-300"
             }`}
             {...register("maritalStatus")}
+            disabled={readOnly}
           >
             <option value="">Select</option>
             <option value="single">Single</option>
@@ -501,9 +519,10 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
               errors.countChild ? "border-red-500" : "border-gray-300"
             }`}
             {...register("countChild")}
-            placeholder="Count of Child/Children"
+            placeholder="Number of children"
+            disabled={readOnly}
           />
-          {errors.mobile && (
+          {errors.countChild && (
             <p className="mt-1 text-sm text-red-600">
               {errors.countChild.message}
             </p>
@@ -518,6 +537,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
             }`}
             {...register("religion")}
             placeholder="Religion"
+            disabled={readOnly}
           />
           {errors.religion && (
             <p className="mt-1 text-sm text-red-600">
@@ -534,6 +554,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
             }`}
             {...register("category")}
             placeholder="Category"
+            disabled={readOnly}
           />
           {errors.category && (
             <p className="mt-1 text-sm text-red-600">
@@ -550,6 +571,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
             }`}
             {...register("subCategory")}
             placeholder="Sub-Category"
+            disabled={readOnly}
           />
           {errors.subCategory && (
             <p className="mt-1 text-sm text-red-600">
@@ -566,6 +588,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
             }`}
             {...register("idMark1")}
             placeholder="Identification Mark 1"
+            disabled={readOnly}
           />
           {errors.idMark1 && (
             <p className="mt-1 text-sm text-red-600">
@@ -582,6 +605,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
             }`}
             {...register("idMark2")}
             placeholder="Identification Mark 2"
+            disabled={readOnly}
           />
           {errors.idMark2 && (
             <p className="mt-1 text-sm text-red-600">
@@ -597,6 +621,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
               errors.exServiceman ? "border-red-500" : "border-gray-300"
             }`}
             {...register("exServiceman")}
+            disabled={readOnly}
           >
             <option value="">Select</option>
             <option value="Yes">Yes</option>
@@ -619,6 +644,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
             }`}
             {...register("adhaarId")}
             placeholder="Aadhar ID"
+            disabled={readOnly}
           />
           {errors.adhaarId && (
             <p className="mt-1 text-sm text-red-600">
@@ -637,6 +663,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
             }`}
             {...register("mobile")}
             placeholder="Mobile Number"
+            disabled={readOnly}
           />
           {errors.mobile && (
             <p className="mt-1 text-sm text-red-600">{errors.mobile.message}</p>
@@ -650,6 +677,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
               errors.pwd ? "border-red-500" : "border-gray-300"
             }`}
             {...register("pwd")}
+            disabled={readOnly}
           >
             <option value="">Select</option>
             <option value="Yes">Yes</option>
@@ -669,6 +697,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
               errors.motherTongue ? "border-red-500" : "border-gray-300"
             }`}
             {...register("motherTongue")}
+            disabled={readOnly}
           >
             <option value="">Select</option>
             {languageOptions.map((lang) => (
@@ -691,6 +720,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
             }`}
             {...register("otherMotherTongue")}
             placeholder="Please specify"
+            disabled={readOnly}
           />
         )}
 
@@ -703,6 +733,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
               errors.hindiKnowledge ? "border-red-500" : "border-gray-300"
             }`}
             {...register("hindiKnowledge")}
+            disabled={readOnly}
           >
             <option value="">Select</option>
             <option value="Yes">Yes</option>
@@ -721,38 +752,67 @@ const PersonalDetailsForm = ({ onNext, defaultValues }) => {
           </label>
           <div className="space-x-4">
             <label>
-              <input type="checkbox" {...register("langHindiRead")} /> Read
+              <input
+                type="checkbox"
+                {...register("langHindiRead")}
+                disabled={readOnly}
+              />{" "}
+              Read
             </label>
             <label>
-              <input type="checkbox" {...register("langHindiWrite")} /> Write
+              <input
+                type="checkbox"
+                {...register("langHindiWrite")}
+                disabled={readOnly}
+              />{" "}
+              Write
             </label>
             <label>
-              <input type="checkbox" {...register("langHindiSpeak")} /> Speak
+              <input
+                type="checkbox"
+                {...register("langHindiSpeak")}
+                disabled={readOnly}
+              />{" "}
+              Speak
             </label>
           </div>
         </div>
       </div>
 
       <div className="flex justify-between mt-6">
-        <button
-          type="button"
-          onClick={handleSaveDraft}
-          disabled={!hasChanges}
-          className={`px-4 py-2 rounded ${
-            hasChanges
-              ? "bg-green-400 text-gray-800 hover:bg-gray-400 cursor-pointer"
-              : "bg-gray-200 text-gray-500 cursor-not-allowed"
-          }`}
-        >
-          💾 Save Draft
-        </button>
+        {!readOnly && (
+          <>
+            <button
+              type="button"
+              onClick={handleSaveDraft}
+              disabled={!hasChanges || readOnly}
+              className={`px-4 py-2 rounded ${
+                hasChanges && !readOnly
+                  ? "bg-green-400 text-gray-800 hover:bg-gray-400 cursor-pointer"
+                  : "bg-gray-200 text-gray-500 cursor-not-allowed"
+              }`}
+            >
+              💾 Save Draft
+            </button>
 
-        <button
-          type="submit"
-          className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer"
-        >
-          Next ➡️
-        </button>
+            <button
+              type="submit"
+              disabled={readOnly}
+              className={`px-6 py-2 rounded ${
+                readOnly
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
+              }`}
+            >
+              Next ➡️
+            </button>
+          </>
+        )}
+        {readOnly && (
+          <div className="w-full text-center">
+            <p className="text-gray-600 italic">Form is in read-only mode</p>
+          </div>
+        )}
       </div>
     </form>
   );

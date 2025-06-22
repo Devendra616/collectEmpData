@@ -14,7 +14,7 @@ const apiUrl = import.meta.env.VITE_API_URL;
 console.log("API URL:", apiUrl);
 // const { token } =useAuth();
 
-export const saveSectionData = async (sectionName, data, token) => {
+export const saveSectionData = async (sectionName, data) => {
   const endpoint = sectionEndpoints[sectionName];
 
   if (!endpoint) {
@@ -31,6 +31,28 @@ export const saveSectionData = async (sectionName, data, token) => {
       `🚀 ~ saveSectionData ~ error saving ${sectionName}:`,
       error?.response?.data
     );
+    return error?.response?.data;
+  }
+};
+
+export const submitForm = async () => {
+  try {
+    const res = await axiosInstance.post("/submit-form");
+    console.log("Form submission response:", res);
+    return res.data;
+  } catch (error) {
+    console.log("🚀 ~ submitForm ~ error:", error?.response?.data);
+    return error?.response?.data;
+  }
+};
+
+export const getSubmissionStatus = async () => {
+  try {
+    const res = await axiosInstance.get("/submission-status");
+    console.log("Submission status response:", res);
+    return res.data;
+  } catch (error) {
+    console.log("🚀 ~ getSubmissionStatus ~ error:", error?.response?.data);
     return error?.response?.data;
   }
 };

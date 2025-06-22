@@ -1,7 +1,7 @@
 import React from "react";
 import { formatDate } from "../../utils/dateConversion.js";
 
-const ReviewForm = ({ data, onBack, onSubmit }) => {
+const ReviewForm = ({ data, onBack, onSubmit, isSubmitted = false }) => {
   console.log("Received data", data);
   const sections = [
     {
@@ -190,10 +190,17 @@ const ReviewForm = ({ data, onBack, onSubmit }) => {
         <h2 className="text-2xl font-bold text-gray-900">
           Review Your Details
         </h2>
-        <p className="mt-2 text-amber-600 text-lg">
-          Please review all your information before final submission. You can't
-          edit after submission.
-        </p>
+        {!isSubmitted ? (
+          <p className="mt-2 text-amber-600 text-lg">
+            Please review all your information before final submission. You
+            can't edit after submission.
+          </p>
+        ) : (
+          <p className="mt-2 text-green-600 text-lg">
+            Your form has been submitted successfully. You can view your data
+            below.
+          </p>
+        )}
       </div>
 
       <div className="space-y-6">
@@ -221,12 +228,18 @@ const ReviewForm = ({ data, onBack, onSubmit }) => {
           Back
         </button>
 
-        <button
-          onClick={onSubmit}
-          className="px-8 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 cursor-pointer"
-        >
-          Final Submit
-        </button>
+        {!isSubmitted ? (
+          <button
+            onClick={onSubmit}
+            className="px-8 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 cursor-pointer"
+          >
+            Final Submit
+          </button>
+        ) : (
+          <div className="px-8 py-2.5 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed">
+            Already Submitted
+          </div>
+        )}
       </div>
     </div>
   );

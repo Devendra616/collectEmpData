@@ -75,12 +75,79 @@ const loginHandler = async (req, res) => {
         email: empFound.email,
         sapId,
         location: empFound.location,
+        isSubmitted: empFound.isSubmitted,
       },
     });
   });
 };
 
+const updateSubmissionStatus = async (req, res) => {
+  try {
+    const { id } = req.user; // Get employee ID from JWT token
+
+    const updatedEmployee = await Employee.findByIdAndUpdate(
+      id,
+      { isSubmitted: true },
+      { new: true }
+    );
+
+    if (!updatedEmployee) {
+      return res.status(404).json({
+        success: false,
+        msg: "Employee not found",
+        statusCode: 404,
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      msg: "Form submitted successfully",
+      statusCode: 200,
+      isSubmitted: updatedEmployee.isSubmitted,
+    });
+  } catch (error) {
+    console.log("🚀 ~ updateSubmissionStatus ~ error:", error);
+    res.status(500).json({
+      success: false,
+      msg: "Internal server error",
+      statusCode: 500,
+    });
+  }
+};
+
+const getSubmissionStatus = async (req, res) => {
+  try {
+    const { id } = req.user; // Get employee ID from JWT token
+
+    const employee = await Employee.findById(id).select("isSubmitted");
+
+    if (!employee) {
+      return res.status(404).json({
+        success: false,
+        msg: "Employee not found",
+        statusCode: 404,
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      msg: "Submission status retrieved successfully",
+      statusCode: 200,
+      isSubmitted: employee.isSubmitted,
+    });
+  } catch (error) {
+    console.log("🚀 ~ getSubmissionStatus ~ error:", error);
+    res.status(500).json({
+      success: false,
+      msg: "Internal server error",
+      statusCode: 500,
+    });
+  }
+};
+
 export default {
   registrationHandler,
   loginHandler,
+  updateSubmissionStatus,
+  getSubmissionStatus,
 };

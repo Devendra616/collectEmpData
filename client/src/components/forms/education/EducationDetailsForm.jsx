@@ -75,7 +75,11 @@ const schema = yup.object().shape({
   ),
 });
 
-const EducationDetailsForm = ({ onNext, defaultValues = [] }) => {
+const EducationDetailsForm = ({
+  onNext,
+  defaultValues = [],
+  readOnly = false,
+}) => {
   const { token } = useAuth();
   const { state: formState, dispatch } = useFormData();
 
@@ -83,7 +87,6 @@ const EducationDetailsForm = ({ onNext, defaultValues = [] }) => {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [hasChanges, setHasChanges] = useState(false);
-  const [fieldChanges, setFieldChanges] = useState({});
 
   // Memoize initial values to prevent unnecessary re-renders
   const initialValues = useMemo(() => {
@@ -145,7 +148,7 @@ const EducationDetailsForm = ({ onNext, defaultValues = [] }) => {
     handleSubmit,
     watch,
     getValues,
-    formState: { errors, dirtyFields },
+    formState: { errors },
   } = useForm({
     resolver: yupResolver(schema),
     defaultValues: initialValues,
@@ -191,42 +194,21 @@ const EducationDetailsForm = ({ onNext, defaultValues = [] }) => {
   // Create onBlur handlers for different field types
   const createTextBlurHandler = useCallback(
     (fieldPath) => (e) => {
-      const currentValue = e.target.value;
-      const initialValue = getFieldValue(initialValues, fieldPath);
-      const hasChanged = currentValue !== initialValue;
-
-      setFieldChanges((prev) => {
-        const updated = { ...prev, [fieldPath]: hasChanged };
-        return updated;
-      });
+      // Text blur handler - no longer tracking changes
     },
     [initialValues]
   );
 
   const createSelectBlurHandler = useCallback(
     (fieldPath) => (e) => {
-      const currentValue = e.target.value;
-      const initialValue = getFieldValue(initialValues, fieldPath);
-      const hasChanged = currentValue !== initialValue;
-
-      setFieldChanges((prev) => {
-        const updated = { ...prev, [fieldPath]: hasChanged };
-        return updated;
-      });
+      // Select blur handler - no longer tracking changes
     },
     [initialValues]
   );
 
   const createDateBlurHandler = useCallback(
     (fieldPath) => (e) => {
-      const currentValue = e.target.value;
-      const initialValue = getFieldValue(initialValues, fieldPath);
-      const hasChanged = currentValue !== initialValue;
-
-      setFieldChanges((prev) => {
-        const updated = { ...prev, [fieldPath]: hasChanged };
-        return updated;
-      });
+      // Date blur handler - no longer tracking changes
     },
     [initialValues]
   );
@@ -297,7 +279,6 @@ const EducationDetailsForm = ({ onNext, defaultValues = [] }) => {
       });
 
       setHasChanges(false);
-      setFieldChanges({});
       if (proceed) onNext(dataToSave);
     } catch (error) {
       console.error("Error saving data:", error);
@@ -383,47 +364,51 @@ const EducationDetailsForm = ({ onNext, defaultValues = [] }) => {
         }}
       >
         <div className="mb-6">
-          <button
-            type="button"
-            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200 flex items-center"
-            onClick={() =>
-              append({
-                educationType: "",
-                instituteName: "",
-                certificateType: "",
-                duration: "",
-                grade: "",
-                medium: "",
-                hindiSubjectLevel: "",
-                startDate: "",
-                passingDate: "",
-                courseDetails: "",
-                specialization: "",
-              })
-            }
-          >
-            <svg
-              className="w-5 h-5 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          {!readOnly && (
+            <button
+              type="button"
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200 flex items-center"
+              onClick={() =>
+                append({
+                  educationType: "",
+                  instituteName: "",
+                  certificateType: "",
+                  duration: "",
+                  grade: "",
+                  medium: "",
+                  hindiSubjectLevel: "",
+                  startDate: "",
+                  passingDate: "",
+                  courseDetails: "",
+                  specialization: "",
+                })
+              }
+              disabled={readOnly}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-            Add Education
-          </button>
+              <svg
+                className="w-5 h-5 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              Add Education
+            </button>
+          )}
         </div>
 
         {fields.length === 0 && (
           <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
             <p className="text-gray-600">
-              No education details added yet. Click the button above to add your
-              education details.
+              No education details added yet.{" "}
+              {!readOnly &&
+                "Click the button above to add your education details."}
             </p>
           </div>
         )}
@@ -438,27 +423,30 @@ const EducationDetailsForm = ({ onNext, defaultValues = [] }) => {
                 key={item.id}
                 className="border border-gray-200 rounded-lg shadow-sm bg-white p-6 relative"
               >
-                <div className="absolute top-4 right-4">
-                  <button
-                    type="button"
-                    className="text-red-600 hover:text-red-800 transition-colors duration-200"
-                    onClick={() => remove(index)}
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                {!readOnly && (
+                  <div className="absolute top-4 right-4">
+                    <button
+                      type="button"
+                      className="text-red-600 hover:text-red-800 transition-colors duration-200"
+                      onClick={() => remove(index)}
+                      disabled={readOnly}
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      />
-                    </svg>
-                  </button>
-                </div>
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                )}
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">
                   Education Entry {index + 1}
                 </h3>
@@ -471,6 +459,7 @@ const EducationDetailsForm = ({ onNext, defaultValues = [] }) => {
                   onTextBlur={createTextBlurHandler}
                   onSelectBlur={createSelectBlurHandler}
                   onDateBlur={createDateBlurHandler}
+                  readOnly={readOnly}
                 />
               </div>
             );
@@ -478,25 +467,39 @@ const EducationDetailsForm = ({ onNext, defaultValues = [] }) => {
         </div>
 
         <div className="mt-8 flex justify-between">
-          <button
-            type="button"
-            onClick={handleSaveDraft}
-            disabled={!hasChanges || saving}
-            className={`px-4 py-2 rounded ${
-              hasChanges
-                ? "bg-green-400 text-gray-800 hover:bg-gray-400 cursor-pointer"
-                : "bg-gray-200 text-gray-500 cursor-not-allowed"
-            }`}
-          >
-            💾 Save Draft
-          </button>
+          {!readOnly && (
+            <>
+              <button
+                type="button"
+                onClick={handleSaveDraft}
+                disabled={!hasChanges || saving || readOnly}
+                className={`px-4 py-2 rounded ${
+                  hasChanges && !readOnly
+                    ? "bg-green-400 text-gray-800 hover:bg-gray-400 cursor-pointer"
+                    : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                }`}
+              >
+                💾 Save Draft
+              </button>
 
-          <button
-            type="submit"
-            className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer"
-          >
-            Next ➡️
-          </button>
+              <button
+                type="submit"
+                disabled={readOnly}
+                className={`px-6 py-2 rounded ${
+                  readOnly
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
+                }`}
+              >
+                Next ➡️
+              </button>
+            </>
+          )}
+          {readOnly && (
+            <div className="w-full text-center">
+              <p className="text-gray-600 italic">Form is in read-only mode</p>
+            </div>
+          )}
         </div>
       </form>
     </div>

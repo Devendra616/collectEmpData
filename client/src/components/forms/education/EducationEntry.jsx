@@ -1,13 +1,22 @@
 import React from "react";
 
-const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
+const EducationEntry = ({
+  index,
+  register,
+  watch,
+  errors,
+  backendErrors,
+  readOnly = false,
+}) => {
   const educationType = watch(`education[${index}].educationType`);
 
   const getErrorClass = (fieldName) => {
     const hasError = errors?.[fieldName] || backendErrors?.[fieldName];
     return `w-full p-2 border ${
       hasError ? "border-red-500" : "border-gray-300"
-    } rounded-md focus:ring-blue-500 focus:border-blue-500`;
+    } rounded-md focus:ring-blue-500 focus:border-blue-500 ${
+      readOnly ? "bg-gray-100" : ""
+    }`;
   };
   const renderError = (fieldName) => {
     const error = errors?.[fieldName] || backendErrors?.[fieldName];
@@ -29,6 +38,7 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
           <select
             {...register(`education[${index}].educationType`)}
             className={getErrorClass("educationType")}
+            disabled={readOnly}
           >
             <option value="">Select</option>
             <option value="10TH">10th Class</option>
@@ -51,6 +61,7 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
                 placeholder="Enter institute name"
                 {...register(`education[${index}].instituteName`)}
                 className={getErrorClass("instituteName")}
+                disabled={readOnly}
               />
               {renderError("instituteName")}
             </div>
@@ -61,6 +72,7 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
               <select
                 {...register(`education[${index}].certificateType`)}
                 className={getErrorClass("certificateType")}
+                disabled={readOnly}
               >
                 <option value="">Select Certificate Type</option>
                 <option value="REGULAR">Regular</option>
@@ -79,6 +91,7 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
                 placeholder="Enter duration"
                 {...register(`education[${index}].duration`)}
                 className={getErrorClass("duration")}
+                disabled={readOnly}
               />
               {renderError("duration")}
             </div>
@@ -90,6 +103,7 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
                 placeholder="Enter final grade"
                 {...register(`education[${index}].grade`)}
                 className={getErrorClass("grade")}
+                disabled={readOnly}
               />
               {renderError("grade")}
             </div>
@@ -104,6 +118,7 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
                     value="ENGLISH"
                     {...register(`education[${index}].medium`)}
                     className="form-radio h-4 w-4 text-blue-600"
+                    disabled={readOnly}
                   />
                   <span className="ml-2">English</span>
                 </label>
@@ -113,6 +128,7 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
                     value="HINDI"
                     {...register(`education[${index}].medium`)}
                     className="form-radio h-4 w-4 text-blue-600"
+                    disabled={readOnly}
                   />
                   <span className="ml-2">Hindi</span>
                 </label>
@@ -126,6 +142,7 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
               <select
                 {...register(`education[${index}].hindiSubjectLevel`)}
                 className={getErrorClass("hindiSubjectLevel")}
+                disabled={readOnly}
               >
                 <option value="">Select Level</option>
                 <option value="FIRST">1st Language</option>
@@ -147,6 +164,7 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
                     placeholder="Enter course details"
                     {...register(`education[${index}].courseDetails`)}
                     className={getErrorClass("courseDetails")}
+                    disabled={readOnly}
                   />
                   {renderError("courseDetails")}
                 </div>
@@ -158,6 +176,7 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
                     placeholder="Enter specialization"
                     {...register(`education[${index}].specialization`)}
                     className={getErrorClass("specialization")}
+                    disabled={readOnly}
                   />
                   {renderError("specialization")}
                 </div>
@@ -171,6 +190,7 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
                 type="date"
                 {...register(`education[${index}].startDate`)}
                 className={getErrorClass("startDate")}
+                disabled={readOnly}
               />
               {renderError("startDate")}
             </div>
@@ -182,6 +202,7 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
                 type="date"
                 {...register(`education[${index}].passingDate`)}
                 className={getErrorClass("startDate")}
+                disabled={readOnly}
               />
               {renderError("passingDate")}
             </div>
@@ -197,6 +218,7 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
               <select
                 {...register(`education[${index}].licenseType`)}
                 className={getErrorClass("licenseType")}
+                disabled={readOnly}
               >
                 <option value="">Select License Type</option>
                 <option value="ELECTRICAL_SUPERVISORY">
@@ -216,6 +238,7 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
                 placeholder="Enter license number"
                 {...register(`education[${index}].licenseNumber`)}
                 className={getErrorClass("licenseNumber")}
+                disabled={readOnly}
               />
               {renderError("licenseNumber")}
             </div>
@@ -228,6 +251,7 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
                 type="date"
                 {...register(`education[${index}].licenseIssueDate`)}
                 className={getErrorClass("issueDate")}
+                disabled={readOnly}
               />
               {renderError("licenseIssueDate")}
             </div>
@@ -240,6 +264,7 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
                 type="date"
                 {...register(`education[${index}].licenseExpiryDate`)}
                 className={getErrorClass("expiryDate")}
+                disabled={readOnly}
               />
               {renderError("licenseExpiryDate")}
             </div>
@@ -252,6 +277,7 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
                 placeholder="Enter issuing authority"
                 {...register(`education[${index}].licenseIssuingAuthority`)}
                 className={getErrorClass("issuingAuthority")}
+                disabled={readOnly}
               />
               {renderError("licenseIssuingAuthority")}
             </div>
@@ -265,6 +291,7 @@ const EducationEntry = ({ index, register, watch, errors, backendErrors }) => {
                 rows={3}
                 {...register(`education[${index}].licenseOtherDetails`)}
                 className={getErrorClass("otherDetails")}
+                disabled={readOnly}
               />
               {renderError("licenseOtherDetails")}
             </div>
