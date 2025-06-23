@@ -36,7 +36,12 @@ import {
 
 // const { fetchPersonalDetails } = fetchController;
 
-const { registrationHandler, loginHandler } = handlers;
+const {
+  registrationHandler,
+  loginHandler,
+  updateSubmissionStatus,
+  getSubmissionStatus,
+} = handlers;
 
 // router.get('/welcome', (req, res) => {
 //   res.status(200).json({ message: 'Welcome! Your route is working.' });
@@ -86,5 +91,11 @@ router.post(
 router.post("/address", verifyToken, validateAddress, addressDetailsHandler);
 
 router.post("/work", verifyToken, validateWorkExperience, WorkDetailsHandler);
+
+// Add route for final form submission
+router.post("/submit-form", verifyToken, updateSubmissionStatus);
+
+// Add route to get submission status
+router.get("/submission-status", verifyToken, getSubmissionStatus);
 
 export default router;

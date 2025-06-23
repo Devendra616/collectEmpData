@@ -10,7 +10,7 @@ import FormNavbar from "./FormNavbar";
 import StepTabs from "./StepTabs";
 import { submitForm, getSubmissionStatus } from "../services/formApi";
 import { toast } from "react-toastify";
-// import { generatePDF } from "../pdf/generatePDF.js";
+import PDFGenerator from "./pdf/PDFGenerator";
 
 const MultiStepForm = () => {
   const { state, dispatch } = useFormData();
@@ -121,12 +121,6 @@ const MultiStepForm = () => {
 
   const CurrentForm = current.Component;
 
-  const handleDownloadForm = (dataToDownload) => {
-    if (isSubmitted && dataToDownload) {
-      // generatePDF(dataToDownload);
-    }
-  };
-
   // Show loading while checking submission status
   if (checkingStatus) {
     return (
@@ -223,12 +217,7 @@ const MultiStepForm = () => {
           />
 
           <div className="text-center space-y-4">
-            <button
-              onClick={() => handleDownloadForm(state)}
-              className="px-4 py-2 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700"
-            >
-              Download Form
-            </button>
+            <PDFGenerator formData={state} isSubmitted={isSubmitted} />
           </div>
         </div>
       )}

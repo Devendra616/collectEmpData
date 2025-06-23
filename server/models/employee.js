@@ -20,6 +20,10 @@ const employeeSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  isSubmitted: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 employeeSchema.pre("save", async function (next) {
