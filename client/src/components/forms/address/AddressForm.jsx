@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
@@ -9,24 +9,72 @@ import { useFormData } from "../../../context/FormContext";
 import axiosInstance from "../../../services/axiosInstance.js";
 import { toast } from "react-toastify";
 
-const schema = yup.object().shape({
-  address: yup.array().of(
-    yup.object().shape({
-      addressLine1: yup.string().required("Address Line 1 is required"),
-      city: yup.string().required("City is required"),
-      state: yup.string().required("State is required"),
-      pincode: yup
-        .string()
-        .matches(/^[0-9]{6}$/, "Pincode must be 6 digits")
-        .required("Pincode is required"),
-      district: yup.string().required("District is required"),
-      postOffice: yup.string().required("Post Office is required"),
-      policeStation: yup.string().required("Police Station is required"),
-    })
-  ),
+// Define base address schema for required addresses
+const requiredAddressSchema = yup.object().shape({
+  addressLine1: yup.string().required("Address Line 1 is required"),
+  addressLine2: yup.string(),
+  city: yup.string().required("City is required"),
+  state: yup.string().required("State is required"),
+  pincode: yup
+    .string()
+    .matches(/^[0-9]{6}$/, "Pincode must be 6 digits")
+    .required("Pincode is required"),
+  district: yup.string().required("District is required"),
+  postOffice: yup.string().required("Post Office is required"),
+  policeStation: yup.string().required("Police Station is required"),
+  type: yup.string(),
 });
 
-const AddressForm = ({ onNext, defaultValues = [], readOnly = false }) => {
+// Define optional address schema for correspondence address
+const correspondenceAddressSchema = yup.object().shape({
+  addressLine1: yup.string(),
+  addressLine2: yup.string(),
+  city: yup.string().when("addressLine1", {
+    is: (val) => val && val.trim().length > 0,
+    then: (schema) => schema.required("City is required"),
+    otherwise: (schema) => schema,
+  }),
+  state: yup.string().when("addressLine1", {
+    is: (val) => val && val.trim().length > 0,
+    then: (schema) => schema.required("State is required"),
+    otherwise: (schema) => schema,
+  }),
+  pincode: yup.string().when("addressLine1", {
+    is: (val) => val && val.trim().length > 0,
+    then: (schema) =>
+      schema
+        .matches(/^[0-9]{6}$/, "Pincode must be 6 digits")
+        .required("Pincode is required"),
+    otherwise: (schema) => schema,
+  }),
+  district: yup.string().when("addressLine1", {
+    is: (val) => val && val.trim().length > 0,
+    then: (schema) => schema.required("District is required"),
+    otherwise: (schema) => schema,
+  }),
+  postOffice: yup.string().when("addressLine1", {
+    is: (val) => val && val.trim().length > 0,
+    then: (schema) => schema.required("Post Office is required"),
+    otherwise: (schema) => schema,
+  }),
+  policeStation: yup.string().when("addressLine1", {
+    is: (val) => val && val.trim().length > 0,
+    then: (schema) => schema.required("Police Station is required"),
+    otherwise: (schema) => schema,
+  }),
+  type: yup.string(),
+});
+
+// Use tuple to define different validation for each address position
+const schema = yup.object().shape({
+  address: yup.tuple([
+    requiredAddressSchema, // address[0] - Present Address (required)
+    requiredAddressSchema, // address[1] - Permanent Address (required)
+    correspondenceAddressSchema, // address[2] - Correspondence Address (optional)
+  ]),
+});
+
+const AddressForm = ({ onNext, readOnly = false }) => {
   const { token } = useAuth();
   const { state: formState, dispatch } = useFormData();
   const [sameAsPresent, setSameAsPresent] = useState(false);
@@ -35,6 +83,22 @@ const AddressForm = ({ onNext, defaultValues = [], readOnly = false }) => {
   const [loading, setLoading] = useState(true);
   const [hasChanges, setHasChanges] = useState(false);
 
+  // Helper function to check if two addresses are the same
+  const areAddressesEqual = (addr1, addr2) => {
+    if (!addr1 || !addr2) return false;
+    const fieldsToCompare = [
+      "addressLine1",
+      "addressLine2",
+      "city",
+      "state",
+      "pincode",
+      "district",
+      "postOffice",
+      "policeStation",
+    ];
+    return fieldsToCompare.every((field) => addr1[field] === addr2[field]);
+  };
+
   // Memoize initial values
   const initialValues = useMemo(() => {
     const addressData = formState?.address?.data || [];
@@ -42,9 +106,11 @@ const AddressForm = ({ onNext, defaultValues = [], readOnly = false }) => {
       addressData.find((addr) => addr.type === "present") || {};
     const permanentAddress =
       addressData.find((addr) => addr.type === "permanent") || {};
+    const correspondenceAddress =
+      addressData.find((addr) => addr.type === "correspondence") || {};
 
     return {
-      address: [presentAddress, permanentAddress],
+      address: [presentAddress, permanentAddress, correspondenceAddress],
     };
   }, [formState?.address?.data]);
 
@@ -80,18 +146,31 @@ const AddressForm = ({ onNext, defaultValues = [], readOnly = false }) => {
   const {
     register,
     handleSubmit,
-    control,
     watch,
     getValues,
     setValue,
     trigger,
+    reset, // Add reset method
     formState: { errors },
   } = useForm({
-    //resolver: yupResolver(schema),
+    resolver: yupResolver(schema),
     defaultValues: initialValues,
   });
 
   const formValues = watch();
+
+  // Reset form when initial values change (when data loads)
+  useEffect(() => {
+    if (!loading && initialValues) {
+      reset(initialValues);
+
+      // Check if permanent address is same as present address
+      const presentAddr = initialValues.address[0];
+      const permanentAddr = initialValues.address[1];
+      const isSame = areAddressesEqual(presentAddr, permanentAddr);
+      setSameAsPresent(isSame);
+    }
+  }, [initialValues, loading, reset]);
 
   // Check for changes whenever form values change
   useEffect(() => {
@@ -106,7 +185,20 @@ const AddressForm = ({ onNext, defaultValues = [], readOnly = false }) => {
         (key) => currentValues.address[1][key] !== initialValues.address[1][key]
       );
 
-      setHasChanges(hasPresentChanges || hasPermanentChanges);
+      // Check correspondence address changes, but ignore if it's empty in both current and initial
+      const currentCorrespondence = currentValues.address[2];
+      const initialCorrespondence = initialValues.address[2];
+      const hasCorrespondenceChanges =
+        currentCorrespondence && initialCorrespondence
+          ? Object.keys(currentCorrespondence).some(
+              (key) => currentCorrespondence[key] !== initialCorrespondence[key]
+            )
+          : currentCorrespondence?.addressLine1?.trim() ||
+            initialCorrespondence?.addressLine1?.trim();
+
+      setHasChanges(
+        hasPresentChanges || hasPermanentChanges || hasCorrespondenceChanges
+      );
     };
 
     checkForChanges();
@@ -115,16 +207,33 @@ const AddressForm = ({ onNext, defaultValues = [], readOnly = false }) => {
   // Sync permanent with present if checkbox is selected
   useEffect(() => {
     if (sameAsPresent) {
-      const presentAddress = formValues.present;
+      const presentAddress = formValues.address?.[0]; // Fix: use correct field path
       if (presentAddress) {
         setValue("address.1", { ...presentAddress });
         trigger("address.1");
       }
     } else {
-      setValue("address.1", {});
-      trigger("address.1");
+      // Don't clear if we're just initializing based on loaded data
+      const currentPermanent = getValues("address.1");
+      const currentPresent = getValues("address.0");
+
+      // Only clear if the permanent address is actually the same as present
+      if (areAddressesEqual(currentPermanent, currentPresent)) {
+        setValue("address.1", {
+          addressLine1: "",
+          addressLine2: "",
+          city: "",
+          state: "",
+          pincode: "",
+          type: "permanent",
+          district: "",
+          policeStation: "",
+          postOffice: "",
+        });
+        trigger("address.1");
+      }
     }
-  }, [sameAsPresent, getValues, setValue, trigger]);
+  }, [sameAsPresent, formValues.address?.[0], setValue, trigger, getValues]);
 
   const handleCheckboxChange = (e) => {
     const checked = e.target.checked;
@@ -164,14 +273,21 @@ const AddressForm = ({ onNext, defaultValues = [], readOnly = false }) => {
     setBackendErrors({});
 
     try {
-      const dataToSave = [
-        { ...data.address[0], type: "present" },
-        { ...data.address[1], type: "permanent" },
-      ];
+      // Filter out empty correspondence address
+      const addressesToSave = [];
+
+      // Always include present and permanent addresses
+      addressesToSave.push({ ...data.address[0], type: "present" });
+      addressesToSave.push({ ...data.address[1], type: "permanent" });
+
+      // Only include correspondence address if it has data
+      if (data.address[2] && data.address[2].addressLine1?.trim()) {
+        addressesToSave.push({ ...data.address[2], type: "correspondence" });
+      }
 
       const res = await saveSectionData(
         "addressDetails",
-        { address: dataToSave },
+        { address: addressesToSave },
         token
       );
 
@@ -179,7 +295,7 @@ const AddressForm = ({ onNext, defaultValues = [], readOnly = false }) => {
         const transformedErrors = {};
         if (res?.errors) {
           Object.entries(res.errors).forEach(([key, value]) => {
-            const match = key.match(/address[\[\.](\d+)[\]\.]/);
+            const match = key.match(/address\[(\d+)\]/);
             if (match) {
               const index = parseInt(match[1]);
               transformedErrors[index] = value;
@@ -195,7 +311,7 @@ const AddressForm = ({ onNext, defaultValues = [], readOnly = false }) => {
       dispatch({
         type: "UPDATE_SECTION",
         section: "addressDetails",
-        data: dataToSave,
+        data: addressesToSave,
       });
 
       setHasChanges(false);
@@ -205,7 +321,7 @@ const AddressForm = ({ onNext, defaultValues = [], readOnly = false }) => {
       const transformedErrors = {};
       if (error?.response?.data?.errors) {
         Object.entries(error.response.data.errors).forEach(([key, value]) => {
-          const match = key.match(/address[\[\.](\d+)[\]\.]/);
+          const match = key.match(/address\[(\d+)\]/);
           if (match) {
             const index = parseInt(match[1]);
             transformedErrors[index] = value;
@@ -252,7 +368,9 @@ const AddressForm = ({ onNext, defaultValues = [], readOnly = false }) => {
               <p className="text-red-700 font-medium">
                 {parseInt(index) === 0
                   ? "Present Address"
-                  : "Permanent Address"}
+                  : parseInt(index) === 1
+                  ? "Permanent Address"
+                  : "Correspondence Address"}
                 :
               </p>
               <ul className="list-disc list-inside ml-4">
@@ -266,7 +384,7 @@ const AddressForm = ({ onNext, defaultValues = [], readOnly = false }) => {
           ))}
         </div>
       )}
-
+      {console.log(errors.address)}
       {errors.address?.[0] || errors.address?.[1] ? (
         <div className="text-red-600 text-sm mb-4">
           Please fix the validation errors below.
@@ -319,6 +437,21 @@ const AddressForm = ({ onNext, defaultValues = [], readOnly = false }) => {
               errors={errors?.address?.[1]}
               backendErrors={backendErrors?.[1]}
               disabled={sameAsPresent || readOnly}
+            />
+          </div>
+
+          {/* Correspondence Address Section */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              Correspondence Address
+            </h3>
+            <AddressDetails
+              index={2}
+              register={register}
+              watch={watch}
+              errors={errors?.address?.[2]}
+              backendErrors={backendErrors?.[2]}
+              disabled={readOnly}
             />
           </div>
 

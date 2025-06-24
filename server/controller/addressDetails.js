@@ -18,12 +18,20 @@ const addressDetailsHandler = async (req, res) => {
 
     // Transform the address array to match the model schema
     const presentAddress = address.find((addr) => addr.type === "present");
+    console.log("🚀 ~ addressDetailsHandler ~ presentAddress:", presentAddress);
     const permanentAddress = address.find((addr) => addr.type === "permanent");
+    const correspondenceAddress = address.find(
+      (addr) => addr.type === "correspondence"
+    );
+    console.log(
+      "🚀 ~ addressDetailsHandler ~ correspondenceAddress:",
+      correspondenceAddress
+    );
 
     if (!presentAddress || !permanentAddress) {
       return res.status(400).json({
         success: false,
-        msg: "Both present and permanent addresses are required",
+        msg: "Present, Permanent and Correspondence addresses are required",
         data: null,
       });
     }
@@ -31,18 +39,28 @@ const addressDetailsHandler = async (req, res) => {
     // Remove the type field before saving
     const { type: _, ...presentAddressData } = presentAddress;
     const { type: __, ...permanentAddressData } = permanentAddress;
+    const { type: ___, ...correspondenceAddressData } =
+      correspondenceAddress || {};
 
-    console.log("Saving address details for employee:", employeeId);
-    console.log("Address data:", {
-      presentAddress: presentAddressData,
-      permanentAddress: permanentAddressData,
-    });
-
+    // Helper to check if all fields are blank
+    function isAddressEmpty(addr) {
+      if (!addr) return true;
+      const fields = Object.keys(addr).filter((k) => k !== "type");
+      return (
+        fields.length === 0 ||
+        fields.every((k) => !addr[k] || addr[k].toString().trim() === "")
+      );
+    }
+    const correspondenceToSave = !isAddressEmpty(correspondenceAddressData)
+      ? correspondenceAddressData
+      : undefined;
+    console.log("--------", correspondenceToSave);
     const savedDetails = await AddressDetails.findOneAndUpdate(
       { employeeId },
       {
         presentAddress: presentAddressData,
         permanentAddress: permanentAddressData,
+        correspondenceAddress: correspondenceToSave,
       },
       {
         new: true,
@@ -126,6 +144,10 @@ const fetchAddressDetails = async (req, res) => {
       {
         type: "permanent",
         ...addressDetails.permanentAddress,
+      },
+      {
+        type: "correspondence",
+        ...addressDetails.correspondenceAddress,
       },
     ];
     console.log("formatted Address", formattedAddress);

@@ -501,9 +501,12 @@ const validateAddress = (req, res, next) => {
     });
   }
 
-  // Check if both addresses are present
+  // Check if required addresses are present (present and permanent are required, correspondence is optional)
   const presentAddress = address.find((addr) => addr.type === "present");
   const permanentAddress = address.find((addr) => addr.type === "permanent");
+  const correspondenceAddress = address.find(
+    (addr) => addr.type === "correspondence"
+  );
 
   if (!presentAddress || !permanentAddress) {
     return res.status(400).json({
@@ -534,21 +537,28 @@ const validateAddress = (req, res, next) => {
     // Validate address type
     if (!addr.type?.trim()) {
       addressErrors.type = "Address type is required";
-    } else if (!["present", "permanent"].includes(addr.type)) {
+    } else if (
+      !["present", "permanent", "correspondence"].includes(addr.type)
+    ) {
       addressErrors.type =
-        "Address type must be either 'present' or 'permanent'";
+        "Address type must be either 'present', 'permanent', or 'correspondence'";
     }
 
-    // Check required fields
-    requiredFields.forEach((field) => {
-      if (!addr[field]?.trim()) {
-        addressErrors[field] = `${
-          field.charAt(0).toUpperCase() + field.slice(1)
-        } is required`;
-      }
-    });
+    // Check required fields only for present and permanent addresses
+    // Correspondence address is optional, so skip validation if it's empty
+    if (addr.type === "correspondence" && !addr.addressLine1?.trim()) {
+      // Skip validation for empty correspondence address
+    } else {
+      requiredFields.forEach((field) => {
+        if (!addr[field]?.trim()) {
+          addressErrors[field] = `${
+            field.charAt(0).toUpperCase() + field.slice(1)
+          } is required`;
+        }
+      });
+    }
 
-    // Validate pincode format
+    // Validate pincode format only if address is not empty
     if (addr.pincode && !/^[0-9]{6}$/.test(addr.pincode)) {
       addressErrors.pincode = "Pincode must be 6 digits";
     }
@@ -621,7 +631,7 @@ const validateWorkExperience = (req, res, next) => {
       typeof entry.isGreenfield !== "boolean" &&
       !["true", "false"].includes(String(entry.isGreenfield).toLowerCase())
     ) {
-      memberErrors.isWorking = "Invalid greenfield status";
+      entryErrors.isGreenfield = "Invalid greenfield status";
     }
 
     // Start Date validations
