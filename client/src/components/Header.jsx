@@ -44,6 +44,12 @@ const Header = () => {
                 <p className="text-xs text-blue-200">Welcome back!</p>
               </div>
               <button
+                onClick={() => navigate("/change-password")}
+                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-400 transition-colors duration-200 font-medium cursor-pointer"
+              >
+                Change Password
+              </button>
+              <button
                 onClick={handleLogout}
                 className="bg-white text-blue-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 font-medium cursor-pointer"
               >

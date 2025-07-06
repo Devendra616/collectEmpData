@@ -6,6 +6,7 @@ import mongoose from "mongoose";
 import session from "express-session";
 
 import router from "./routes/formRoutes.js";
+import adminRouter from "./routes/adminRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -29,6 +30,7 @@ app.use(
 );
 
 app.use("/api", router);
+app.use("/api/admin", adminRouter);
 
 app.get("/health", (req, res) => {
   res.json({ message: "Server is running" });
