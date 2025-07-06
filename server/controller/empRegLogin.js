@@ -42,43 +42,91 @@ const registrationHandler = async (req, res) => {
 };
 
 const loginHandler = async (req, res) => {
-  const { sapId, password } = req.body;
-
-  let empFound = await Employee.findOne({ sapId }).select("+password");
-
-  if (!empFound) {
-    return res.status(400).json({
-      msg: "Employee not found....Please register!!!",
-      success: false,
-    });
-  }
-
-  empFound.checkpw(password, async function (err, result) {
-    if (err) return next(err);
-    if (!result) {
-      return res.status(400).json({ msg: "Invalid Password", success: false });
+  try {
+    const { sapId, password } = req.body;
+    if (!sapId || !password) {
+      return res
+        .status(400)
+        .json({ success: false, msg: "SAP ID and Password are required." });
     }
-    req.session.employeeId = empFound._id;
-
-    console.log("Employee Id:", req.session.employeeId);
-
+    let empFound = await Employee.findOne({ sapId }).select("+password");
+    if (!empFound) {
+      return res.status(404).json({
+        msg: "Employee not found....Please register!!!",
+        success: false,
+      });
+    }
+    const isMatch = await empFound.checkpw(password);
+    if (!isMatch) {
+      return res
+        .status(401)
+        .json({ success: false, msg: "Invalid credentials." });
+    }
     const token = jwt.sign({ id: empFound._id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
+    req.session.employeeId = empFound._id;
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       msg: "Successfully Logged In",
-      statusCode: 200,
       token,
       user: {
         email: empFound.email,
-        sapId,
+        sapId: empFound.sapId,
         location: empFound.location,
         isSubmitted: empFound.isSubmitted,
+        isAdmin: empFound.isAdmin,
       },
     });
-  });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      msg: "Internal server error",
+      statusCode: 500,
+    });
+  }
+};
+
+const changePasswordHandler = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const { id } = req.user; // Get employee ID from JWT token
+
+    if (!currentPassword || !newPassword) {
+      return res
+        .status(400)
+        .json({ success: false, msg: "Old and new passwords are required." });
+    }
+
+    const emp = await Employee.findById(id).select("+password");
+
+    if (!emp) {
+      return res
+        .status(404)
+        .json({ success: false, msg: "Employee not found." });
+    }
+
+    const isMatch = await emp.checkpw(currentPassword);
+
+    if (!isMatch) {
+      return res
+        .status(401)
+        .json({ success: false, msg: "Current password is incorrect." });
+    }
+
+    emp.password = newPassword;
+    await emp.save();
+
+    return res
+      .status(200)
+      .json({ success: true, msg: "Password changed successfully." });
+  } catch (error) {
+    console.error("Error in changePasswordHandler:", error);
+    return res
+      .status(500)
+      .json({ success: false, msg: "Internal server error" });
+  }
 };
 
 const updateSubmissionStatus = async (req, res) => {
@@ -150,4 +198,5 @@ export default {
   loginHandler,
   updateSubmissionStatus,
   getSubmissionStatus,
+  changePasswordHandler,
 };

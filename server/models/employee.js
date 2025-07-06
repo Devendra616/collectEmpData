@@ -19,8 +19,13 @@ const employeeSchema = new mongoose.Schema({
   location: {
     type: String,
     required: true,
+    default: "KDL",
   },
   isSubmitted: {
+    type: Boolean,
+    default: false,
+  },
+  isAdmin: {
     type: Boolean,
     default: false,
   },
@@ -37,10 +42,8 @@ employeeSchema.pre("save", async function (next) {
   }
 });
 
-employeeSchema.methods.checkpw = function (password, cb) {
-  bcrypt.compare(password, this.password, (err, result) => {
-    return cb(err, result);
-  });
+employeeSchema.methods.checkpw = function (password) {
+  return bcrypt.compare(password, this.password);
 };
 
 export default mongoose.model("Employee", employeeSchema);

@@ -5,6 +5,7 @@ const router = express.Router();
 import handlers from "../controller/empRegLogin.js";
 import {
   validateReg,
+  validateChangePassword,
   validatePersonalDetails,
   validateFamilyDetails,
   validateEducationalDetails,
@@ -41,6 +42,7 @@ const {
   loginHandler,
   updateSubmissionStatus,
   getSubmissionStatus,
+  changePasswordHandler,
 } = handlers;
 
 // router.get('/welcome', (req, res) => {
@@ -97,5 +99,13 @@ router.post("/submit-form", verifyToken, updateSubmissionStatus);
 
 // Add route to get submission status
 router.get("/submission-status", verifyToken, getSubmissionStatus);
+
+// Add route for changing password
+router.post(
+  "/change-password",
+  verifyToken,
+  validateChangePassword,
+  changePasswordHandler
+);
 
 export default router;

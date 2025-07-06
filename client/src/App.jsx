@@ -9,6 +9,10 @@ import { FormDataProvider } from "./context/FormContext";
 import SessionTimeoutHandler from "./components/SessionTimeoutHandler";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import ChangePassword from "./components/ChangePassword";
+import AdminLogin from "./components/admin/AdminLogin";
+import AdminDashboard from "./components/admin/AdminDashboard";
+import AdminRoute from "./components/AdminRoute";
 
 function App() {
   return (
@@ -27,6 +31,23 @@ function App() {
                   <PrivateRoute>
                     <MultiStepForm />
                   </PrivateRoute>
+                }
+              />
+              <Route
+                path="/change-password"
+                element={
+                  <PrivateRoute>
+                    <ChangePassword />
+                  </PrivateRoute>
+                }
+              />
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route
+                path="/admin/dashboard"
+                element={
+                  <AdminRoute>
+                    <AdminDashboard />
+                  </AdminRoute>
                 }
               />
             </Routes>

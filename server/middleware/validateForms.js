@@ -56,6 +56,37 @@ const validateReg = (req, res, next) => {
   next();
 };
 
+const validateChangePassword = (req, res, next) => {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword?.trim() || !newPassword?.trim()) {
+    return res.status(400).json({
+      success: false,
+      msg: "Current password and new password are required",
+      statusCode: 400,
+    });
+  }
+
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z]).{6,}$/;
+  if (!passwordRegex.test(newPassword)) {
+    return res.status(400).json({
+      success: false,
+      msg: "Password must be of minimum length 6 and contain at least 1 lowercase letter, 1 uppercase letter, and can include numbers",
+      statusCode: 400,
+    });
+  }
+
+  if (currentPassword === newPassword) {
+    return res.status(400).json({
+      success: false,
+      msg: "New password must be different from current password",
+      statusCode: 400,
+    });
+  }
+
+  next();
+};
+
 const validatePersonalDetails = (req, res, next) => {
   const {
     title,
@@ -701,6 +732,7 @@ const validateWorkExperience = (req, res, next) => {
 
 export {
   validateReg,
+  validateChangePassword,
   validatePersonalDetails,
   validateFamilyDetails,
   validateEducationalDetails,
