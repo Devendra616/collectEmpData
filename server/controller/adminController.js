@@ -90,9 +90,8 @@ const resetEmployeePassword = async (req, res) => {
       });
     }
 
-    // Hash the new password
-    const hashedPassword = await bcrypt.hash(password, 10);
-    employee.password = hashedPassword;
+    // Set the password (will be hashed by pre-save middleware)
+    employee.password = password;
     await employee.save();
 
     res.status(200).json({
@@ -108,7 +107,7 @@ const resetEmployeePassword = async (req, res) => {
   }
 };
 
-// Reset all employee passwords
+// Reset all employee passwords except admin
 const resetAllPasswords = async (req, res) => {
   try {
     const { password } = req.body;
@@ -120,11 +119,14 @@ const resetAllPasswords = async (req, res) => {
       });
     }
 
-    // Hash the new password
+    // Hash the new password for bulk update
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Update all employees' passwords
-    const result = await Employee.updateMany({}, { password: hashedPassword });
+    const result = await Employee.updateMany(
+      { isAdmin: { $ne: true } },
+      { password: hashedPassword }
+    );
 
     res.status(200).json({
       success: true,
