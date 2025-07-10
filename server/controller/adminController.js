@@ -107,11 +107,7 @@ const resetEmployeePassword = async (req, res) => {
   }
 };
 
-<<<<<<< HEAD
 // Reset all employee passwords except admin
-=======
-// Reset all employee passwords
->>>>>>> 70247f6 (Admin routes and admin dashboard, login, change password)
 const resetAllPasswords = async (req, res) => {
   try {
     const { password } = req.body;
