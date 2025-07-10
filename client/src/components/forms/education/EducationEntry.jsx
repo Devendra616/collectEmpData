@@ -1,4 +1,10 @@
 import React from "react";
+import {
+  education,
+  certficateTypeOptions,
+  hindiSubjectLevels,
+  licenseTypes,
+} from "../../../constants";
 
 const EducationEntry = ({
   index,
@@ -41,13 +47,11 @@ const EducationEntry = ({
             disabled={readOnly}
           >
             <option value="">Select</option>
-            <option value="10TH">10th Class</option>
-            <option value="12TH">12th Class</option>
-            <option value="GRAD">Graduation / Diploma / ITI</option>
-            <option value="POSTGRAD">Post-graduation / PhD</option>
-
-            <option value="CERTIFICATE">Course Certificate / Others</option>
-            <option value="LICENSE">License/Skills</option>
+            {education.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
           </select>
           {renderError("educationType")}
         </div>
@@ -75,8 +79,11 @@ const EducationEntry = ({
                 disabled={readOnly}
               >
                 <option value="">Select Certificate Type</option>
-                <option value="REGULAR">Regular</option>
-                <option value="CORRESPONDANCE">Correspondance</option>
+                {certficateTypeOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
               </select>
               {renderError("certificateType")}
             </div>
@@ -145,10 +152,11 @@ const EducationEntry = ({
                 disabled={readOnly}
               >
                 <option value="">Select Level</option>
-                <option value="FIRST">1st Language</option>
-                <option value="SECOND">2nd Language</option>
-                <option value="THIRD">3rd Language</option>
-                <option value="NONE">None</option>
+                {hindiSubjectLevels.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
               </select>
               {renderError("hindiSubjectLevel")}
             </div>
@@ -201,7 +209,7 @@ const EducationEntry = ({
               <input
                 type="date"
                 {...register(`education[${index}].passingDate`)}
-                className={getErrorClass("startDate")}
+                className={getErrorClass("passingDate")}
                 disabled={readOnly}
               />
               {renderError("passingDate")}
@@ -221,11 +229,11 @@ const EducationEntry = ({
                 disabled={readOnly}
               >
                 <option value="">Select License Type</option>
-                <option value="ELECTRICAL_SUPERVISORY">
-                  Electrical Supervisory
-                </option>
-                <option value="HVD">HVD(Heavy Vehicle Driver)</option>
-                <option value="LVD">LVD(Light Vehicle Driver)</option>
+                {licenseTypes.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
               </select>
               {renderError("licenseType")}
             </div>

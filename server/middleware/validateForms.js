@@ -1,4 +1,21 @@
 import { getAgeFromDOB } from "../utils/getAge.js";
+import {
+  VALID_TITLES,
+  VALID_GENDERS,
+  VALID_MARITAL_STATUS,
+  VALID_EXSERVICEMAN,
+  VALID_PWD,
+  VALID_HINDI_KNOWLEDGE,
+  VALID_RELATIONS,
+  VALID_TITLES_BY_RELATION,
+  VALID_EDUCATION_TYPES,
+  VALID_CERTIFICATE_TYPES,
+  VALID_MEDIUMS,
+  VALID_HINDI_SUBJECT_LEVELS,
+  VALID_LICENSE_TYPES,
+  VALID_INDUSTRY_TYPES,
+  VALID_STATES,
+} from "./constants.js";
 
 const fieldNameMapping = {
   title: "Title",
@@ -209,44 +226,37 @@ const validatePersonalDetails = (req, res, next) => {
   }
 
   // Validate title
-  const validTitles = ["Shri", "Smt", "Ms"];
-  if (title && !validTitles.includes(title)) {
+  if (title && !VALID_TITLES.includes(title)) {
     errors.title = "Invalid Title selected";
   }
 
   // Validate gender
-  const validGenders = ["Male", "Female"];
-  if (gender && !validGenders.includes(gender)) {
+  if (gender && !VALID_GENDERS.includes(gender)) {
     errors.gender = "Invalid Gender selected";
   }
   // Validate marital status
-  const validMaritalStatus = [
-    "single",
-    "married",
-    "divorced",
-    "widowed",
-    "separated",
-  ];
-  if (maritalStatus && !validMaritalStatus.includes(maritalStatus)) {
+  if (maritalStatus && !VALID_MARITAL_STATUS.includes(maritalStatus)) {
     errors.maritalStatus = "Invalid Marital Status selected";
   }
 
   // Validate exServiceman
-  const validExServiceman = ["Yes", "No"];
-  if (exServiceman && !validExServiceman.includes(exServiceman)) {
+  if (exServiceman && !VALID_EXSERVICEMAN.includes(exServiceman)) {
     errors.exServiceman = "Invalid Ex-Serviceman selection";
   }
 
   // Validate PWD
-  const validPWD = ["Yes", "No"];
-  if (pwd && !validPWD.includes(pwd)) {
+  if (pwd && !VALID_PWD.includes(pwd)) {
     errors.pwd = "Invalid Person with Disability selection";
   }
 
   // Validate hindiKnowledge
-  const validHindiKnowledge = ["Yes", "No"];
-  if (hindiKnowledge && !validHindiKnowledge.includes(hindiKnowledge)) {
+  if (hindiKnowledge && !VALID_HINDI_KNOWLEDGE.includes(hindiKnowledge)) {
     errors.hindiKnowledge = "Invalid Working Knowledge in Hindi selection";
+  }
+
+  // Validate state
+  if (state && !VALID_STATES.includes(state)) {
+    errors.state = "Invalid state selected";
   }
 
   // If there are any errors, return them all
@@ -269,39 +279,24 @@ const validateFamilyDetails = (req, res, next) => {
     });
   }
 
-  const validRelations = [
-    "Spouse",
-    "Child",
-    "Father",
-    "Father-in-law",
-    "Mother",
-    "Mother-in-law",
-  ];
-  const validTitles = {
-    Spouse: ["Shri", "Smt"],
-    Child: ["Mt", "Ms"],
-    Father: ["Shri"],
-    "Father-in-law": ["Shri"],
-    Mother: ["Smt"],
-    "Mother-in-law": ["Smt"],
-  };
-
   familyMembers.forEach((member, index) => {
     const memberErrors = {};
     let isChild = false;
     // Required fields validation
     if (!member.relationship?.trim()) {
       memberErrors.relationship = "Family relation is required";
-    } else if (!validRelations.includes(member.relationship)) {
+    } else if (!VALID_RELATIONS.includes(member.relationship)) {
       memberErrors.relationship = "Invalid family relation selected";
     }
 
     if (!member.title?.trim()) {
       memberErrors.title = "Title is required";
+    } else if (!VALID_TITLES.includes(member.title)) {
+      memberErrors.title = "Invalid title selected";
     } else if (
-      member.type &&
-      validTitles[member.relationship] &&
-      !validTitles[member.relationship].includes(member.title)
+      member.relationship &&
+      VALID_TITLES_BY_RELATION[member.relationship] &&
+      !VALID_TITLES_BY_RELATION[member.relationship].includes(member.title)
     ) {
       memberErrors.title = "Invalid title for selected family member type";
     }
@@ -347,7 +342,7 @@ const validateFamilyDetails = (req, res, next) => {
 
     if (member.relationship === "Spouse") {
       // Spouse specific validations
-      if (member.isWorking === "") {
+      if (member.isWorking === "" || member.isWorking === undefined) {
         memberErrors.isWorking = "Employment status is required for spouse";
       } else if (
         typeof member.isWorking !== "boolean" &&
@@ -356,7 +351,10 @@ const validateFamilyDetails = (req, res, next) => {
         memberErrors.isWorking = "Invalid employment status";
       }
 
-      if (member.isWorking && !member.employmentDetails?.trim()) {
+      if (
+        (member.isWorking === true || member.isWorking === "true") &&
+        !member.employmentDetails?.trim()
+      ) {
         memberErrors.employmentDetails =
           "Employment details are required when status is Working";
       }
@@ -366,7 +364,7 @@ const validateFamilyDetails = (req, res, next) => {
     if (isChild) {
       if (!member.gender?.trim()) {
         memberErrors.gender = "Gender is required for child";
-      } else if (!["Male", "Female"].includes(member.gender)) {
+      } else if (!VALID_GENDERS.includes(member.gender)) {
         memberErrors.gender = "Invalid gender selection";
       }
     }
@@ -397,26 +395,13 @@ const validateEducationalDetails = (req, res, next) => {
     });
   }
 
-  const validEducationTypes = [
-    "10TH",
-    "12TH",
-    "GRAD",
-    "POSTGRAD",
-    "CERTIFICATE",
-    "LICENSE",
-  ];
-  const validCertificateTypes = ["REGULAR", "CORRESPONDANCE"];
-  const validMediums = ["ENGLISH", "HINDI"];
-  const validHindiSubjectLevels = ["FIRST", "SECOND", "THIRD", "NONE"];
-  const validLicenseTypes = ["HVD", "LVD", "ELECTRICAL_SUPERVISORY"];
-
   education.forEach((entry, index) => {
     const entryErrors = {};
 
     // Required fields validation
     if (!entry.educationType?.trim()) {
       entryErrors.educationType = "Education type is required";
-    } else if (!validEducationTypes.includes(entry.educationType)) {
+    } else if (!VALID_EDUCATION_TYPES.includes(entry.educationType)) {
       entryErrors.educationType = "Invalid education type";
     }
 
@@ -432,7 +417,7 @@ const validateEducationalDetails = (req, res, next) => {
       }
       if (!entry.certificateType?.trim()) {
         entryErrors.certificateType = "Certificate type is required";
-      } else if (!validCertificateTypes.includes(entry.certificateType)) {
+      } else if (!VALID_CERTIFICATE_TYPES.includes(entry.certificateType)) {
         entryErrors.certificateType = "Invalid certificate type";
       }
 
@@ -447,15 +432,35 @@ const validateEducationalDetails = (req, res, next) => {
       }
 
       // Medium validation
-      if (entry.medium && !validMediums.includes(entry.medium)) {
+      if (entry.medium && !VALID_MEDIUMS.includes(entry.medium)) {
         entryErrors.medium = "Invalid medium of education";
       }
+      // Grade validation
+      if (!entry.grade?.trim()) {
+        entryErrors.grade = "Final grade is required";
+      }
+
+      // Medium validation
+      if (entry.medium && !VALID_MEDIUMS.includes(entry.medium)) {
+        entryErrors.medium = "Invalid medium of education";
+      }
+
       // Hindi subject level validation
       if (
         entry.hindiSubjectLevel &&
-        !validHindiSubjectLevels.includes(entry.hindiSubjectLevel)
+        !VALID_HINDI_SUBJECT_LEVELS.includes(entry.hindiSubjectLevel)
       ) {
         entryErrors.hindiSubjectLevel = "Invalid Hindi subject level";
+      }
+
+      // Course details and specialization for specific education types
+      if (["GRAD", "POSTGRAD", "CERTIFICATE"].includes(entry.educationType)) {
+        if (!entry.courseDetails?.trim()) {
+          entryErrors.courseDetails = "Course details are required";
+        }
+        if (!entry.specialization?.trim()) {
+          entryErrors.specialization = "Specialization is required";
+        }
       }
 
       // Date validations
@@ -491,14 +496,21 @@ const validateEducationalDetails = (req, res, next) => {
       }
     } else {
       // for licenses
-      if (!validLicenseTypes.includes(entry.licenseType)) {
-        entryErrors.entryErrors = "Invalid License Type Selected";
+      if (!entry.licenseType?.trim()) {
+        entryErrors.licenseType = "License type is required";
+      } else if (!VALID_LICENSE_TYPES.includes(entry.licenseType)) {
+        entryErrors.licenseType = "Invalid License Type Selected";
       }
       if (!entry.licenseNumber?.trim()) {
         entryErrors.licenseNumber = "License Number is required";
       }
-      if (!entry.licenseIssueDate?.trim()) {
+      if (!entry.licenseIssueDate) {
         entryErrors.licenseIssueDate = "License Issue Date is required";
+      } else {
+        const issueDate = new Date(entry.licenseIssueDate);
+        if (isNaN(issueDate.getTime())) {
+          entryErrors.licenseIssueDate = "Invalid license issue date";
+        }
       }
       if (!entry.licenseIssuingAuthority?.trim()) {
         entryErrors.licenseIssuingAuthority =
@@ -620,17 +632,6 @@ const validateWorkExperience = (req, res, next) => {
     });
   }
 
-  const validIndustryTypes = [
-    "Autonomous Bodies",
-    "Central govt.",
-    "Indian Armed Forces",
-    "NGO",
-    "Private",
-    "PSU central",
-    "PSU state",
-    "State govt",
-  ];
-
   workExperience.forEach((entry, index) => {
     const entryErrors = {};
 
@@ -651,7 +652,7 @@ const validateWorkExperience = (req, res, next) => {
     }
 
     // Industry validation
-    if (entry.industry && !validIndustryTypes.includes(entry.industry)) {
+    if (entry.industry && !VALID_INDUSTRY_TYPES.includes(entry.industry)) {
       entryErrors.industry = "Invalid industry selected";
     }
 

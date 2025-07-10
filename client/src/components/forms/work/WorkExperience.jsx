@@ -9,6 +9,7 @@ import { toast } from "react-toastify";
 import { formatDuration } from "../../../utils/getAge.js";
 import axiosInstance from "../../../services/axiosInstance.js";
 import { formatDate } from "../../../utils/dateConversion.js";
+import { employmentIndustryOptions, yesNoOptions } from "../../../constants";
 
 const industries = [
   "Autonomous Bodies",
@@ -82,7 +83,6 @@ const WorkExperienceForm = ({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
-  const [fieldChanges, setFieldChanges] = useState({});
 
   // Memoize initial values to prevent unnecessary re-renders
   const initialValues = useMemo(() => {
@@ -234,7 +234,6 @@ const WorkExperienceForm = ({
       });
 
       setHasChanges(false);
-      setFieldChanges({});
 
       if (proceed) onNext(dataToSave);
     } catch (error) {
@@ -275,7 +274,7 @@ const WorkExperienceForm = ({
   return (
     <div className="max-w-4xl mx-auto p-6">
       <h2 className="text-2xl font-bold mb-6 text-gray-800">
-        Employment History
+        Employment History (Other than NMDC Ltd.)
       </h2>
 
       {saving && (
@@ -501,9 +500,9 @@ const WorkExperienceForm = ({
                       disabled={readOnly}
                     >
                       <option value="">Select Industry</option>
-                      {industries.map((ind, idx) => (
-                        <option key={idx} value={ind}>
-                          {ind}
+                      {employmentIndustryOptions.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
                         </option>
                       ))}
                     </select>
@@ -579,8 +578,11 @@ const WorkExperienceForm = ({
                       disabled={readOnly}
                     >
                       <option value="">Select</option>
-                      <option value="false">No</option>
-                      <option value="true">Yes</option>
+                      {yesNoOptions.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
                     </select>
                     {renderError("isGreenfield")}
                   </div>
