@@ -275,7 +275,7 @@ const WorkExperienceForm = ({
   return (
     <div className="max-w-4xl mx-auto p-6">
       <h2 className="text-2xl font-bold mb-6 text-gray-800">
-        Employment History
+        Employment History (Other than NMDC Ltd)
       </h2>
 
       {saving && (
@@ -356,7 +356,7 @@ const WorkExperienceForm = ({
           <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
             <p className="text-gray-600">
               No employers added yet. Click the button above to add employment
-              details.
+              details. Add only other than NMDC experience.
             </p>
           </div>
         )}

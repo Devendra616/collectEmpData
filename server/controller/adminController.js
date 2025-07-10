@@ -123,7 +123,6 @@ const resetAllPasswords = async (req, res) => {
       });
     }
 
-<<<<<<< HEAD
     // Hash the new password for bulk update
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -132,13 +131,6 @@ const resetAllPasswords = async (req, res) => {
       { isAdmin: { $ne: true } },
       { password: hashedPassword }
     );
-=======
-    // Hash the new password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Update all employees' passwords
-    const result = await Employee.updateMany({}, { password: hashedPassword });
->>>>>>> 70247f6 (Admin routes and admin dashboard, login, change password)
 
     res.status(200).json({
       success: true,
