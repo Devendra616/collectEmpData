@@ -90,14 +90,8 @@ const resetEmployeePassword = async (req, res) => {
       });
     }
 
-<<<<<<< HEAD
     // Set the password (will be hashed by pre-save middleware)
     employee.password = password;
-=======
-    // Hash the new password
-    const hashedPassword = await bcrypt.hash(password, 10);
-    employee.password = hashedPassword;
->>>>>>> 70247f6 (Admin routes and admin dashboard, login, change password)
     await employee.save();
 
     res.status(200).json({
