@@ -8,24 +8,13 @@ import { useFormData } from "../../../context/FormContext";
 import axiosInstance from "../../../services/axiosInstance.js";
 import { toast } from "react-toastify";
 import { formatDate } from "../../../utils/dateConversion.js";
-
-const familyTypes = [
-  "Spouse",
-  "Child",
-  "Father",
-  "Father-in-law",
-  "Mother",
-  "Mother-in-law",
-];
-
-const titlesByType = {
-  Spouse: ["Shri", "Smt"],
-  Child: ["Mt", "Ms"],
-  Father: ["Shri"],
-  "Father-in-law": ["Shri"],
-  Mother: ["Smt"],
-  "Mother-in-law": ["Smt"],
-};
+import {
+  familyRelationOptions,
+  titleOptions,
+  genderOptions,
+  bloodGroupOptions,
+  nationalityOptions,
+} from "../../../constants";
 
 const schema = yup.object().shape({
   family: yup.array().of(
@@ -89,7 +78,19 @@ const schema = yup.object().shape({
       cityOfBirth: yup.string(),
       isWorking: yup.boolean(),
       employmentDetails: yup.string(),
-      gender: yup.string(),
+      gender: yup
+        .string()
+        .test(
+          "conditional-gender",
+          "Gender is required for child",
+          function (value) {
+            const { relationship } = this.parent;
+            if (relationship === "Child") {
+              return value && value.trim() !== "";
+            }
+            return true;
+          }
+        ),
       nationality: yup.string().required("Nationality is required"),
     })
   ),
@@ -375,7 +376,33 @@ const FamilyDetailsForm = ({
             const backendFieldErrors = backendErrors[index];
 
             const relationship = watch(`family.${index}.relationship`);
-            const titles = titlesByType[relationship] || [];
+            // Filter titles based on relationship (matching backend validation)
+            const getTitlesForRelationship = (rel) => {
+              switch (rel) {
+                case "Child":
+                  return titleOptions.filter((opt) =>
+                    ["Mt", "MS", "Miss"].includes(opt.value)
+                  );
+                case "Father":
+                case "Father_In_Law":
+                  return titleOptions.filter((opt) =>
+                    ["Shri"].includes(opt.value)
+                  );
+                case "Mother":
+                case "Mother_In_Law":
+                  return titleOptions.filter((opt) =>
+                    ["Smt"].includes(opt.value)
+                  );
+                case "Spouse":
+                  return titleOptions.filter((opt) =>
+                    ["Shri", "Smt"].includes(opt.value)
+                  );
+                default:
+                  return titleOptions;
+              }
+            };
+
+            const titles = getTitlesForRelationship(relationship);
 
             const getErrorClass = (fieldName) => {
               const hasError =
@@ -443,9 +470,9 @@ const FamilyDetailsForm = ({
                       disabled={readOnly}
                     >
                       <option value="">Select Type</option>
-                      {familyTypes.map((t) => (
-                        <option key={t} value={t}>
-                          {t}
+                      {familyRelationOptions.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
                         </option>
                       ))}
                     </select>
@@ -463,8 +490,8 @@ const FamilyDetailsForm = ({
                     >
                       <option value="">Select Title</option>
                       {titles.map((title) => (
-                        <option key={title} value={title}>
-                          {title}
+                        <option key={title.value} value={title.value}>
+                          {title.label}
                         </option>
                       ))}
                     </select>
@@ -518,12 +545,18 @@ const FamilyDetailsForm = ({
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Blood Group <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      placeholder="Enter blood group"
+                    <select
                       {...register(`family.${index}.bloodGroup`)}
                       className={getErrorClass("bloodGroup")}
                       disabled={readOnly}
-                    />
+                    >
+                      <option value="">Select Blood Group</option>
+                      {bloodGroupOptions.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
                     {renderError("bloodGroup")}
                   </div>
 
@@ -557,12 +590,18 @@ const FamilyDetailsForm = ({
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Nationality <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      placeholder="Enter nationality Indian or others"
+                    <select
                       {...register(`family.${index}.nationality`)}
-                      className={getErrorClass("cityOfBirth")}
+                      className={getErrorClass("nationality")}
                       disabled={readOnly}
-                    />
+                    >
+                      <option value="">Select Nationality</option>
+                      {nationalityOptions.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
                     {renderError("nationality")}
                   </div>
 
@@ -613,8 +652,11 @@ const FamilyDetailsForm = ({
                         disabled={readOnly}
                       >
                         <option value="">Select Gender</option>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
+                        {genderOptions.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
                       </select>
                       {renderError("gender")}
                     </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
@@ -33,14 +33,17 @@ const schema = yup.object().shape({
           is: (val) => val !== "LICENSE",
           then: (schema) =>
             schema
-              .required("Duration is required")
               .min(0, "Duration must be a positive number")
               .typeError(
                 "Duration must be a number (e.g., 2.5 for 2 years and 6 months)"
               ),
           otherwise: (schema) => schema.notRequired(),
         }),
-      grade: yup.string(),
+      grade: yup.string().when("educationType", {
+        is: (val) => val !== "LICENSE",
+        then: (schema) => schema.required("Final grade is required"),
+        otherwise: (schema) => schema.notRequired(),
+      }),
       medium: yup.string(),
       hindiSubjectLevel: yup.string(),
       startDate: yup
@@ -69,8 +72,38 @@ const schema = yup.object().shape({
               ),
           otherwise: (schema) => schema.notRequired(),
         }),
-      courseDetails: yup.string(),
-      specialization: yup.string(),
+      courseDetails: yup.string().when("educationType", {
+        is: (val) => ["GRAD", "POSTGRAD", "CERTIFICATE"].includes(val),
+        then: (schema) => schema.required("Course details are required"),
+        otherwise: (schema) => schema.notRequired(),
+      }),
+      specialization: yup.string().when("educationType", {
+        is: (val) => ["GRAD", "POSTGRAD", "CERTIFICATE"].includes(val),
+        then: (schema) => schema.required("Specialization is required"),
+        otherwise: (schema) => schema.notRequired(),
+      }),
+      // License fields
+      licenseType: yup.string().when("educationType", {
+        is: "LICENSE",
+        then: (schema) => schema.required("License type is required"),
+        otherwise: (schema) => schema.notRequired(),
+      }),
+      licenseNumber: yup.string().when("educationType", {
+        is: "LICENSE",
+        then: (schema) => schema.required("License number is required"),
+        otherwise: (schema) => schema.notRequired(),
+      }),
+      licenseIssueDate: yup.date().when("educationType", {
+        is: "LICENSE",
+        then: (schema) => schema.required("License issue date is required"),
+        otherwise: (schema) => schema.notRequired(),
+      }),
+      licenseIssuingAuthority: yup.string().when("educationType", {
+        is: "LICENSE",
+        then: (schema) =>
+          schema.required("License issuing authority is required"),
+        otherwise: (schema) => schema.notRequired(),
+      }),
     })
   ),
 });
@@ -191,40 +224,6 @@ const EducationDetailsForm = ({
     checkForChanges();
   }, [formValues, initialValues, getValues]);
 
-  // Create onBlur handlers for different field types
-  const createTextBlurHandler = useCallback(
-    (fieldPath) => (e) => {
-      // Text blur handler - no longer tracking changes
-    },
-    [initialValues]
-  );
-
-  const createSelectBlurHandler = useCallback(
-    (fieldPath) => (e) => {
-      // Select blur handler - no longer tracking changes
-    },
-    [initialValues]
-  );
-
-  const createDateBlurHandler = useCallback(
-    (fieldPath) => (e) => {
-      // Date blur handler - no longer tracking changes
-    },
-    [initialValues]
-  );
-
-  // Helper to get nested field value
-  const getFieldValue = useCallback((obj, path) => {
-    return path.split(".").reduce((curr, key) => {
-      if (key.includes("[") && key.includes("]")) {
-        const arrayKey = key.split("[")[0];
-        const index = parseInt(key.split("[")[1].split("]")[0]);
-        return curr?.[arrayKey]?.[index];
-      }
-      return curr?.[key];
-    }, obj);
-  }, []);
-
   const saveData = async (data, proceed = false) => {
     console.log("saveData called with data:", data);
     console.log("hasChanges:", hasChanges);
@@ -252,11 +251,11 @@ const EducationDetailsForm = ({
         { education: dataToSave },
         token
       );
-      if (res?.status === 400) {
+      if (!res?.success && res.errors) {
         // Transform the nested error structure
         const transformedErrors = {};
-        if (res.response?.data?.errors) {
-          const errors = res.response.data.errors;
+        if (res.errors) {
+          const errors = res.errors;
           // Handle the education[index] format
           Object.entries(errors).forEach(([key, value]) => {
             const match = key.match(/education\[(\d+)\]/);
@@ -267,9 +266,12 @@ const EducationDetailsForm = ({
           });
         }
         setBackendErrors(transformedErrors);
+        toast.error(res?.msg || "Fix the errors first");
         return;
-      } else if (res?.data?.success) {
-        toast.success(res.data?.msg || "Education details saved");
+      } else if (res?.success) {
+        toast.success(res?.msg || "Education details updated successfully");
+      } else {
+        toast.error(res?.msg || "Something went wrong, not updated");
       }
 
       dispatch({
@@ -282,12 +284,12 @@ const EducationDetailsForm = ({
       if (proceed) onNext(dataToSave);
     } catch (error) {
       console.error("Error saving data:", error);
+      const errorMessages = error?.response?.data?.errors || {};
       // Transform error structure for caught errors
       const transformedErrors = {};
-      if (error?.response?.data?.errors) {
-        const errors = error.response.data.errors;
+      if (errorMessages) {
         // Handle the education[index] format
-        Object.entries(errors).forEach(([key, value]) => {
+        Object.entries(errorMessages).forEach(([key, value]) => {
           const match = key.match(/education\[(\d+)\]/);
           if (match) {
             const index = parseInt(match[1]);
@@ -456,9 +458,6 @@ const EducationDetailsForm = ({
                   watch={watch}
                   errors={fieldErrors}
                   backendErrors={backendFieldErrors}
-                  onTextBlur={createTextBlurHandler}
-                  onSelectBlur={createSelectBlurHandler}
-                  onDateBlur={createDateBlurHandler}
                   readOnly={readOnly}
                 />
               </div>

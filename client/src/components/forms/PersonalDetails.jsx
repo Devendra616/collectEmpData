@@ -6,7 +6,13 @@ import { saveSectionData } from "../../services/formApi";
 import { useAuth } from "../../context/AuthContext";
 import { useFormData } from "../../context/FormContext";
 import { getAgeFromDOB } from "../../utils/getAge";
-import languageOptions from "../../constants/languageOptions";
+import {
+  motherTongueOptions,
+  titleOptions,
+  maritalStatusOptions,
+  categoryOptions,
+  states,
+} from "./../../constants";
 import axiosInstance from "../../services/axiosInstance.js";
 import { toast } from "react-toastify";
 import { formatDate } from "../../utils/dateConversion.js";
@@ -42,7 +48,13 @@ const schema = yup.object().shape({
       return (hasHadBirthday ? age : age - 1) >= 18;
     }),
   birthplace: yup.string().required("Birthplace is required"),
-  state: yup.string().required("State is required"),
+  state: yup
+    .string()
+    .required("State is required")
+    .oneOf(
+      states.map((s) => s.code),
+      "Invalid state selected"
+    ),
   religion: yup.string().required("Religion is required"),
   category: yup.string().required("Category is required"),
   subCategory: yup.string().required("Sub-category is required"),
@@ -352,9 +364,11 @@ const PersonalDetailsForm = ({ onNext, defaultValues, readOnly = false }) => {
             disabled={readOnly}
           >
             <option value="">Select</option>
-            <option value="Shri">Shri</option>
-            <option value="Smt">Smt</option>
-            <option value="Ms">Ms</option>
+            {titleOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
           </select>
           {errors.title && (
             <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
@@ -403,7 +417,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues, readOnly = false }) => {
             <label>
               <input
                 type="radio"
-                value="Male"
+                value="MALE"
                 {...register("gender")}
                 disabled={readOnly}
               />{" "}
@@ -412,11 +426,20 @@ const PersonalDetailsForm = ({ onNext, defaultValues, readOnly = false }) => {
             <label>
               <input
                 type="radio"
-                value="Female"
+                value="FEMALE"
                 {...register("gender")}
                 disabled={readOnly}
               />{" "}
               Female
+            </label>
+            <label>
+              <input
+                type="radio"
+                value="OTHERS"
+                {...register("gender")}
+                disabled={readOnly}
+              />{" "}
+              Others
             </label>
           </div>
           {errors.gender && (
@@ -473,14 +496,20 @@ const PersonalDetailsForm = ({ onNext, defaultValues, readOnly = false }) => {
 
         <div>
           <label className="block font-medium">State</label>
-          <input
+          <select
             className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
               errors.state ? "border-red-500" : "border-gray-300"
             }`}
             {...register("state")}
-            placeholder="State"
             disabled={readOnly}
-          />
+          >
+            <option value="">Select</option>
+            {states.map((state) => (
+              <option key={state.code} value={state.code}>
+                {state.name}
+              </option>
+            ))}
+          </select>
           {errors.state && (
             <p className="mt-1 text-sm text-red-600">{errors.state.message}</p>
           )}
@@ -496,11 +525,11 @@ const PersonalDetailsForm = ({ onNext, defaultValues, readOnly = false }) => {
             disabled={readOnly}
           >
             <option value="">Select</option>
-            <option value="single">Single</option>
-            <option value="married">Married</option>
-            <option value="divorced">Divorced</option>
-            <option value="widowed">Widowed</option>
-            <option value="separated">Separated</option>
+            {maritalStatusOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
           </select>
           {errors.maritalStatus && (
             <p className="mt-1 text-sm text-red-600">
@@ -548,14 +577,20 @@ const PersonalDetailsForm = ({ onNext, defaultValues, readOnly = false }) => {
 
         <div>
           <label className="block font-medium">Category</label>
-          <input
+          <select
             className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
               errors.category ? "border-red-500" : "border-gray-300"
             }`}
             {...register("category")}
-            placeholder="Category"
             disabled={readOnly}
-          />
+          >
+            <option value="">Select</option>
+            {categoryOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
           {errors.category && (
             <p className="mt-1 text-sm text-red-600">
               {errors.category.message}
@@ -700,7 +735,7 @@ const PersonalDetailsForm = ({ onNext, defaultValues, readOnly = false }) => {
             disabled={readOnly}
           >
             <option value="">Select</option>
-            {languageOptions.map((lang) => (
+            {motherTongueOptions.map((lang) => (
               <option key={lang} value={lang}>
                 {lang}
               </option>
