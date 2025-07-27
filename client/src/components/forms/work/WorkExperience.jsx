@@ -11,17 +11,6 @@ import axiosInstance from "../../../services/axiosInstance.js";
 import { formatDate } from "../../../utils/dateConversion.js";
 import { employmentIndustryOptions, yesNoOptions } from "../../../constants";
 
-const industries = [
-  "Autonomous Bodies",
-  "Central govt.",
-  "Indian Armed Forces",
-  "NGO",
-  "Private",
-  "PSU central",
-  "PSU state",
-  "State govt",
-];
-
 const schema = yup.object().shape({
   work: yup.array().of(
     yup.object().shape({
@@ -51,9 +40,6 @@ const schema = yup.object().shape({
             return new Date(value) > new Date(startDate);
           }
         ),
-      industry: yup
-        .string()
-        .oneOf(industries, "Please select a valid industry"),
       scaleOnLeaving: yup.string(),
       reasonForLeaving: yup.string(),
       grossSalary: yup
