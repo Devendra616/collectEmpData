@@ -21,12 +21,12 @@ export const VALID_RELATIONS = [
   "Spouse",
 ];
 export const VALID_TITLES_BY_RELATION = {
-  Child: ["Mt", "Ms", "Miss"],
+  Child: ["Mt", "Ms", "Miss", "Shri"],
   Father: ["Shri"],
   Father_In_Law: ["Shri"],
   Mother: ["Smt"],
   Mother_In_Law: ["Smt"],
-  Sister: [],
+  Sister: ["Miss", "Smt"],
   Spouse: ["Shri", "Smt"],
 };
 export const VALID_EDUCATION_TYPES = [
