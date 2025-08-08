@@ -381,7 +381,7 @@ const FamilyDetailsForm = ({
               switch (rel) {
                 case "Child":
                   return titleOptions.filter((opt) =>
-                    ["Mt", "MS", "Miss"].includes(opt.value)
+                    ["Mt", "Ms", "Miss", "Shri"].includes(opt.value)
                   );
                 case "Father":
                 case "Father_In_Law":
@@ -396,6 +396,10 @@ const FamilyDetailsForm = ({
                 case "Spouse":
                   return titleOptions.filter((opt) =>
                     ["Shri", "Smt"].includes(opt.value)
+                  );
+                case "Sister":
+                  return titleOptions.filter((opt) =>
+                    ["Miss", "Smt"].includes(opt.value)
                   );
                 default:
                   return titleOptions;
