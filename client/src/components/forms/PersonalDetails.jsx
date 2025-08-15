@@ -12,6 +12,9 @@ import {
   maritalStatusOptions,
   categoryOptions,
   states,
+  exServicemanOptions,
+  pwdOptions,
+  hindiKnowledgeOptions,
 } from "./../../constants";
 import axiosInstance from "../../services/axiosInstance.js";
 import { toast } from "react-toastify";
@@ -560,14 +563,20 @@ const PersonalDetailsForm = ({ onNext, defaultValues, readOnly = false }) => {
 
         <div>
           <label className="block font-medium">Religion</label>
-          <input
+          <select
             className={`w-full border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 ${
               errors.religion ? "border-red-500" : "border-gray-300"
             }`}
             {...register("religion")}
-            placeholder="Religion"
             disabled={readOnly}
-          />
+          >
+            <option value="">Select</option>
+            {religionOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
           {errors.religion && (
             <p className="mt-1 text-sm text-red-600">
               {errors.religion.message}
@@ -659,8 +668,11 @@ const PersonalDetailsForm = ({ onNext, defaultValues, readOnly = false }) => {
             disabled={readOnly}
           >
             <option value="">Select</option>
-            <option value="Yes">Yes</option>
-            <option value="No">No</option>
+            {exServicemanOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
           </select>
           {errors.exServiceman && (
             <p className="mt-1 text-sm text-red-600">
@@ -715,8 +727,11 @@ const PersonalDetailsForm = ({ onNext, defaultValues, readOnly = false }) => {
             disabled={readOnly}
           >
             <option value="">Select</option>
-            <option value="Yes">Yes</option>
-            <option value="No">No</option>
+            {pwdOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
           </select>
           {errors.pwd && (
             <p className="mt-1 text-sm text-red-600">{errors.pwd.message}</p>
@@ -771,8 +786,11 @@ const PersonalDetailsForm = ({ onNext, defaultValues, readOnly = false }) => {
             disabled={readOnly}
           >
             <option value="">Select</option>
-            <option value="Yes">Yes</option>
-            <option value="No">No</option>
+            {hindiKnowledgeOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
           </select>
           {errors.hindiKnowledge && (
             <p className="mt-1 text-sm text-red-600">

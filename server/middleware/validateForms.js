@@ -15,6 +15,12 @@ import {
   VALID_LICENSE_TYPES,
   VALID_INDUSTRY_TYPES,
   VALID_STATES,
+  VALID_MOTHER_TONGUES,
+  VALID_RELIGIONS,
+  VALID_CATEGORIES,
+  VALID_BLOOD_GROUPS,
+  VALID_NATIONALITIES,
+  VALID_ADDRESS_TYPES,
 } from "./constants.js";
 
 const fieldNameMapping = {
@@ -259,6 +265,21 @@ const validatePersonalDetails = (req, res, next) => {
     errors.state = "Invalid state selected";
   }
 
+  // Validate mother tongue
+  if (motherTongue && !VALID_MOTHER_TONGUES.includes(motherTongue)) {
+    errors.motherTongue = "Invalid mother tongue selected";
+  }
+
+  // Validate religion
+  if (religion && !VALID_RELIGIONS.includes(religion)) {
+    errors.religion = "Invalid religion selected";
+  }
+
+  // Validate category
+  if (category && !VALID_CATEGORIES.includes(category)) {
+    errors.category = "Invalid category selected";
+  }
+
   // If there are any errors, return them all
   if (Object.keys(errors).length > 0) {
     return res.status(400).json({ errors, success: false, data: null });
@@ -338,6 +359,13 @@ const validateFamilyDetails = (req, res, next) => {
     // nationality validation
     if (!member.nationality) {
       memberErrors.nationality = "Nationality is required";
+    } else if (!VALID_NATIONALITIES.includes(member.nationality)) {
+      memberErrors.nationality = "Invalid nationality selected";
+    }
+
+    // blood group validation (optional field)
+    if (member.bloodGroup && !VALID_BLOOD_GROUPS.includes(member.bloodGroup)) {
+      memberErrors.bloodGroup = "Invalid blood group selected";
     }
 
     if (member.relationship === "Spouse") {
@@ -580,11 +608,8 @@ const validateAddress = (req, res, next) => {
     // Validate address type
     if (!addr.type?.trim()) {
       addressErrors.type = "Address type is required";
-    } else if (
-      !["present", "permanent", "correspondence"].includes(addr.type)
-    ) {
-      addressErrors.type =
-        "Address type must be either 'present', 'permanent', or 'correspondence'";
+    } else if (!VALID_ADDRESS_TYPES.includes(addr.type)) {
+      addressErrors.type = "Invalid address type selected";
     }
 
     // Check required fields only for present and permanent addresses

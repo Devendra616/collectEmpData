@@ -52,6 +52,62 @@ export const VALID_INDUSTRY_TYPES = [
   "STATE_GOVT",
   "OTHER",
 ];
+
+// Add missing constants for fields that are validated
+export const VALID_MOTHER_TONGUES = [
+  "ASSAMESE",
+  "BENGALI",
+  "BODO",
+  "DOGRI",
+  "ENGLISH",
+  "GUJARATI",
+  "HINDI",
+  "KANNADA",
+  "KASHMIRI",
+  "KONKANI",
+  "MAITHILI",
+  "MALAYALAM",
+  "MARATHI",
+  "NEPALI",
+  "ODIYA",
+  "PUNJABI",
+  "SANSKRIT",
+  "SANTALI",
+  "SINDHI",
+  "TAMIL",
+  "TELUGU",
+  "URDU",
+  "OTHER",
+];
+
+export const VALID_RELIGIONS = [
+  "HINDU",
+  "MUSLIM",
+  "CHRISTIAN",
+  "BUDDHIST",
+  "SIKH",
+  "JAIN",
+  "PARSI",
+  "OTHER",
+];
+
+export const VALID_CATEGORIES = ["GENERAL", "OBC", "SC", "ST", "OTHER"];
+
+export const VALID_BLOOD_GROUPS = [
+  "A+",
+  "A-",
+  "B+",
+  "B-",
+  "AB+",
+  "AB-",
+  "O+",
+  "O-",
+];
+
+export const VALID_NATIONALITIES = ["INDIAN", "OTHER"];
+
+export const VALID_ADDRESS_TYPES = ["present", "permanent", "correspondence"];
+
 export const VALID_STATES = [
   "Andaman and Nicobar Islands",
   "Andhra Pradesh",

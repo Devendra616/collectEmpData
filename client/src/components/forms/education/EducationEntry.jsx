@@ -4,6 +4,7 @@ import {
   certficateTypeOptions,
   hindiSubjectLevels,
   licenseTypes,
+  mediumOptions,
 } from "../../../constants";
 
 const EducationEntry = ({
@@ -119,26 +120,18 @@ const EducationEntry = ({
                 Medium of Education
               </label>
               <div className="flex space-x-4">
-                <label className="inline-flex items-center">
-                  <input
-                    type="radio"
-                    value="ENGLISH"
-                    {...register(`education[${index}].medium`)}
-                    className="form-radio h-4 w-4 text-blue-600"
-                    disabled={readOnly}
-                  />
-                  <span className="ml-2">English</span>
-                </label>
-                <label className="inline-flex items-center">
-                  <input
-                    type="radio"
-                    value="HINDI"
-                    {...register(`education[${index}].medium`)}
-                    className="form-radio h-4 w-4 text-blue-600"
-                    disabled={readOnly}
-                  />
-                  <span className="ml-2">Hindi</span>
-                </label>
+                {mediumOptions.map((opt) => (
+                  <label key={opt.value} className="inline-flex items-center">
+                    <input
+                      type="radio"
+                      value={opt.value}
+                      {...register(`education[${index}].medium`)}
+                      className="form-radio h-4 w-4 text-blue-600"
+                      disabled={readOnly}
+                    />
+                    <span className="ml-2">{opt.label}</span>
+                  </label>
+                ))}
               </div>
               {renderError("medium")}
             </div>

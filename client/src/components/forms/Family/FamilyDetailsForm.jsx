@@ -14,6 +14,7 @@ import {
   genderOptions,
   bloodGroupOptions,
   nationalityOptions,
+  yesNoOptions,
 } from "../../../constants";
 
 const schema = yup.object().shape({
@@ -622,8 +623,11 @@ const FamilyDetailsForm = ({
                           disabled={readOnly}
                         >
                           <option value="">Select Status</option>
-                          <option value="true">Working</option>
-                          <option value="false">Not-Working</option>
+                          {yesNoOptions.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
                         </select>
                         {renderError("isWorking")}
                       </div>

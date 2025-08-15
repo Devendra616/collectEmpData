@@ -176,12 +176,41 @@ const yesNoOptions = [
   { value: "false", label: "No" },
 ];
 
+// Add missing constants that are used in server-side validation
+const exServicemanOptions = [
+  { value: "Yes", label: "Yes" },
+  { value: "No", label: "No" },
+];
+
+const pwdOptions = [
+  { value: "Yes", label: "Yes" },
+  { value: "No", label: "No" },
+];
+
+const hindiKnowledgeOptions = [
+  { value: "Yes", label: "Yes" },
+  { value: "No", label: "No" },
+];
+
+const mediumOptions = [
+  { value: "HINDI", label: "Hindi" },
+  { value: "ENGLISH", label: "English" },
+];
+
+// Add address type constants
+const addressTypeOptions = [
+  { value: "present", label: "Present Address" },
+  { value: "permanent", label: "Permanent Address" },
+  { value: "correspondence", label: "Correspondence Address" },
+];
+
 export {
   motherTongueOptions,
   states,
   titleOptions,
   genderOptions,
   maritalStatusOptions,
+  religionOptions,
   education,
   categoryOptions,
   certficateTypeOptions,
@@ -192,4 +221,9 @@ export {
   hindiSubjectLevels,
   licenseTypes,
   yesNoOptions,
+  exServicemanOptions,
+  pwdOptions,
+  hindiKnowledgeOptions,
+  mediumOptions,
+  addressTypeOptions,
 };
