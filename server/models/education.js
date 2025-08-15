@@ -20,17 +20,20 @@ const completeEducationSchema = new mongoose.Schema({
   licenseOtherDetails: String,
 });
 
-const educationDetailsSchema = new mongoose.Schema({
-  employeeId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Employee",
-    required: true,
+const educationDetailsSchema = new mongoose.Schema(
+  {
+    employeeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Employee",
+      required: true,
+    },
+    education: {
+      type: [completeEducationSchema],
+      default: [],
+    },
   },
-  education: {
-    type: [completeEducationSchema],
-    default: [],
-  },
-});
+  { timestamps: true }
+);
 
 const EducationDetails = mongoose.model(
   "educationDetails",

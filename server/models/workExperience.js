@@ -45,14 +45,17 @@ experienceSchema.pre("save", function (next) {
   next();
 }); */
 
-const workExperienceSchema = new mongoose.Schema({
-  employeeId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Employee",
-    required: true,
+const workExperienceSchema = new mongoose.Schema(
+  {
+    employeeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Employee",
+      required: true,
+    },
+    experiences: [experienceSchema],
   },
-  experiences: [experienceSchema],
-});
+  { timestamps: true }
+);
 
 const WorkExperience = mongoose.model("workExperience", workExperienceSchema);
 export default WorkExperience;
