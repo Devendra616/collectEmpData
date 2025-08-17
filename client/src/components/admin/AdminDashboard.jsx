@@ -10,6 +10,7 @@ import {
   LogOut,
   Shield,
   Database,
+  Download,
 } from "lucide-react";
 import {
   formatValue,
@@ -22,6 +23,7 @@ import { toast } from "react-toastify";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useForm } from "react-hook-form";
+import PDFGenerator from "../pdf/PDFGenerator";
 
 const passwordRegex =
   /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@#$%!?*&])[a-zA-Z\d@#$%!?*&]{8,}$/;
@@ -94,6 +96,7 @@ const AdminDashboard = () => {
   const [employeeData, setEmployeeData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [bulkLoading, setBulkLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
   const [viewSapId, setviewSapId] = useState("");
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [message, setMessage] = useState({ type: "", text: "" });
@@ -327,6 +330,249 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleDownloadEmployeePDF = async (employee) => {
+    try {
+      setPdfLoading(true);
+      // Fetch complete employee data for PDF generation
+      const response = await api.get(`admin/view-employee/${employee.sapId}`, {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("adminToken")}`,
+        },
+      });
+
+      if (response.data && response.data.data) {
+        // Generate PDF directly using the same logic as PDFGenerator
+        generateEmployeePDF(response.data.data, employee.sapId);
+
+        setMessage({
+          type: "success",
+          text: `PDF download initiated for ${employee.sapId}`,
+        });
+      } else {
+        setMessage({
+          type: "error",
+          text: "Failed to fetch employee data for PDF",
+        });
+      }
+    } catch (error) {
+      console.error("Error downloading employee PDF:", error);
+      setMessage({ type: "error", text: "Error downloading employee PDF" });
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
+  // Function to generate PDF for employee data
+  const generateEmployeePDF = (formData, sapId) => {
+    try {
+      setPdfLoading(true);
+      console.log(
+        "Generating PDF for employee:",
+        sapId,
+        "with data:",
+        formData
+      );
+
+      // Import pdfMake dynamically to avoid SSR issues
+      import("pdfmake/build/pdfmake")
+        .then((pdfMakeModule) => {
+          const pdfMake = pdfMakeModule.default;
+          import("pdfmake/build/vfs_fonts")
+            .then(() => {
+              const docDefinition = {
+                content: [
+                  {
+                    text: `Employee Application Form - ${sapId}`,
+                    style: "header",
+                    alignment: "center",
+                    margin: [0, 0, 0, 30],
+                  },
+                  ...generatePDFSections(formData),
+                ],
+                styles: {
+                  header: {
+                    fontSize: 20,
+                    bold: true,
+                    color: "#2E86AB",
+                  },
+                  sectionHeader: {
+                    fontSize: 14,
+                    bold: true,
+                    margin: [0, 15, 0, 8],
+                    color: "#2E86AB",
+                  },
+                  tableCell: {
+                    fontSize: 9,
+                    margin: [5, 3, 5, 3],
+                  },
+                  entryHeader: {
+                    fontSize: 11,
+                    bold: true,
+                    color: "#2E86AB",
+                    margin: [5, 8, 5, 5],
+                  },
+                },
+                defaultStyle: {
+                  fontSize: 10,
+                  color: "#333333",
+                },
+                pageMargins: [40, 40, 40, 40],
+              };
+
+              const pdfDoc = pdfMake.createPdf(docDefinition);
+              pdfDoc.download(`employee_${sapId}_application.pdf`);
+              setPdfLoading(false);
+              toast.success(`PDF generated successfully for ${sapId}`);
+            })
+            .catch(() => {
+              setPdfLoading(false);
+              toast.error("Failed to load PDF fonts. Please try again.");
+            });
+        })
+        .catch(() => {
+          setPdfLoading(false);
+          toast.error("Failed to load PDF library. Please try again.");
+        });
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast.error("Failed to generate PDF. Please try again.");
+      setPdfLoading(false);
+    }
+  };
+
+  // Function to generate PDF sections
+  const generatePDFSections = (formData) => {
+    const sections = [];
+    console.log("Generating PDF sections for formData:", formData);
+
+    const sectionConfigs = [
+      { key: "personalDetails", title: "Personal Details" },
+      { key: "education", title: "Education Details" },
+      { key: "family", title: "Family Details" },
+      { key: "address", title: "Address Details" },
+      { key: "experiences", title: "Work Experience" },
+    ];
+
+    sectionConfigs.forEach(({ key, title }) => {
+      // Handle different data structures
+      let sectionData = formData[key];
+      console.log(`Processing section ${key}:`, sectionData);
+
+      // If the data is nested under a 'data' property, extract it
+      if (sectionData && sectionData.data) {
+        sectionData = sectionData.data;
+        console.log(`Extracted nested data for ${key}:`, sectionData);
+      }
+
+      if (
+        sectionData &&
+        (Array.isArray(sectionData)
+          ? sectionData.length > 0
+          : Object.keys(sectionData || {}).length > 0)
+      ) {
+        console.log(`Adding section ${title} with data:`, sectionData);
+        sections.push({
+          text: title,
+          style: "sectionHeader",
+        });
+        sections.push(generatePDFTableFromData(sectionData, title));
+      } else {
+        console.log(`Skipping section ${title} - no data available`);
+      }
+    });
+
+    console.log("Final sections:", sections);
+    return sections;
+  };
+
+  // Function to generate PDF table from data
+  const generatePDFTableFromData = (data, sectionTitle) => {
+    if (!data || (Array.isArray(data) && data.length === 0)) {
+      return {
+        text: `No ${sectionTitle.toLowerCase()} available`,
+        italics: true,
+        color: "#666666",
+        margin: [0, 5, 0, 15],
+      };
+    }
+
+    const tableBody = [];
+
+    if (Array.isArray(data)) {
+      data.forEach((item, index) => {
+        if (item && typeof item === "object") {
+          if (data.length > 1) {
+            tableBody.push([
+              {
+                text: `${sectionTitle} - Entry ${index + 1}`,
+                colSpan: 2,
+                style: "entryHeader",
+                fillColor: "#f5f5f5",
+              },
+              {},
+            ]);
+          }
+
+          Object.entries(item)
+            .filter(([key]) => !shouldHideField(key))
+            .forEach(([key, value]) => {
+              tableBody.push([
+                { text: formatKey(key), style: "tableCell", bold: true },
+                { text: formatValue(value, key), style: "tableCell" },
+              ]);
+            });
+
+          if (index < data.length - 1) {
+            tableBody.push([
+              { text: "", colSpan: 2, margin: [0, 8, 0, 0] },
+              {},
+            ]);
+          }
+        }
+      });
+    } else if (typeof data === "object") {
+      Object.entries(data)
+        .filter(([key]) => !shouldHideField(key))
+        .forEach(([key, value]) => {
+          tableBody.push([
+            { text: formatKey(key), style: "tableCell", bold: true },
+            { text: formatValue(value, key), style: "tableCell" },
+          ]);
+        });
+    }
+
+    if (tableBody.length === 0) {
+      return {
+        text: `No data available for ${sectionTitle.toLowerCase()}`,
+        italics: true,
+        color: "#666666",
+        margin: [0, 5, 0, 15],
+      };
+    }
+
+    return {
+      table: {
+        headerRows: 0,
+        widths: ["35%", "65%"],
+        body: tableBody,
+      },
+      layout: {
+        hLineWidth: () => 0.5,
+        vLineWidth: () => 0.5,
+        hLineColor: () => "#dddddd",
+        vLineColor: () => "#dddddd",
+        paddingLeft: () => 8,
+        paddingRight: () => 8,
+        paddingTop: () => 6,
+        paddingBottom: () => 6,
+        fillColor: (rowIndex) => {
+          return rowIndex % 2 === 0 ? "#fafafa" : "white";
+        },
+      },
+      margin: [0, 0, 0, 20],
+    };
+  };
+
   const columns = useMemo(
     () => [
       {
@@ -343,11 +589,6 @@ const AdminDashboard = () => {
         accessorKey: "name",
         header: "Name",
         size: 150,
-      },
-      {
-        accessorKey: "department",
-        header: "Department",
-        size: 120,
       },
       {
         accessorKey: "email",
@@ -380,6 +621,28 @@ const AdminDashboard = () => {
               <option value="true">Submitted</option>
               <option value="false">Not Submitted</option>
             </select>
+          );
+        },
+      },
+      {
+        accessorKey: "actions",
+        header: "Actions",
+        size: 120,
+        Cell: ({ row }) => {
+          const employee = row.original;
+          return (
+            <button
+              onClick={() => handleDownloadEmployeePDF(employee)}
+              disabled={pdfLoading}
+              className="flex items-center space-x-1 px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 cursor-pointer  disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {pdfLoading ? (
+                <RefreshCw className="h-3 w-3 animate-spin" />
+              ) : (
+                <Download className="h-3 w-3" />
+              )}
+              <span>{pdfLoading ? "..." : "PDF"}</span>
+            </button>
           );
         },
       },
@@ -721,7 +984,7 @@ const AdminDashboard = () => {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Quick Actions
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <button
                   onClick={() => setActiveTab("resetPassword")}
                   className="flex items-center justify-center space-x-2 p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
@@ -742,6 +1005,13 @@ const AdminDashboard = () => {
                 >
                   <Users className="h-5 w-5 text-purple-600" />
                   <span>Applications</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab("applicationStatus")}
+                  className="flex items-center justify-center space-x-2 p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                >
+                  <Download className="h-5 w-5 text-orange-600" />
+                  <span>Download PDFs</span>
                 </button>
               </div>
             </div>
@@ -995,6 +1265,36 @@ const AdminDashboard = () => {
                       title="Work Experience"
                       data={selectedEmployee.data.experiences}
                     />
+                  </div>
+
+                  {/* PDF Download Section */}
+                  <div className="mt-6 pt-6 border-t">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                      <Download className="h-5 w-5 mr-2 text-green-600" />
+                      Download Employee Data
+                    </h3>
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <p className="text-sm text-green-800 mb-3">
+                        Download the complete employee application form as a PDF
+                        document.
+                      </p>
+                      <button
+                        onClick={() =>
+                          generateEmployeePDF(selectedEmployee.data, viewSapId)
+                        }
+                        disabled={pdfLoading}
+                        className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                      >
+                        {pdfLoading ? (
+                          <RefreshCw className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Download className="h-4 w-4" />
+                        )}
+                        <span>
+                          {pdfLoading ? "Generating..." : "Download PDF"}
+                        </span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
