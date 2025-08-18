@@ -11,6 +11,8 @@ import {
   Shield,
   Database,
   Download,
+  FileText,
+  FileSpreadsheet,
 } from "lucide-react";
 import {
   formatValue,
@@ -24,6 +26,11 @@ import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useForm } from "react-hook-form";
 import PDFGenerator from "../pdf/PDFGenerator";
+import * as XLSX from "xlsx";
+
+// Utility function to check for the existence of an object
+const isNotEmpty = (obj) =>
+  typeof obj === "object" && obj !== null && Object.keys(obj).length > 0;
 
 const passwordRegex =
   /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@#$%!?*&])[a-zA-Z\d@#$%!?*&]{8,}$/;
@@ -97,6 +104,10 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [bulkLoading, setBulkLoading] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [bulkDownloadProgress, setBulkDownloadProgress] = useState({
+    current: 0,
+    total: 0,
+  });
   const [viewSapId, setviewSapId] = useState("");
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [message, setMessage] = useState({ type: "", text: "" });
@@ -126,6 +137,45 @@ const AdminDashboard = () => {
     resolver: yupResolver(bulkSchema),
   });
 
+  const [downloadCancelled, setDownloadCancelled] = useState(false);
+  const [bulkExcelLoading, setBulkExcelLoading] = useState(false);
+  const [batchProgress, setBatchProgress] = useState({
+    current: 0,
+    total: 0,
+    status: "",
+  });
+
+  const calculateAge = (dobString) => {
+    if (!dobString) return "";
+    const dob = new Date(dobString);
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+    return age.toString();
+  };
+
+  const formatDuration = (durationObj) => {
+    if (!durationObj) return "";
+    const { years = 0, months = 0, days = 0 } = durationObj;
+    const parts = [];
+    if (years > 0) parts.push(`${years} year${years !== 1 ? "s" : ""}`);
+    if (months > 0) parts.push(`${months} month${months !== 1 ? "s" : ""}`);
+    if (days > 0) parts.push(`${days} day${days !== 1 ? "s" : ""}`);
+    return parts.join(", ");
+  };
+
+  const formatFullName = (firstName = "", lastName = "") => {
+    return [firstName, lastName].filter(Boolean).join(" ").trim();
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    return new Date(dateString).toLocaleDateString();
+  };
+
   function changeDisplayMain(key) {
     return personalFieldLabels[key] || formatKey(key);
   }
@@ -134,26 +184,46 @@ const AdminDashboard = () => {
     if (activeTab === "viewAll") {
       fetchAllEmployees();
     }
-    if (activeTab === "applicationStatus") {
-      fetchAllEmployees();
-    }
     if (activeTab === "overview") {
       fetchEmployeeStats();
     }
+    if (activeTab === "applicationStatus") {
+      fetchAllEmployees();
+    }
   }, [activeTab]);
+
+  useEffect(() => {
+    console.log("Employee stats updated:", employeeStats);
+  }, [employeeStats]);
 
   const fetchEmployeeStats = async () => {
     try {
+      console.log("Fetching employee statistics...");
       const response = await api.get("admin/get-employee-stats", {
         headers: {
           Authorization: `Bearer ${sessionStorage.getItem("adminToken")}`,
         },
       });
-      if (response.data) {
+
+      console.log("Full API response:", response);
+      console.log("Response data:", response.data);
+      console.log("Response data.data:", response.data?.data);
+
+      if (response.data && response.data.data) {
+        console.log("Setting employee stats:", response.data.data);
         setEmployeeStats(response.data.data);
-        console.log("Employee statistics", employeeStats);
+      } else if (response.data) {
+        console.log(
+          "Setting employee stats from response.data:",
+          response.data
+        );
+        setEmployeeStats(response.data);
+      } else {
+        console.log("No valid data found in response");
+        console.log("Response structure:", JSON.stringify(response, null, 2));
       }
     } catch (error) {
+      console.error("Error fetching employee stats:", error);
       console.log("🚀 ~ fetchEmployeeStats ~ error:", error);
     }
   };
@@ -161,7 +231,6 @@ const AdminDashboard = () => {
   const fetchAllEmployees = async () => {
     setLoading(true);
     try {
-      // Replace with actual API call
       const response = await api.get("admin/get-all-employees", {
         headers: {
           Authorization: `Bearer ${sessionStorage.getItem("adminToken")}`,
@@ -169,10 +238,8 @@ const AdminDashboard = () => {
       });
 
       console.log("all emp data", response.data.data.employees);
-      // console.log("type of employees", typeof response.data.data.employees);
 
       if (response.data && Array.isArray(response.data.data.employees)) {
-        // Sort employees by sapId
         const sortedEmployees = response.data.data.employees.sort((a, b) =>
           a.sapId.localeCompare(b.sapId)
         );
@@ -192,10 +259,8 @@ const AdminDashboard = () => {
   };
 
   const handleResetPassword = async (resetData) => {
-    // e.preventDefault();
     setLoading(true);
     try {
-      // Replace with actual API call
       const response = await api.post(
         "admin/reset-employee-password",
         {
@@ -215,7 +280,6 @@ const AdminDashboard = () => {
           type: "success",
           text: `Password reset successfully for ${resetData.sapId}`,
         });
-        // setResetPassword({ sapId: "", password: "" });
         resetIndividual();
       } else {
         setMessage({ type: "error", text: "Failed to reset password" });
@@ -228,10 +292,8 @@ const AdminDashboard = () => {
   };
 
   const handleBulkResetPassword = async ({ password }) => {
-    // e.preventDefault();
     setBulkLoading(true);
     try {
-      // Replace with actual API call
       const response = await api.post(
         "admin/reset-all-passwords",
         { password },
@@ -248,7 +310,6 @@ const AdminDashboard = () => {
           text: response.data?.msg || "All passwords reset successfully",
         });
         resetBulk();
-        // setBulkResetPassword("");
       } else {
         setMessage({ type: "error", text: "Failed to reset all passwords" });
       }
@@ -281,15 +342,6 @@ const AdminDashboard = () => {
         setMessage({ type: "error", text: "Employee not found" });
         setSelectedEmployee(null);
       }
-      // Replace with actual API call
-      // const employee = mockEmployees.find(emp => emp.sapId === viewSapId);
-      // if (employee) {
-      //   setSelectedEmployee(employee);
-      //   setMessage({ type: 'success', text: `Employee data retrieved for ${viewSapId}` });
-      // } else {
-      //   setMessage({ type: 'error', text: 'Employee not found' });
-      //   setSelectedEmployee(null);
-      // }
     } catch (error) {
       console.error("Error fetching employee data:", error);
       setMessage({ type: "error", text: "Error fetching employee data" });
@@ -333,7 +385,6 @@ const AdminDashboard = () => {
   const handleDownloadEmployeePDF = async (employee) => {
     try {
       setPdfLoading(true);
-      // Fetch complete employee data for PDF generation
       const response = await api.get(`admin/view-employee/${employee.sapId}`, {
         headers: {
           Authorization: `Bearer ${sessionStorage.getItem("adminToken")}`,
@@ -341,7 +392,6 @@ const AdminDashboard = () => {
       });
 
       if (response.data && response.data.data) {
-        // Generate PDF directly using the same logic as PDFGenerator
         generateEmployeePDF(response.data.data, employee.sapId);
 
         setMessage({
@@ -362,7 +412,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // Function to generate PDF for employee data
   const generateEmployeePDF = (formData, sapId) => {
     try {
       setPdfLoading(true);
@@ -373,7 +422,6 @@ const AdminDashboard = () => {
         formData
       );
 
-      // Import pdfMake dynamically to avoid SSR issues
       import("pdfmake/build/pdfmake")
         .then((pdfMakeModule) => {
           const pdfMake = pdfMakeModule.default;
@@ -440,7 +488,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // Function to generate PDF sections
   const generatePDFSections = (formData) => {
     const sections = [];
     console.log("Generating PDF sections for formData:", formData);
@@ -454,11 +501,9 @@ const AdminDashboard = () => {
     ];
 
     sectionConfigs.forEach(({ key, title }) => {
-      // Handle different data structures
       let sectionData = formData[key];
       console.log(`Processing section ${key}:`, sectionData);
 
-      // If the data is nested under a 'data' property, extract it
       if (sectionData && sectionData.data) {
         sectionData = sectionData.data;
         console.log(`Extracted nested data for ${key}:`, sectionData);
@@ -484,8 +529,6 @@ const AdminDashboard = () => {
     console.log("Final sections:", sections);
     return sections;
   };
-
-  // Function to generate PDF table from data
   const generatePDFTableFromData = (data, sectionTitle) => {
     if (!data || (Array.isArray(data) && data.length === 0)) {
       return {
@@ -573,6 +616,284 @@ const AdminDashboard = () => {
     };
   };
 
+  const handleCancelDownload = () => {
+    setDownloadCancelled(true);
+    setBulkExcelLoading(false);
+    setBatchProgress({ current: 0, total: 0, status: "" });
+    setMessage({ type: "info", text: "Download cancelled" });
+  };
+
+  const handleBulkDownloadExcel = async () => {
+    try {
+      setBulkExcelLoading(true);
+      setDownloadCancelled(false);
+      setBatchProgress({
+        current: 0,
+        total: 0,
+        status: "Initializing Excel download...",
+      });
+
+      if (employeeData.length === 0) {
+        setBatchProgress({
+          current: 0,
+          total: 0,
+          status: "Fetching employee list...",
+        });
+        await fetchAllEmployees();
+      }
+
+      if (employeeData.length === 0) {
+        setMessage({
+          type: "error",
+          text: "No employee data available for download",
+        });
+        return;
+      }
+
+      const BATCH_SIZE = 15;
+      const REQUEST_TIMEOUT = 10000;
+      const MAX_RETRIES = 2;
+
+      const totalEmployees = employeeData.length;
+      const totalBatches = Math.ceil(totalEmployees / BATCH_SIZE);
+
+      setBatchProgress({
+        current: 0,
+        total: totalBatches,
+        status: `Processing ${totalEmployees} employees in ${totalBatches} batches...`,
+      });
+
+      const allEmployeeData = [];
+      const errors = [];
+
+      for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
+        if (downloadCancelled) {
+          setMessage({ type: "error", text: "Download cancelled by user" });
+          return;
+        }
+
+        const startIndex = batchIndex * BATCH_SIZE;
+        const endIndex = Math.min(startIndex + BATCH_SIZE, totalEmployees);
+        const batchEmployees = employeeData.slice(startIndex, endIndex);
+
+        setBatchProgress({
+          current: batchIndex + 1,
+          total: totalBatches,
+          status: `Processing batch ${batchIndex + 1}/${totalBatches}...`,
+        });
+
+        const batchPromises = batchEmployees.map(async (employee) => {
+          for (let retry = 0; retry <= MAX_RETRIES; retry++) {
+            try {
+              const controller = new AbortController();
+              const timeoutId = setTimeout(
+                () => controller.abort(),
+                REQUEST_TIMEOUT
+              );
+
+              const response = await api.get(
+                `admin/view-employee/${employee.sapId}`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${sessionStorage.getItem(
+                      "adminToken"
+                    )}`,
+                  },
+                  signal: controller.signal,
+                }
+              );
+              clearTimeout(timeoutId);
+
+              if (response.data && response.data.data) {
+                return { success: true, employee, data: response.data.data };
+              } else {
+                throw new Error("No data received");
+              }
+            } catch (error) {
+              if (retry === MAX_RETRIES) {
+                console.error(
+                  `Failed to fetch data for ${employee.sapId}:`,
+                  error
+                );
+                errors.push(`${employee.sapId}: ${error.message}`);
+                return { success: false, employee, error: error.message };
+              }
+              await new Promise((resolve) =>
+                setTimeout(resolve, Math.pow(2, retry) * 1000)
+              );
+            }
+          }
+        });
+
+        const batchResults = await Promise.allSettled(batchPromises);
+        batchResults.forEach((result) => {
+          if (result.status === "fulfilled" && result.value.success) {
+            allEmployeeData.push(result.value);
+          }
+        });
+
+        setBulkDownloadProgress((prev) => ({
+          ...prev,
+          current: allEmployeeData.length,
+          total: totalEmployees,
+        }));
+
+        if (batchIndex < totalBatches - 1) {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+      }
+
+      if (allEmployeeData.length === 0) {
+        setMessage({
+          type: "error",
+          text: "No employee data fetched for Excel generation.",
+        });
+        return;
+      }
+
+      const personalDetailsData = [];
+      const addressData = [];
+      const educationData = [];
+      const familyData = [];
+      const experiencesData = [];
+
+      allEmployeeData.forEach(({ employee, data }) => {
+        const { personalDetails, address, education, family, experiences } =
+          data;
+
+        if (isNotEmpty(personalDetails)) {
+          personalDetailsData.push({
+            "SAP ID": employee.sapId,
+            "Employee ID": employee.empId,
+            "Submission Status": employee.isSubmitted
+              ? "Submitted"
+              : "Not Submitted",
+            Title: personalDetails[0]?.title || "",
+            "First Name": personalDetails[0]?.firstName || "",
+            "Last Name": personalDetails[0]?.lastName || "",
+            "Date of Birth": formatDate(personalDetails[0]?.dob) || "",
+            Gender: personalDetails[0]?.gender || "",
+            Religion: personalDetails[0]?.religion || "",
+            "Marital Status": personalDetails[0]?.maritalStatus || "",
+            "Mother Tongue": personalDetails[0]?.motherTongue || "",
+            "State (Personal)": personalDetails[0]?.state || "",
+            Category: personalDetails[0]?.category || "",
+            "Aadhaar ID": personalDetails[0]?.adhaarId || "",
+            Mobile: personalDetails[0]?.mobile || "",
+          });
+        }
+
+        if (Array.isArray(address) && address.length > 0) {
+          address.forEach((addr) => {
+            addressData.push({
+              "SAP ID": employee.sapId,
+              "Address Type": addr.type || "",
+              "Address Line 1": addr.addressLine1 || "",
+              "Address Line 2": addr.addressLine2 || "",
+              City: addr.city || "",
+              District: addr.district || "",
+              State: addr.state || "",
+              Pincode: addr.pincode || "",
+              "Post Office": addr.postOffice || "",
+              "Police Station": addr.policeStation || "",
+            });
+          });
+        }
+
+        if (Array.isArray(education) && education.length > 0) {
+          education.forEach((edu) => {
+            educationData.push({
+              "SAP ID": employee.sapId,
+              "Education Type": edu.educationType || "",
+              "Institution Name": edu.instituteName || "",
+              "Certificate Type": edu.certificateType || "",
+              Grade: edu.grade || "",
+              Medium: edu.medium || "",
+              "Passing Date": formatDate(edu.passingDate) || "",
+              "Course Details": edu.courseDetails || "",
+            });
+          });
+        }
+
+        if (Array.isArray(family) && family.length > 0) {
+          family.forEach((fam) => {
+            familyData.push({
+              "SAP ID": employee.sapId,
+              Relationship: fam.relationship || "",
+              "Family Member Name": formatFullName(fam.firstName, fam.lastName),
+              "Date of Birth": formatDate(fam.dob) || "",
+              Age: calculateAge(fam.dob),
+              "Blood Group": fam.bloodGroup || "",
+              Nationality: fam.nationality || "",
+              "Employment Details": fam.employmentDetails || "",
+            });
+          });
+        }
+
+        if (Array.isArray(experiences) && experiences.length > 0) {
+          experiences.forEach((exp) => {
+            experiencesData.push({
+              "SAP ID": employee.sapId,
+              "Company Name": exp.companyName || "",
+              Role: exp.role || "",
+              "Work Duration": formatDuration(exp.duration),
+              "Start Date": formatDate(exp.startDate) || "",
+              "End Date": formatDate(exp.relievingDate) || "",
+              "Gross Salary": exp.grossSalary || "",
+              "Work City": exp.city || "",
+              Industry: exp.industry || "",
+              Responsibilities: exp.responsibilities || "",
+            });
+          });
+        }
+      });
+
+      const wb = XLSX.utils.book_new();
+
+      if (personalDetailsData.length > 0) {
+        const wsPersonal = XLSX.utils.json_to_sheet(personalDetailsData);
+        XLSX.utils.book_append_sheet(wb, wsPersonal, "Personal Details");
+      }
+      if (addressData.length > 0) {
+        const wsAddress = XLSX.utils.json_to_sheet(addressData);
+        XLSX.utils.book_append_sheet(wb, wsAddress, "Address");
+      }
+      if (educationData.length > 0) {
+        const wsEducation = XLSX.utils.json_to_sheet(educationData);
+        XLSX.utils.book_append_sheet(wb, wsEducation, "Education");
+      }
+      if (familyData.length > 0) {
+        const wsFamily = XLSX.utils.json_to_sheet(familyData);
+        XLSX.utils.book_append_sheet(wb, wsFamily, "Family");
+      }
+      if (experiencesData.length > 0) {
+        const wsExperiences = XLSX.utils.json_to_sheet(experiencesData);
+        XLSX.utils.book_append_sheet(wb, wsExperiences, "Experiences");
+      }
+
+      XLSX.writeFile(
+        wb,
+        `all_employee_data_${new Date().toISOString().split("T")[0]}.xlsx`
+      );
+
+      let message = `Excel download completed! Exported data for ${allEmployeeData.length} employees.`;
+      if (errors.length > 0) {
+        message += ` Note: Failed to fetch detailed data for ${errors.length} employees.`;
+      }
+      setMessage({
+        type: errors.length > 0 ? "warning" : "success",
+        text: message,
+      });
+    } catch (error) {
+      console.error("Error in bulk Excel download:", error);
+      setMessage({ type: "error", text: "Error downloading Excel file." });
+    } finally {
+      setBulkExcelLoading(false);
+      setBatchProgress({ current: 0, total: 0, status: "" });
+      setDownloadCancelled(false);
+    }
+  };
+
   const columns = useMemo(
     () => [
       {
@@ -651,10 +972,8 @@ const AdminDashboard = () => {
   );
 
   const handleLogout = () => {
-    // Add logout logic here
-    sessionStorage.removeItem("adminToken"); // Example token removal
-    sessionStorage.removeItem("adminUser"); // Example user data removal
-    // Redirect to login page or home page
+    sessionStorage.removeItem("adminToken");
+    sessionStorage.removeItem("adminUser");
     navigate("/admin/login");
 
     toast.success("Admin logout successful!");
@@ -680,7 +999,7 @@ const AdminDashboard = () => {
                           <span className="font-medium capitalize">
                             {changeDisplayMain(k)}:
                           </span>{" "}
-                          {formatValue(v)}
+                          {formatValue(v, k)}
                         </li>
                       )
                   )}
@@ -703,7 +1022,7 @@ const AdminDashboard = () => {
                   <span className="font-medium capitalize">
                     {k.replace(/([A-Z])/g, " $1")}:
                   </span>{" "}
-                  {formatValue(v)}
+                  {formatValue(v, k)}
                 </li>
               )
           )}
@@ -713,7 +1032,6 @@ const AdminDashboard = () => {
     return formatValue(value);
   };
 
-  // Section component for rendering object data in ordered keys
   const Section = ({
     title,
     data,
@@ -724,8 +1042,6 @@ const AdminDashboard = () => {
     let formattedData;
     const sortedMap = [];
 
-    // Handle array data by extracting the first element for single records
-    // For arrays (like education/work experience), we'll handle them differently
     const actualData = Array.isArray(data) ? data[0] || {} : data;
 
     if (isSorted) {
@@ -757,9 +1073,7 @@ const AdminDashboard = () => {
       });
     } else {
       formattedData = Object.keys(actualData || {}).map((key) => {
-        // console.log("key:", key);
         const value = actualData?.[key];
-        // console.log("value:", value);
         if (value === undefined || shouldHideField(key)) return null;
         return (
           <div
@@ -785,7 +1099,6 @@ const AdminDashboard = () => {
     );
   };
 
-  // ArraySection component for rendering array data (like education, work experience)
   const ArraySection = ({ title, data, keyFormatter = formatKey }) => {
     if (!Array.isArray(data) || data.length === 0) {
       return (
@@ -805,7 +1118,6 @@ const AdminDashboard = () => {
         </h3>
         <div className="space-y-4">
           {data.map((item, index) => {
-            // For address data, use the type field for the section title
             const sectionTitle = item.type
               ? `${
                   item.type.charAt(0).toUpperCase() + item.type.slice(1)
@@ -837,7 +1149,7 @@ const AdminDashboard = () => {
                           {keyFormatter(key)}:
                         </div>
                         <div className="text-gray-900 flex-1">
-                          {formatValue(value)}
+                          {formatValue(value, key)}
                         </div>
                       </div>
                     );
@@ -880,11 +1192,15 @@ const AdminDashboard = () => {
               { id: "overview", label: "Overview", icon: Database },
               { id: "resetPassword", label: "Reset Password", icon: Key },
               { id: "viewEmployee", label: "View Employee", icon: Eye },
-              // { id: "viewAll", label: "All Employees", icon: Users },
               {
                 id: "applicationStatus",
                 label: "Application Status",
                 icon: Search,
+              },
+              {
+                id: "bulkDownload",
+                label: "Bulk Download",
+                icon: FileText,
               },
             ].map((tab) => {
               const IconComponent = tab.icon;
@@ -951,11 +1267,7 @@ const AdminDashboard = () => {
                       Submitted Applications
                     </p>
                     <p className="text-3xl font-bold text-green-600">
-                      {
-                        employeeStats.submittedApplications
-                        // mockEmployees.filter((emp) => emp.status === "Active")
-                        //   .length
-                      }
+                      {employeeStats.submittedApplications}
                     </p>
                   </div>
                   <User className="h-12 w-12 text-green-600" />
@@ -969,10 +1281,7 @@ const AdminDashboard = () => {
                       Pending Applications
                     </p>
                     <p className="text-3xl font-bold text-purple-600">
-                      {
-                        employeeStats.pendingApplications
-                        // new Set(mockEmployees.map((emp) => emp.department)).size
-                      }
+                      {employeeStats.pendingApplications}
                     </p>
                   </div>
                   <Database className="h-12 w-12 text-purple-600" />
@@ -1007,11 +1316,16 @@ const AdminDashboard = () => {
                   <span>Applications</span>
                 </button>
                 <button
-                  onClick={() => setActiveTab("applicationStatus")}
-                  className="flex items-center justify-center space-x-2 p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                  onClick={handleBulkDownloadExcel}
+                  disabled={bulkExcelLoading}
+                  className="flex items-center justify-center space-x-2 p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Download className="h-5 w-5 text-orange-600" />
-                  <span>Download PDFs</span>
+                  {bulkExcelLoading ? (
+                    <RefreshCw className="h-5 w-5 text-green-600 animate-spin" />
+                  ) : (
+                    <FileSpreadsheet className="h-5 w-5 text-green-600" />
+                  )}
+                  <span>{bulkExcelLoading ? "..." : "Download Excel"}</span>
                 </button>
               </div>
             </div>
@@ -1042,11 +1356,7 @@ const AdminDashboard = () => {
                     </label>
                     <input
                       type="number"
-                      // value={resetPassword.sapId}
                       min={10000000}
-                      // onChange={(e) =>
-                      //   setResetPassword({ ...resetPassword, sapId: e.target.value })
-                      // }
                       {...registerIndividual("sapId")}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="Enter employee ID"
@@ -1061,10 +1371,6 @@ const AdminDashboard = () => {
                     </label>
                     <input
                       type="password"
-                      // value={resetPassword.password}
-                      // onChange={(e) =>
-                      //   setResetPassword({ ...resetPassword, password: e.target.value })
-                      // }
                       {...registerIndividual("password")}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="Enter new password"
@@ -1116,8 +1422,6 @@ const AdminDashboard = () => {
                     </label>
                     <input
                       type="password"
-                      // value={bulkResetPassword}
-                      // onChange={(e) => setBulkResetPassword(e.target.value)}
                       {...registerBulk("password")}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                       placeholder="Enter new password for all users"
@@ -1210,41 +1514,6 @@ const AdminDashboard = () => {
                     Employee Details
                   </h3>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* <div className="space-y-3">
-                      <div>
-                        <span className="text-sm font-medium text-gray-600">SAP ID:</span>
-                        <p className="text-gray-900">{selectedEmployee.sapId}</p>
-                      </div>
-                      <div>
-                        <span className="text-sm font-medium text-gray-600">Employee ID:</span>
-                        <p className="text-gray-900">{selectedEmployee.empId}</p>
-                      </div>
-                      <div>
-                        <span className="text-sm font-medium text-gray-600">Name:</span>
-                        <p className="text-gray-900">{selectedEmployee.name}</p>
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      <div>
-                        <span className="text-sm font-medium text-gray-600">Department:</span>
-                        <p className="text-gray-900">{selectedEmployee.department}</p>
-                      </div>
-                      <div>
-                        <span className="text-sm font-medium text-gray-600">Email:</span>
-                        <p className="text-gray-900">{selectedEmployee.email}</p>
-                      </div>
-                      <div>
-                        <span className="text-sm font-medium text-gray-600">Status:</span>
-                        <span className={`inline-block px-2 py-1 rounded-full text-xs ${
-                          selectedEmployee.status === 'Active' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {selectedEmployee.status}
-                        </span>
-                      </div>
-                    </div> */}
-
                     <ArraySection
                       title="Personal Details"
                       data={selectedEmployee.data.personalDetails}
@@ -1302,11 +1571,12 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* View All Employees Tab */}
-        {/* {activeTab === "viewAll" && (
+        {/* Veiw Application Status */}
+        {activeTab === "applicationStatus" && (
           <div className="space-y-6">
-            <h2 className="text-3xl font-bold text-gray-900">All Employees</h2>
-
+            <h2 className="text-3xl font-bold text-gray-900">
+              Application Status
+            </h2>
             <div className="bg-white rounded-lg shadow-sm border">
               <MaterialReactTable
                 columns={columns}
@@ -1336,42 +1606,168 @@ const AdminDashboard = () => {
               />
             </div>
           </div>
-        )} */}
+        )}
 
-        {/* Veiw Application Status */}
-        {activeTab === "applicationStatus" && (
+        {/* Bulk Download Tab */}
+        {activeTab === "bulkDownload" && (
           <div className="space-y-6">
             <h2 className="text-3xl font-bold text-gray-900">
-              Application Status
+              Bulk Data Download
             </h2>
 
-            <div className="bg-white rounded-lg shadow-sm border">
-              <MaterialReactTable
-                columns={columns}
-                data={employeeData}
-                enableSorting
-                defaultSortStateOrder={[{ id: "sapId", desc: false }]}
-                enableGlobalFilter
-                enableColumnFilters
-                enablePagination
-                initialState={{
-                  pagination: { pageSize: 10 },
-                  sorting: [{ id: "sapId", desc: false }],
-                }}
-                muiTableContainerProps={{
-                  sx: { maxHeight: "600px" },
-                }}
-                muiTableProps={{
-                  sx: {
-                    "& .MuiTableHead-root": {
-                      backgroundColor: "#f8fafc",
-                    },
-                  },
-                }}
-                state={{
-                  isLoading: loading,
-                }}
-              />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Excel Download */}
+              <div className="bg-white p-6 rounded-lg shadow-sm border">
+                <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                  <FileSpreadsheet className="h-5 w-5 mr-2 text-green-600" />
+                  Download All Employee Data (Excel)
+                </h3>
+                <div className="space-y-4">
+                  <p className="text-gray-600">
+                    Download a single Excel file containing separate sheets for
+                    each data section, including personal details, addresses,
+                    education, family members, and work experiences.
+                  </p>
+                  <button
+                    onClick={handleBulkDownloadExcel}
+                    disabled={bulkExcelLoading}
+                    className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer"
+                  >
+                    {bulkExcelLoading ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                        {batchProgress.status || "Processing..."}
+                      </>
+                    ) : (
+                      <>
+                        <FileSpreadsheet className="h-4 w-4 mr-2" />
+                        Download Excel File
+                      </>
+                    )}
+                  </button>
+
+                  {/* Progress section for Excel - show when processing */}
+                  {bulkExcelLoading && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium text-yellow-800">
+                          Processing...
+                        </h4>
+                        <button
+                          onClick={handleCancelDownload}
+                          className="text-sm px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                      {batchProgress.status && (
+                        <p className="text-sm text-yellow-700 mb-3">
+                          {batchProgress.status}
+                        </p>
+                      )}
+                      {bulkDownloadProgress.total > 0 && (
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm text-yellow-700">
+                            <span>Employee Progress:</span>
+                            <span>
+                              {bulkDownloadProgress.current}/
+                              {bulkDownloadProgress.total}
+                            </span>
+                          </div>
+                          <div className="w-full bg-yellow-200 rounded-full h-2">
+                            <div
+                              className="bg-green-600 h-2 rounded-full transition-all duration-300"
+                              style={{
+                                width: `${
+                                  (bulkDownloadProgress.current /
+                                    bulkDownloadProgress.total) *
+                                  100
+                                }%`,
+                              }}
+                            ></div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Individual PDF Downloads */}
+              <div className="bg-white p-6 rounded-lg shadow-sm border">
+                <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                  <Download className="h-5 w-5 mr-2 text-green-600" />
+                  Individual PDF Downloads
+                </h3>
+                <div className="space-y-4">
+                  <p className="text-gray-600">
+                    Access the Application Status tab to download individual
+                    employee PDFs or use the table below to manage application
+                    statuses.
+                  </p>
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h4 className="font-medium text-green-800 mb-2">
+                      Features:
+                    </h4>
+                    <ul className="text-sm text-green-700 space-y-1">
+                      <li>• View all employee application statuses</li>
+                      <li>• Download individual employee PDFs</li>
+                      <li>• Update submission statuses</li>
+                      <li>• Sort and filter employee data</li>
+                    </ul>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab("applicationStatus")}
+                    className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center cursor-pointer"
+                  >
+                    <Search className="h-4 w-4 mr-2" />
+                    Go to Application Status
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Performance notice */}
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <h4 className="font-medium text-amber-800 mb-2">
+                Performance Notice:
+              </h4>
+              <p className="text-sm text-amber-700">
+                For large datasets (300-500+ employees), the process is
+                optimized with batch processing and concurrent requests. The
+                download may take several minutes depending on your data size
+                and network connection.
+              </p>
+            </div>
+
+            {/* Data Preview */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Data Preview
+              </h3>
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <p className="text-sm text-gray-600 mb-3">
+                  The Excel file will contain {employeeData.length} employee
+                  records with multiple sheets.
+                  {employeeData.length === 0 &&
+                    " Click the download button to fetch employee data first."}
+                </p>
+                {employeeData.length > 0 && (
+                  <div className="text-sm text-gray-700">
+                    <p>
+                      <strong>Total Employees:</strong> {employeeData.length}
+                    </p>
+                    <p>
+                      <strong>Submitted Applications:</strong>{" "}
+                      {employeeData.filter((emp) => emp.isSubmitted).length}
+                    </p>
+                    <p>
+                      <strong>Pending Applications:</strong>{" "}
+                      {employeeData.filter((emp) => !emp.isSubmitted).length}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}

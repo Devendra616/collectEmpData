@@ -7,6 +7,13 @@ const formatValue = (value, key = "") => {
   if (value === null || value === undefined) return "Not Provided";
   if (typeof value === "boolean") return value ? "Yes" : "No";
 
+  // Debug logging for grade field
+  if (key === "grade") {
+    console.log("PDF Grade field value:", value, "Type:", typeof value);
+    // Ensure grade is always treated as a string, not a date
+    return String(value);
+  }
+
   // Date formatting
   if (key.includes("Date") || key === "dob") {
     if (!value) return "Not Provided";

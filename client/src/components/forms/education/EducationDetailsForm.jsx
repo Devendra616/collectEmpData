@@ -126,6 +126,20 @@ const EducationDetailsForm = ({
     console.log("Form State:", formState);
     const educationData = formState?.education?.data || [];
 
+    // Debug logging for grade fields
+    if (educationData && Array.isArray(educationData)) {
+      educationData.forEach((entry, index) => {
+        if (entry.grade !== undefined) {
+          console.log(
+            `Initial education entry ${index} grade:`,
+            entry.grade,
+            "Type:",
+            typeof entry.grade
+          );
+        }
+      });
+    }
+
     // Format dates in each education entry
     const formattedEducationData = educationData.map((entry) => ({
       ...entry,
@@ -228,6 +242,20 @@ const EducationDetailsForm = ({
     console.log("saveData called with data:", data);
     console.log("hasChanges:", hasChanges);
 
+    // Debug logging for grade fields
+    if (data.education && Array.isArray(data.education)) {
+      data.education.forEach((entry, index) => {
+        if (entry.grade !== undefined) {
+          console.log(
+            `Education entry ${index} grade:`,
+            entry.grade,
+            "Type:",
+            typeof entry.grade
+          );
+        }
+      });
+    }
+
     // If no changes, just proceed to next step without saving
     if (!hasChanges) {
       console.log("No changes detected, skipping save");
@@ -241,6 +269,18 @@ const EducationDetailsForm = ({
       // Remove internal fields before saving
       const dataToSave = data.education.map((entry) => {
         const { _id, __v, ...cleanEntry } = entry;
+
+        // Ensure grade is always a string
+        if (cleanEntry.grade !== undefined) {
+          cleanEntry.grade = String(cleanEntry.grade);
+          console.log(
+            `Ensuring grade is string for entry:`,
+            cleanEntry.grade,
+            "Type:",
+            typeof cleanEntry.grade
+          );
+        }
+
         return cleanEntry;
       });
 

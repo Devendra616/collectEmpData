@@ -13,11 +13,22 @@ export const shouldHideField = (key) => {
   );
 };
 
-export const formatValue = (value) => {
+export const formatValue = (value, fieldName = "") => {
   if (typeof value === "boolean") return value ? "Yes" : "No";
 
+  // Special handling for grade field - always treat as string
+  if (fieldName === "grade") {
+    return String(value);
+  }
+
   // Handle date strings - format as dd/mm/yyyy
+  // Exclude numeric strings that could be grades or other non-date values
   if (typeof value === "string" && !isNaN(Date.parse(value))) {
+    // Additional check to avoid treating numeric strings as dates
+    // This prevents values like "100" from being treated as dates
+    if (/^\d+$/.test(value)) {
+      return value; // Return as-is for pure numeric strings
+    }
     return formatDate(value, "dd/mm/yyyy");
   }
 

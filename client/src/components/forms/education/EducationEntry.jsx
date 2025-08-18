@@ -112,6 +112,18 @@ const EducationEntry = ({
                 {...register(`education[${index}].grade`)}
                 className={getErrorClass("grade")}
                 disabled={readOnly}
+                onChange={(e) => {
+                  // Ensure grade is always treated as a string
+                  const value = e.target.value;
+                  console.log(
+                    `Grade input change for entry ${index}:`,
+                    value,
+                    "Type:",
+                    typeof value
+                  );
+                  // Force the value to be a string
+                  e.target.value = String(value);
+                }}
               />
               {renderError("grade")}
             </div>

@@ -15,6 +15,7 @@ import {
   exServicemanOptions,
   pwdOptions,
   hindiKnowledgeOptions,
+  religionOptions,
 } from "./../../constants";
 import axiosInstance from "../../services/axiosInstance.js";
 import { toast } from "react-toastify";

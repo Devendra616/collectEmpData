@@ -118,6 +118,12 @@ const ReviewForm = ({ data, onBack, onSubmit, isSubmitted = false }) => {
     if (typeof value === "boolean") return value ? "Yes" : "No";
     if (fieldName === "grossSalary") return `₹${value.toLocaleString()}`;
 
+    // Debug logging for grade field
+    if (fieldName === "grade") {
+      // Ensure grade is always treated as a string, not a date
+      return String(value);
+    }
+
     if (
       [
         "dob",

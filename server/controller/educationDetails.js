@@ -14,6 +14,28 @@ const educationDetailsHandler = async (req, res) => {
       });
     }
 
+    // Debug logging for grade fields
+    if (education && Array.isArray(education)) {
+      education.forEach((entry, index) => {
+        if (entry.grade !== undefined) {
+          console.log(
+            `Received education entry ${index} grade:`,
+            entry.grade,
+            "Type:",
+            typeof entry.grade
+          );
+          // Ensure grade is always a string
+          education[index].grade = String(entry.grade);
+          console.log(
+            `After conversion - education entry ${index} grade:`,
+            education[index].grade,
+            "Type:",
+            typeof education[index].grade
+          );
+        }
+      });
+    }
+
     // console.log(req.body)
     console.log("Received Edu details", education);
     // console.log(req.body.education)
@@ -51,6 +73,29 @@ const fetchEducationDetails = async (req, res) => {
         data: null,
       });
     }
+
+    // Debug logging for grade fields
+    if (educationData.education && Array.isArray(educationData.education)) {
+      educationData.education.forEach((entry, index) => {
+        if (entry.grade !== undefined) {
+          console.log(
+            `Retrieved education entry ${index} grade:`,
+            entry.grade,
+            "Type:",
+            typeof entry.grade
+          );
+          // Ensure grade is always a string
+          educationData.education[index].grade = String(entry.grade);
+          console.log(
+            `After conversion - retrieved education entry ${index} grade:`,
+            educationData.education[index].grade,
+            "Type:",
+            typeof educationData.education[index].grade
+          );
+        }
+      });
+    }
+
     const { employeeId: id, ...educationDetails } = educationData.toObject();
     return res.status(200).json({
       data: educationDetails.education || [],
