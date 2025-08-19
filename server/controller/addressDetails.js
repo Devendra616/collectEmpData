@@ -54,7 +54,6 @@ const addressDetailsHandler = async (req, res) => {
     const correspondenceToSave = !isAddressEmpty(correspondenceAddressData)
       ? correspondenceAddressData
       : undefined;
-    console.log("--------", correspondenceToSave);
     const savedDetails = await AddressDetails.findOneAndUpdate(
       { employeeId },
       {

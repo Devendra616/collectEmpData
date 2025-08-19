@@ -19,13 +19,14 @@ import {
   shouldHideField,
   formatKey,
 } from "../../utils/formatters";
+import { formatDate } from "../../utils/dateConversion";
+import { getAgeFromDOB } from "../../utils/getAge";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/axiosInstance";
 import { toast } from "react-toastify";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useForm } from "react-hook-form";
-import PDFGenerator from "../pdf/PDFGenerator";
 import * as XLSX from "xlsx";
 
 // Utility function to check for the existence of an object
@@ -147,14 +148,8 @@ const AdminDashboard = () => {
 
   const calculateAge = (dobString) => {
     if (!dobString) return "";
-    const dob = new Date(dobString);
-    const today = new Date();
-    let age = today.getFullYear() - dob.getFullYear();
-    const monthDiff = today.getMonth() - dob.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-      age--;
-    }
-    return age.toString();
+    const age = getAgeFromDOB(dobString);
+    return age?.years.toString();
   };
 
   const formatDuration = (durationObj) => {
@@ -171,10 +166,10 @@ const AdminDashboard = () => {
     return [firstName, lastName].filter(Boolean).join(" ").trim();
   };
 
-  const formatDate = (dateString) => {
+  /*   const formatDate = (dateString) => {
     if (!dateString) return "";
     return new Date(dateString).toLocaleDateString();
-  };
+  }; */
 
   function changeDisplayMain(key) {
     return personalFieldLabels[key] || formatKey(key);
@@ -652,7 +647,7 @@ const AdminDashboard = () => {
 
       const BATCH_SIZE = 15;
       const REQUEST_TIMEOUT = 10000;
-      const MAX_RETRIES = 2;
+      const MAX_RETRIES = 2; //0,1,2 (3 times)
 
       const totalEmployees = employeeData.length;
       const totalBatches = Math.ceil(totalEmployees / BATCH_SIZE);
@@ -764,22 +759,40 @@ const AdminDashboard = () => {
         if (isNotEmpty(personalDetails)) {
           personalDetailsData.push({
             "SAP ID": employee.sapId,
-            "Employee ID": employee.empId,
+            Project: employee.location,
             "Submission Status": employee.isSubmitted
               ? "Submitted"
               : "Not Submitted",
             Title: personalDetails[0]?.title || "",
             "First Name": personalDetails[0]?.firstName || "",
             "Last Name": personalDetails[0]?.lastName || "",
-            "Date of Birth": formatDate(personalDetails[0]?.dob) || "",
             Gender: personalDetails[0]?.gender || "",
             Religion: personalDetails[0]?.religion || "",
             "Marital Status": personalDetails[0]?.maritalStatus || "",
-            "Mother Tongue": personalDetails[0]?.motherTongue || "",
-            "State (Personal)": personalDetails[0]?.state || "",
-            Category: personalDetails[0]?.category || "",
+            "Count of Child": personalDetails[0]?.countChild || "",
             "Aadhaar ID": personalDetails[0]?.adhaarId || "",
             Mobile: personalDetails[0]?.mobile || "",
+            "Date of Birth":
+              formatDate(personalDetails[0]?.dob, "dd-mm-yyyy") || "",
+            "Place of Birth": personalDetails[0]?.birthplace || "",
+            "State (Personal)": personalDetails[0]?.state || "",
+            Category: personalDetails[0]?.category || "",
+            "Sub Category": personalDetails[0]?.subCategory || "",
+            "ID Mark 1": personalDetails[0]?.idMark1 || "",
+            "ID Mark 2": personalDetails[0]?.idMark2 || "",
+            "Ex Serviceman": personalDetails[0]?.exServiceman || "",
+            "Person With Disability": personalDetails[0]?.pwd || "",
+            "Mother Tongue": personalDetails[0]?.motherTongue || "",
+            "Hindi Knowledge": personalDetails[0]?.hindiKnowledge || "",
+            "Language Hindi Read": personalDetails[0]?.langHindiRead
+              ? "Yes"
+              : "No",
+            "Language Hindi Write": personalDetails[0]?.langHindiWrite
+              ? "Yes"
+              : "No",
+            "Language Hindi Speak": personalDetails[0]?.langHindiSpeak
+              ? "Yes"
+              : "No",
           });
         }
 
@@ -809,8 +822,20 @@ const AdminDashboard = () => {
               "Certificate Type": edu.certificateType || "",
               Grade: edu.grade || "",
               Medium: edu.medium || "",
-              "Passing Date": formatDate(edu.passingDate) || "",
+              "Start Date": formatDate(edu.startDate, "dd-mm-yyyy") || "",
+              "Passing Date": formatDate(edu.passingDate, "dd-mm-yyyy") || "",
+              Duration: formatDuration(edu.duration),
               "Course Details": edu.courseDetails || "",
+              Specialization: edu.specialization || "",
+              "Hindi Subject Level": edu.hindiSubjectLevel || "",
+              "License Type": edu.licenseType || "",
+              "License Number": edu.licenseNumber || "",
+              "License Issue Date":
+                formatDate(edu.licenseIssueDate, "dd-mm-yyyy") || "",
+              "License Expiry Date":
+                formatDate(edu.licenseExpiryDate, "dd-mm-yyyy") || "",
+              "License Issue Authority": edu.licenseIssuingAuthority || "",
+              "License Other Details": edu.licenseOtherDetails || "",
             });
           });
         }
@@ -820,11 +845,14 @@ const AdminDashboard = () => {
             familyData.push({
               "SAP ID": employee.sapId,
               Relationship: fam.relationship || "",
+              Gender: fam.gender || "",
               "Family Member Name": formatFullName(fam.firstName, fam.lastName),
-              "Date of Birth": formatDate(fam.dob) || "",
+              "Date of Birth": formatDate(fam.dob, "dd-mm-yyyy") || "",
               Age: calculateAge(fam.dob),
+              "City of Birth": fam.cityOfBirth || "",
               "Blood Group": fam.bloodGroup || "",
               Nationality: fam.nationality || "",
+              "Is Working": fam.isWorking || "",
               "Employment Details": fam.employmentDetails || "",
             });
           });
@@ -836,13 +864,16 @@ const AdminDashboard = () => {
               "SAP ID": employee.sapId,
               "Company Name": exp.companyName || "",
               Role: exp.role || "",
+              "Start Date": formatDate(exp.startDate, "dd-mm-yyyy") || "",
+              "End Date": formatDate(exp.relievingDate, "dd-mm-yyyy") || "",
               "Work Duration": formatDuration(exp.duration),
-              "Start Date": formatDate(exp.startDate) || "",
-              "End Date": formatDate(exp.relievingDate) || "",
               "Gross Salary": exp.grossSalary || "",
               "Work City": exp.city || "",
               Industry: exp.industry || "",
+              Greenfield: exp.isGreenfield ? "Yes" : "No",
               Responsibilities: exp.responsibilities || "",
+              "Scale on Leaving": exp.scaleOnLeaving || "",
+              "Reasons for Leaving": exp.reasonForLeaving || "",
             });
           });
         }

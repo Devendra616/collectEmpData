@@ -11,6 +11,7 @@ const familyMembersSchema = new mongoose.Schema(
         "Father-in-law",
         "Mother",
         "Mother-in-law",
+        "Sister",
       ],
       required: true,
     },
